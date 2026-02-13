@@ -55,6 +55,22 @@ export interface TFPBearing {
   d3: number;         // displacement capacity surface 3 (in)
 }
 
+export interface PointLoad {
+  id: number;
+  nodeId: number;
+  fx: number; fy: number; fz: number;
+  mx: number; my: number; mz: number;
+}
+
+export interface GroundMotionRecord {
+  id: number;
+  name: string;
+  dt: number;
+  acceleration: number[];
+  direction: 1 | 2 | 3;
+  scaleFactor: number;
+}
+
 export interface StructuralModel {
   name: string;
   units: string;

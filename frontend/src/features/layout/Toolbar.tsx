@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useModelStore } from '../../stores/modelStore';
 import { useDisplayStore, type DisplayMode } from '../../stores/displayStore';
 import { useAnalysisStore } from '../../stores/analysisStore';
+import { AnalysisDialog } from '../analysis/AnalysisDialog';
 
 const DISPLAY_MODES: { value: DisplayMode; label: string }[] = [
   { value: 'wireframe', label: 'Wireframe' },
@@ -14,7 +16,8 @@ export function Toolbar() {
   const displayMode = useDisplayStore((state) => state.displayMode);
   const setDisplayMode = useDisplayStore((state) => state.setDisplayMode);
   const analysisStatus = useAnalysisStore((state) => state.status);
-  const startAnalysis = useAnalysisStore((state) => state.startAnalysis);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <div className="flex h-12 items-center justify-between border-b border-gray-700 bg-gray-900 px-4">
@@ -40,7 +43,7 @@ export function Toolbar() {
         </button>
 
         <button
-          onClick={startAnalysis}
+          onClick={() => setDialogOpen(true)}
           disabled={analysisStatus === 'running'}
           className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -71,6 +74,8 @@ export function Toolbar() {
           </button>
         ))}
       </div>
+
+      <AnalysisDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }

@@ -32,6 +32,8 @@ describe('modelStore — initial state', () => {
     expect(getState().sections.size).toBe(0);
     expect(getState().materials.size).toBe(0);
     expect(getState().bearings.size).toBe(0);
+    expect(getState().loads.size).toBe(0);
+    expect(getState().groundMotions.size).toBe(0);
   });
 });
 
@@ -73,6 +75,9 @@ describe('modelStore — loadSampleModel', () => {
     // 1 material, 2 sections
     expect(state.materials.size).toBe(1);
     expect(state.sections.size).toBe(2);
+
+    // 9 gravity loads on floor nodes (nodes 4-12)
+    expect(state.loads.size).toBe(9);
   });
 
   it('creates fixed-base nodes at y=0', () => {

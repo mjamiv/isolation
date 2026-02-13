@@ -5,6 +5,7 @@ import { SectionList } from './SectionList';
 import { MaterialList } from './MaterialList';
 import { BearingList } from './BearingList';
 import { LoadList } from './LoadList';
+import { GroundMotionList } from './GroundMotionList';
 
 export function ModelEditor() {
   return (
@@ -19,6 +20,7 @@ export function ModelEditor() {
       <MaterialList />
       <BearingList />
       <LoadList />
+      <GroundMotionList />
     </Accordion.Root>
   );
 }

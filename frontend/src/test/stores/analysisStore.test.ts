@@ -2,12 +2,12 @@
  * Tests for the analysis Zustand store.
  *
  * Covers initial state, result updates, time step management,
- * and playback toggling.
+ * analysisId/analysisType tracking, and playback toggling.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useAnalysisStore } from '@/stores/analysisStore';
-import type { AnalysisResults } from '@/stores/analysisStore';
+import type { AnalysisResults } from '@/types/analysis';
 
 const getState = () => useAnalysisStore.getState();
 
@@ -41,8 +41,9 @@ describe('analysisStore — initial state', () => {
     expect(getState().error).toBeNull();
   });
 
-  it('initializes with no time history', () => {
-    expect(getState().timeHistory).toBeNull();
+  it('initializes with no analysisId or analysisType', () => {
+    expect(getState().analysisId).toBeNull();
+    expect(getState().analysisType).toBeNull();
   });
 });
 
@@ -52,24 +53,44 @@ describe('analysisStore — initial state', () => {
 
 describe('analysisStore — startAnalysis', () => {
   it('sets status to running and clears previous state', () => {
-    // Simulate a completed analysis first
     const mockResults: AnalysisResults = {
-      modalResults: [],
-      maxDisplacement: 1.5,
-      maxBaseShear: 100,
-      maxDrift: 0.02,
-      elementForces: new Map(),
-      peakDrifts: new Map(),
+      analysisId: 'test-001',
+      modelId: 'model-001',
+      type: 'static',
+      status: 'complete',
+      progress: 1,
+      results: {
+        nodeDisplacements: {},
+        elementForces: {},
+        reactions: {},
+      },
     };
     getState().setResults(mockResults);
     expect(getState().status).toBe('complete');
 
-    // Now start a new analysis
     getState().startAnalysis();
     expect(getState().status).toBe('running');
     expect(getState().progress).toBe(0);
     expect(getState().results).toBeNull();
     expect(getState().error).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// setAnalysisId / setAnalysisType
+// ---------------------------------------------------------------------------
+
+describe('analysisStore — setAnalysisId', () => {
+  it('stores the analysis ID', () => {
+    getState().setAnalysisId('run-123');
+    expect(getState().analysisId).toBe('run-123');
+  });
+});
+
+describe('analysisStore — setAnalysisType', () => {
+  it('stores the analysis type', () => {
+    getState().setAnalysisType('modal');
+    expect(getState().analysisType).toBe('modal');
   });
 });
 
@@ -80,15 +101,21 @@ describe('analysisStore — startAnalysis', () => {
 describe('analysisStore — setResults', () => {
   it('updates results and changes status to complete', () => {
     const mockResults: AnalysisResults = {
-      modalResults: [
-        { modeNumber: 1, period: 0.85, frequency: 1.18, massParticipation: { x: 0.82, y: 0.0, z: 0.0 } },
-        { modeNumber: 2, period: 0.30, frequency: 3.33, massParticipation: { x: 0.10, y: 0.0, z: 0.0 } },
-      ],
-      maxDisplacement: 2.1,
-      maxBaseShear: 150.5,
-      maxDrift: 0.015,
-      elementForces: new Map(),
-      peakDrifts: new Map([[1, 0.012], [2, 0.015], [3, 0.010]]),
+      analysisId: 'test-002',
+      modelId: 'model-002',
+      type: 'modal',
+      status: 'complete',
+      progress: 1,
+      results: {
+        periods: [0.85, 0.30],
+        frequencies: [1.18, 3.33],
+        modeShapes: {},
+        massParticipation: {
+          1: { x: 0.82, y: 0.0, z: 0.0 },
+          2: { x: 0.10, y: 0.0, z: 0.0 },
+        },
+      },
+      wallTime: 1.23,
     };
 
     getState().startAnalysis();
@@ -97,8 +124,7 @@ describe('analysisStore — setResults', () => {
     expect(getState().status).toBe('complete');
     expect(getState().progress).toBe(100);
     expect(getState().results).toBe(mockResults);
-    expect(getState().results!.modalResults).toHaveLength(2);
-    expect(getState().results!.maxDisplacement).toBe(2.1);
+    expect(getState().results!.type).toBe('modal');
   });
 });
 
@@ -183,9 +209,10 @@ describe('analysisStore — setPlaybackSpeed', () => {
 
 describe('analysisStore — resetAnalysis', () => {
   it('resets all state back to idle defaults', () => {
-    // Set up dirty state
     getState().startAnalysis();
     getState().setProgress(75, 750, 1000);
+    getState().setAnalysisId('run-999');
+    getState().setAnalysisType('time_history');
     getState().togglePlayback();
     getState().setTimeStep(500);
 
@@ -195,8 +222,9 @@ describe('analysisStore — resetAnalysis', () => {
     expect(getState().progress).toBe(0);
     expect(getState().currentStep).toBe(0);
     expect(getState().totalSteps).toBe(0);
+    expect(getState().analysisId).toBeNull();
+    expect(getState().analysisType).toBeNull();
     expect(getState().results).toBeNull();
-    expect(getState().timeHistory).toBeNull();
     expect(getState().currentTimeStep).toBe(0);
     expect(getState().isPlaying).toBe(false);
     expect(getState().error).toBeNull();

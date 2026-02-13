@@ -1,49 +1,15 @@
 import { create } from 'zustand';
+import type {
+  AnalysisType,
+  AnalysisResults,
+} from '@/types/analysis';
 
-// ── Inline types ──────────────────────────────────────────────────────
+// Re-export the canonical types from analysis.ts for backward compat
+export type { AnalysisResults };
+
+// ── Store types ──────────────────────────────────────────────────────
 
 export type AnalysisStatus = 'idle' | 'running' | 'complete' | 'error';
-
-export interface ModalResult {
-  modeNumber: number;
-  period: number;       // seconds
-  frequency: number;    // Hz
-  massParticipation: { x: number; y: number; z: number };
-}
-
-export interface TimeHistoryPoint {
-  time: number;
-  displacement: number;
-  velocity: number;
-  acceleration: number;
-  baseShear: number;
-}
-
-export interface ElementForces {
-  elementId: number;
-  axial: number;
-  shearY: number;
-  shearZ: number;
-  momentY: number;
-  momentZ: number;
-  torsion: number;
-}
-
-export interface TimeHistoryData {
-  dt: number;
-  nSteps: number;
-  groundMotion: number[];
-  responses: Map<number, TimeHistoryPoint[]>; // nodeId -> array of time points
-}
-
-export interface AnalysisResults {
-  modalResults: ModalResult[];
-  maxDisplacement: number;
-  maxBaseShear: number;
-  maxDrift: number;
-  elementForces: Map<number, ElementForces[]>; // elementId -> forces at each time step
-  peakDrifts: Map<number, number>;             // storyNumber -> peak drift ratio
-}
 
 // ── Store interface ───────────────────────────────────────────────────
 
@@ -52,8 +18,9 @@ interface AnalysisState {
   progress: number;        // 0 - 100
   currentStep: number;
   totalSteps: number;
+  analysisId: string | null;
+  analysisType: AnalysisType | null;
   results: AnalysisResults | null;
-  timeHistory: TimeHistoryData | null;
   currentTimeStep: number;
   isPlaying: boolean;
   playbackSpeed: number;   // multiplier: 0.25, 0.5, 1, 2, 4
@@ -61,9 +28,10 @@ interface AnalysisState {
 
   // Actions
   startAnalysis: () => void;
+  setAnalysisId: (id: string) => void;
+  setAnalysisType: (type: AnalysisType) => void;
   setProgress: (progress: number, currentStep: number, totalSteps: number) => void;
   setResults: (results: AnalysisResults) => void;
-  setTimeHistory: (data: TimeHistoryData) => void;
   setError: (error: string) => void;
   resetAnalysis: () => void;
   setTimeStep: (step: number) => void;
@@ -79,8 +47,9 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   progress: 0,
   currentStep: 0,
   totalSteps: 0,
+  analysisId: null,
+  analysisType: null,
   results: null,
-  timeHistory: null,
   currentTimeStep: 0,
   isPlaying: false,
   playbackSpeed: 1,
@@ -96,6 +65,12 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       error: null,
     }),
 
+  setAnalysisId: (id) =>
+    set({ analysisId: id }),
+
+  setAnalysisType: (type) =>
+    set({ analysisType: type }),
+
   setProgress: (progress, currentStep, totalSteps) =>
     set({ progress, currentStep, totalSteps }),
 
@@ -105,9 +80,6 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       status: 'complete',
       progress: 100,
     }),
-
-  setTimeHistory: (data) =>
-    set({ timeHistory: data }),
 
   setError: (error) =>
     set({
@@ -121,8 +93,9 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       progress: 0,
       currentStep: 0,
       totalSteps: 0,
+      analysisId: null,
+      analysisType: null,
       results: null,
-      timeHistory: null,
       currentTimeStep: 0,
       isPlaying: false,
       error: null,

@@ -5,11 +5,13 @@ import type {
   Section,
   Material,
   TFPBearing,
+  PointLoad,
+  GroundMotionRecord,
   StructuralModel,
 } from '@/types/storeModel';
 
 // Re-export types for backward compat
-export type { Node, Element, Section, Material, TFPBearing, StructuralModel };
+export type { Node, Element, Section, Material, TFPBearing, PointLoad, GroundMotionRecord, StructuralModel };
 
 // ── Store interface ───────────────────────────────────────────────────
 
@@ -20,6 +22,8 @@ interface ModelState {
   sections: Map<number, Section>;
   materials: Map<number, Material>;
   bearings: Map<number, TFPBearing>;
+  loads: Map<number, PointLoad>;
+  groundMotions: Map<number, GroundMotionRecord>;
 
   // Model actions
   setModel: (model: StructuralModel) => void;
@@ -49,6 +53,16 @@ interface ModelState {
   updateBearing: (id: number, updates: Partial<TFPBearing>) => void;
   removeBearing: (id: number) => void;
 
+  // Load CRUD
+  addLoad: (load: PointLoad) => void;
+  updateLoad: (id: number, updates: Partial<PointLoad>) => void;
+  removeLoad: (id: number) => void;
+
+  // Ground Motion CRUD
+  addGroundMotion: (gm: GroundMotionRecord) => void;
+  updateGroundMotion: (id: number, updates: Partial<GroundMotionRecord>) => void;
+  removeGroundMotion: (id: number) => void;
+
   // Demo loader
   loadSampleModel: () => void;
   clearModel: () => void;
@@ -63,6 +77,8 @@ export const useModelStore = create<ModelState>((set) => ({
   sections: new Map(),
   materials: new Map(),
   bearings: new Map(),
+  loads: new Map(),
+  groundMotions: new Map(),
 
   // ── Model ────────────────────────────────────────
   setModel: (model) => set({ model }),
@@ -192,6 +208,56 @@ export const useModelStore = create<ModelState>((set) => ({
       return { bearings };
     }),
 
+  // ── Load CRUD ─────────────────────────────────
+  addLoad: (load) =>
+    set((state) => {
+      const loads = new Map(state.loads);
+      loads.set(load.id, load);
+      return { loads };
+    }),
+
+  updateLoad: (id, updates) =>
+    set((state) => {
+      const loads = new Map(state.loads);
+      const existing = loads.get(id);
+      if (existing) {
+        loads.set(id, { ...existing, ...updates });
+      }
+      return { loads };
+    }),
+
+  removeLoad: (id) =>
+    set((state) => {
+      const loads = new Map(state.loads);
+      loads.delete(id);
+      return { loads };
+    }),
+
+  // ── Ground Motion CRUD ────────────────────────
+  addGroundMotion: (gm) =>
+    set((state) => {
+      const groundMotions = new Map(state.groundMotions);
+      groundMotions.set(gm.id, gm);
+      return { groundMotions };
+    }),
+
+  updateGroundMotion: (id, updates) =>
+    set((state) => {
+      const groundMotions = new Map(state.groundMotions);
+      const existing = groundMotions.get(id);
+      if (existing) {
+        groundMotions.set(id, { ...existing, ...updates });
+      }
+      return { groundMotions };
+    }),
+
+  removeGroundMotion: (id) =>
+    set((state) => {
+      const groundMotions = new Map(state.groundMotions);
+      groundMotions.delete(id);
+      return { groundMotions };
+    }),
+
   // ── Clear ────────────────────────────────────────
   clearModel: () =>
     set({
@@ -201,6 +267,8 @@ export const useModelStore = create<ModelState>((set) => ({
       sections: new Map(),
       materials: new Map(),
       bearings: new Map(),
+      loads: new Map(),
+      groundMotions: new Map(),
     }),
 
   // ── Sample model loader ──────────────────────────
@@ -303,6 +371,21 @@ export const useModelStore = create<ModelState>((set) => ({
       }
     }
 
+    // Gravity loads on floor nodes (-50 kip vertical on each free node)
+    const loads = new Map<number, PointLoad>();
+    let loadId = 1;
+    for (const [id, node] of nodes) {
+      if (node.y > 0) {
+        loads.set(loadId, {
+          id: loadId,
+          nodeId: id,
+          fx: 0, fy: -50, fz: 0,
+          mx: 0, my: 0, mz: 0,
+        });
+        loadId++;
+      }
+    }
+
     set({
       model: {
         name: '3-Story 2-Bay Steel Moment Frame',
@@ -315,6 +398,8 @@ export const useModelStore = create<ModelState>((set) => ({
       sections,
       materials,
       bearings: new Map(),
+      loads,
+      groundMotions: new Map(),
     });
   },
 }));

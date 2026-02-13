@@ -1,0 +1,54 @@
+import { useAnalysisStore } from '@/stores/analysisStore';
+import type {
+  StaticResults as StaticResultsType,
+  ModalResults as ModalResultsType,
+  TimeHistoryResults as THResultsType,
+} from '@/types/analysis';
+import { StaticResults } from './StaticResults';
+import { ModalResults } from './ModalResults';
+import { TimeHistoryResults } from './TimeHistoryResults';
+
+export function ResultsPanel() {
+  const results = useAnalysisStore((s) => s.results);
+  const analysisType = useAnalysisStore((s) => s.analysisType);
+
+  if (!results) {
+    return (
+      <div className="p-3 text-xs text-gray-500">
+        No analysis results available. Run an analysis to see results here.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 p-3">
+      {/* Summary header */}
+      <div className="rounded bg-gray-800/50 p-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-gray-300">
+            {analysisType === 'static' && 'Static Analysis'}
+            {analysisType === 'modal' && 'Modal Analysis'}
+            {analysisType === 'time_history' && 'Time-History Analysis'}
+            {!analysisType && 'Analysis'}
+          </span>
+          <span className="text-[10px] text-gray-500">
+            {results.status === 'complete' && results.wallTime != null
+              ? `${results.wallTime.toFixed(2)}s`
+              : results.status}
+          </span>
+        </div>
+      </div>
+
+      {/* Type-specific results */}
+      {results.results && results.type === 'static' && (
+        <StaticResults data={results.results as StaticResultsType} />
+      )}
+      {results.results && results.type === 'modal' && (
+        <ModalResults data={results.results as ModalResultsType} />
+      )}
+      {results.results && results.type === 'time_history' && (
+        <TimeHistoryResults data={results.results as THResultsType} />
+      )}
+    </div>
+  );
+}

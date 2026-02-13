@@ -128,7 +128,7 @@ describe('api -- deleteModel', () => {
 // ---------------------------------------------------------------------------
 
 describe('api -- runAnalysis', () => {
-  it('sends correct params', async () => {
+  it('sends correct params to /analysis/run', async () => {
     const params = { type: 'static' as const };
     mockFetch.mockResolvedValue(
       jsonResponse({ analysis_id: 'run-001' }),
@@ -138,9 +138,15 @@ describe('api -- runAnalysis', () => {
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, options] = mockFetch.mock.calls[0]!;
-    expect(url).toContain('/models/abc-123/analysis');
+    expect(url).toContain('/analysis/run');
     expect(options.method).toBe('POST');
     expect(options.headers['Content-Type']).toBe('application/json');
+
+    // Body should contain model_id and params
+    const parsed = JSON.parse(options.body as string);
+    expect(parsed).toHaveProperty('model_id', 'abc-123');
+    expect(parsed).toHaveProperty('params');
+
     expect(result).toHaveProperty('analysisId', 'run-001');
   });
 });

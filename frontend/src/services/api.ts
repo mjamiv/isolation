@@ -147,10 +147,10 @@ export async function runAnalysis(
   modelId: string,
   params: AnalysisParams,
 ): Promise<{ analysisId: string }> {
-  const response = await fetch(`${API_BASE}/models/${modelId}/analysis`, {
+  const response = await fetch(`${API_BASE}/analysis/run`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(keysToSnake(params)),
+    body: JSON.stringify(keysToSnake({ modelId, params })),
   });
   return handleResponse<{ analysisId: string }>(response);
 }
@@ -161,8 +161,18 @@ export async function runAnalysis(
 export async function getResults(
   analysisId: string,
 ): Promise<AnalysisResults> {
-  const response = await fetch(`${API_BASE}/analysis/${analysisId}/results`);
+  const response = await fetch(`${API_BASE}/results/${analysisId}`);
   return handleResponse<AnalysisResults>(response);
+}
+
+/**
+ * Retrieve a summary of analysis results (lighter payload).
+ */
+export async function getResultsSummary(
+  analysisId: string,
+): Promise<{ type: string; status: string; wallTime?: number }> {
+  const response = await fetch(`${API_BASE}/results/${analysisId}/summary`);
+  return handleResponse<{ type: string; status: string; wallTime?: number }>(response);
 }
 
 /**
