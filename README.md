@@ -6,7 +6,9 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 ## Current Status
 
-Phase 1 scaffolding is complete. The app provides:
+Phases 1 and 2 are complete. The app provides:
+
+### Phase 1 — Model Editor & 3D Viewer
 - **3D structural viewer** with interactive node/element selection, hover highlighting, and support symbols
 - **Model Editor** (left panel) with accordion sections for nodes, elements, sections, materials, and bearings — all with inline editing
 - **Property Inspector** (right panel) showing read-only details for selected nodes and elements
@@ -14,7 +16,18 @@ Phase 1 scaffolding is complete. The app provides:
 - **Viewer controls** for display mode, grid, axes, labels, deformation scale, force diagrams, and color maps
 - **Sample model** — 3-story 2-bay steel moment frame loadable from the toolbar
 
-Phase 2 (load editing, analysis runner, results visualization) is not yet started.
+### Phase 2 — Load Editing, Analysis Runner & Results
+- **Load Editor** — CRUD for point loads with node selector and force fields; gravity loads auto-created with sample model
+- **Ground Motion Editor** — add/edit ground motion records with sample 1 Hz sinusoidal generator
+- **Analysis Dialog** — configure and run Static, Modal, or Time-History analyses with type-specific parameters and validation
+- **Analysis Pipeline** — model serialization, backend submission, status polling, and result fetching via `useRunAnalysis` hook
+- **Results Panel** — right panel tab with type-routed views:
+  - Static: node displacement and support reaction tables with max highlighting
+  - Modal: period, frequency, and mass participation table
+  - Time-History: Plotly charts for displacement vs time and bearing hysteresis
+- **Model Serializer** — converts Zustand store format to backend `StructuralModel` schema
+
+Phase 3 (advanced bearing modeling, nonlinear analysis, pushover) is not yet started.
 
 ## Tech Stack
 
@@ -50,11 +63,14 @@ isolation/
       features/
         layout/      # AppLayout, Toolbar, StatusBar
         viewer-3d/   # 3D canvas, NodePoints, MemberLines, SupportSymbols, Labels
-        model-editor/# Accordion-based model tree with inline editing
+        model-editor/# Accordion-based model tree with inline editing (loads, ground motions)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
+        analysis/    # AnalysisDialog, useRunAnalysis hook
+        results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults
+      services/      # API client, WebSocket client, model serializer
       stores/        # Zustand stores (modelStore, displayStore, analysisStore)
-      types/         # Shared TypeScript interfaces (storeModel.ts)
+      types/         # Shared TypeScript interfaces (storeModel.ts, analysis.ts, model.ts)
   backend/           # FastAPI server
     app/
       core/          # Configuration, settings
@@ -103,7 +119,7 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests
+# Frontend tests (75 tests across 5 suites)
 cd frontend && npm test
 
 # Frontend lint
