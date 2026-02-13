@@ -93,7 +93,7 @@ export type FrictionModelType = 'Coulomb' | 'VelDependent' | 'VelPressureDep';
 
 export interface FrictionModel {
   type: FrictionModelType;
-  /** Velocity-dependent parameters: muSlow, muFast, transRate, etc. */
+  /** Friction model parameters. Expected keys: muSlow, muFast, transRate. */
   params: Record<string, number>;
 }
 

@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { serializeModel } from '@/services/modelSerializer';
-import type { Node, Element, Section, Material, PointLoad, GroundMotionRecord } from '@/types/storeModel';
+import type { Node, Element, Section, Material, TFPBearing, FrictionSurface, PointLoad, GroundMotionRecord } from '@/types/storeModel';
 
 function makeStore(overrides: Partial<Parameters<typeof serializeModel>[0]> = {}) {
   return {
@@ -16,6 +16,7 @@ function makeStore(overrides: Partial<Parameters<typeof serializeModel>[0]> = {}
     elements: new Map<number, Element>(),
     sections: new Map<number, Section>(),
     materials: new Map<number, Material>(),
+    bearings: new Map<number, TFPBearing>(),
     loads: new Map<number, PointLoad>(),
     groundMotions: new Map<number, GroundMotionRecord>(),
     ...overrides,
@@ -163,6 +164,66 @@ describe('modelSerializer — groundMotions', () => {
     expect(result.groundMotions[0]!.direction).toBe(1);
     expect(result.groundMotions[0]!.scaleFactor).toBe(1.5);
     expect(result.groundMotions[0]!.acceleration).toEqual([0.1, 0.2, 0.3]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bearing serialization
+// ---------------------------------------------------------------------------
+
+function makeTestBearing(id: number): TFPBearing {
+  const inner: FrictionSurface = { type: 'VelDependent', muSlow: 0.012, muFast: 0.018, transRate: 0.4 };
+  const outer: FrictionSurface = { type: 'VelDependent', muSlow: 0.018, muFast: 0.030, transRate: 0.4 };
+  return {
+    id,
+    nodeI: 101,
+    nodeJ: 1,
+    surfaces: [{ ...inner }, { ...inner }, { ...outer }, { ...outer }],
+    radii: [16, 84, 16],
+    dispCapacities: [2, 16, 2],
+    weight: 150,
+    yieldDisp: 0.04,
+    vertStiffness: 10000,
+    minVertForce: 0.1,
+    tolerance: 1e-8,
+  };
+}
+
+describe('modelSerializer — bearings', () => {
+  it('serializes a TFP bearing with all properties', () => {
+    const bearings = new Map<number, TFPBearing>();
+    bearings.set(1, makeTestBearing(1));
+    const result = serializeModel(makeStore({ bearings }));
+
+    expect(result.bearings).toHaveLength(1);
+    const b = result.bearings[0]!;
+    expect(b.id).toBe(1);
+    expect(b.nodes).toEqual([101, 1]);
+    expect(b.frictionModels).toHaveLength(4);
+    expect(b.frictionModels[0].params.muSlow).toBe(0.012);
+    expect(b.frictionModels[0].params.muFast).toBe(0.018);
+    expect(b.frictionModels[0].params.transRate).toBe(0.4);
+    expect(b.radii).toEqual([16, 84, 16]);
+    expect(b.dispCapacities).toEqual([2, 16, 2]);
+    expect(b.weight).toBe(150);
+    expect(b.yieldDisp).toBe(0.04);
+    expect(b.vertStiffness).toBe(10000);
+    expect(b.minVertForce).toBe(0.1);
+    expect(b.tolerance).toBe(1e-8);
+  });
+
+  it('returns empty bearings when none in store', () => {
+    const result = serializeModel(makeStore());
+    expect(result.bearings).toHaveLength(0);
+  });
+
+  it('serializes multiple bearings', () => {
+    const bearings = new Map<number, TFPBearing>();
+    bearings.set(1, makeTestBearing(1));
+    bearings.set(2, makeTestBearing(2));
+    bearings.set(3, makeTestBearing(3));
+    const result = serializeModel(makeStore({ bearings }));
+    expect(result.bearings).toHaveLength(3);
   });
 });
 

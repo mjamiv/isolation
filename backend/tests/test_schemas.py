@@ -123,7 +123,7 @@ class TestTFPBearingSchema:
                 id=1,
                 nodes=[1, 2],
                 friction_models=[
-                    {"mu_slow": 0.01, "mu_fast": 0.02, "transRate": 0.4},
+                    {"mu_slow": 0.01, "mu_fast": 0.02, "trans_rate": 0.4},
                 ],  # Only 1 instead of 4
                 radii=[0.4, 2.0, 0.4],
                 disp_capacities=[0.05, 0.4, 0.05],
@@ -137,10 +137,10 @@ class TestTFPBearingSchema:
                 id=1,
                 nodes=[1, 2],
                 friction_models=[
-                    {"mu_slow": 0.01, "mu_fast": 0.02, "transRate": 0.4},
-                    {"mu_slow": 0.02, "mu_fast": 0.03, "transRate": 0.4},
-                    {"mu_slow": 0.01, "mu_fast": 0.02, "transRate": 0.4},
-                    {"mu_slow": 0.02, "mu_fast": 0.03, "transRate": 0.4},
+                    {"mu_slow": 0.01, "mu_fast": 0.02, "trans_rate": 0.4},
+                    {"mu_slow": 0.02, "mu_fast": 0.03, "trans_rate": 0.4},
+                    {"mu_slow": 0.01, "mu_fast": 0.02, "trans_rate": 0.4},
+                    {"mu_slow": 0.02, "mu_fast": 0.03, "trans_rate": 0.4},
                 ],
                 radii=[0.4, 2.0, 0.4],
                 disp_capacities=[0.05, 0.4, 0.05],

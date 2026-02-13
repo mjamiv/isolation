@@ -41,18 +41,28 @@ export interface Material {
   nu: number;         // Poisson ratio
 }
 
+export type FrictionModelType = 'Coulomb' | 'VelDependent' | 'VelPressureDep';
+
+export interface FrictionSurface {
+  type: FrictionModelType;
+  muSlow: number;
+  muFast: number;
+  transRate: number;
+}
+
 export interface TFPBearing {
   id: number;
-  nodeId: number;
-  R1: number;         // radius of curvature surface 1 (in)
-  R2: number;         // radius of curvature surface 2 (in)
-  R3: number;         // radius of curvature surface 3 (in)
-  mu1: number;        // friction coefficient surface 1
-  mu2: number;        // friction coefficient surface 2
-  mu3: number;        // friction coefficient surface 3
-  d1: number;         // displacement capacity surface 1 (in)
-  d2: number;         // displacement capacity surface 2 (in)
-  d3: number;         // displacement capacity surface 3 (in)
+  nodeI: number;
+  nodeJ: number;
+  surfaces: [FrictionSurface, FrictionSurface, FrictionSurface, FrictionSurface];
+  radii: [number, number, number];           // [L1, L2, L3] effective pendulum radii
+  dispCapacities: [number, number, number];   // [d1, d2, d3] displacement capacities
+  weight: number;           // vertical load on bearing (force units)
+  yieldDisp: number;        // yield displacement for initial stiffness
+  vertStiffness: number;    // vertical stiffness factor
+  minVertForce: number;     // minimum vertical force ratio
+  tolerance: number;        // Newton-Raphson convergence tolerance
+  label?: string;
 }
 
 export interface PointLoad {

@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useModelStore } from '@/stores/modelStore';
-import type { Node, Element } from '@/stores/modelStore';
+import type { Node, Element, TFPBearing, FrictionSurface } from '@/stores/modelStore';
 
 // Helper: get a fresh snapshot of the store state.
 const getState = () => useModelStore.getState();
@@ -58,16 +58,16 @@ describe('modelStore — setModel', () => {
 // ---------------------------------------------------------------------------
 
 describe('modelStore — loadSampleModel', () => {
-  it('creates a valid 3-story frame', () => {
+  it('creates a valid base-isolated 3-story frame', () => {
     getState().loadSampleModel();
     const state = getState();
 
     // Model metadata should be populated
     expect(state.model).not.toBeNull();
-    expect(state.model!.name).toContain('3-Story');
+    expect(state.model!.name).toContain('Base-Isolated');
 
-    // 3 stories x 3 columns + base = 4 levels x 3 = 12 nodes
-    expect(state.nodes.size).toBe(12);
+    // 12 structure nodes + 3 ground nodes = 15 nodes
+    expect(state.nodes.size).toBe(15);
 
     // 9 columns + 6 beams = 15 elements
     expect(state.elements.size).toBe(15);
@@ -76,19 +76,33 @@ describe('modelStore — loadSampleModel', () => {
     expect(state.materials.size).toBe(1);
     expect(state.sections.size).toBe(2);
 
-    // 9 gravity loads on floor nodes (nodes 4-12)
+    // 3 TFP bearings
+    expect(state.bearings.size).toBe(3);
+
+    // 9 gravity loads on floor nodes above base (y > 0)
     expect(state.loads.size).toBe(9);
   });
 
-  it('creates fixed-base nodes at y=0', () => {
+  it('creates fixed ground nodes', () => {
     getState().loadSampleModel();
     const nodes = getState().nodes;
 
-    // Nodes 1, 2, 3 are base nodes at y=0 with all DOFs restrained
+    // Ground nodes 101, 102, 103 are fixed
+    for (const id of [101, 102, 103]) {
+      const node = nodes.get(id)!;
+      expect(node.restraint).toEqual([true, true, true, true, true, true]);
+    }
+  });
+
+  it('creates free base nodes at y=0', () => {
+    getState().loadSampleModel();
+    const nodes = getState().nodes;
+
+    // Base nodes 1, 2, 3 are free (bearing tops)
     for (const id of [1, 2, 3]) {
       const node = nodes.get(id)!;
       expect(node.y).toBe(0);
-      expect(node.restraint).toEqual([true, true, true, true, true, true]);
+      expect(node.restraint).toEqual([false, false, false, false, false, false]);
     }
   });
 
@@ -102,6 +116,21 @@ describe('modelStore — loadSampleModel', () => {
       expect(node.y).toBeGreaterThan(0);
       expect(node.restraint).toEqual([false, false, false, false, false, false]);
     }
+  });
+
+  it('creates bearings connecting ground to base nodes', () => {
+    getState().loadSampleModel();
+    const bearings = getState().bearings;
+
+    expect(bearings.size).toBe(3);
+
+    const b1 = bearings.get(1)!;
+    expect(b1.nodeI).toBe(101);
+    expect(b1.nodeJ).toBe(1);
+    expect(b1.surfaces).toHaveLength(4);
+    expect(b1.radii).toEqual([16, 84, 16]);
+    expect(b1.dispCapacities).toEqual([2, 16, 2]);
+    expect(b1.surfaces[0].type).toBe('VelDependent');
   });
 });
 
@@ -189,5 +218,69 @@ describe('modelStore — element operations', () => {
 
     getState().removeElement(1);
     expect(getState().elements.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bearing CRUD
+// ---------------------------------------------------------------------------
+
+function makeTestBearing(id: number): TFPBearing {
+  const surface: FrictionSurface = {
+    type: 'VelDependent', muSlow: 0.01, muFast: 0.02, transRate: 0.4,
+  };
+  return {
+    id,
+    nodeI: 100,
+    nodeJ: 1,
+    surfaces: [{ ...surface }, { ...surface }, { ...surface }, { ...surface }],
+    radii: [16, 84, 16],
+    dispCapacities: [2, 16, 2],
+    weight: 150,
+    yieldDisp: 0.04,
+    vertStiffness: 10000,
+    minVertForce: 0.1,
+    tolerance: 1e-8,
+  };
+}
+
+describe('modelStore — bearing CRUD', () => {
+  it('adds a bearing to the store', () => {
+    const bearing = makeTestBearing(1);
+    getState().addBearing(bearing);
+    expect(getState().bearings.size).toBe(1);
+    expect(getState().bearings.get(1)).toEqual(bearing);
+  });
+
+  it('updates bearing properties', () => {
+    getState().addBearing(makeTestBearing(1));
+    getState().updateBearing(1, { weight: 200, nodeJ: 5 });
+
+    const updated = getState().bearings.get(1)!;
+    expect(updated.weight).toBe(200);
+    expect(updated.nodeJ).toBe(5);
+    // Other fields unchanged
+    expect(updated.radii).toEqual([16, 84, 16]);
+  });
+
+  it('removes a bearing from the store', () => {
+    getState().addBearing(makeTestBearing(1));
+    expect(getState().bearings.size).toBe(1);
+
+    getState().removeBearing(1);
+    expect(getState().bearings.size).toBe(0);
+  });
+
+  it('preserves 4-surface structure', () => {
+    getState().addBearing(makeTestBearing(1));
+    const bearing = getState().bearings.get(1)!;
+    expect(bearing.surfaces).toHaveLength(4);
+    expect(bearing.surfaces[0].type).toBe('VelDependent');
+    expect(bearing.surfaces[0].muSlow).toBe(0.01);
+  });
+
+  it('does not update a non-existent bearing', () => {
+    getState().updateBearing(999, { weight: 200 });
+    expect(getState().bearings.size).toBe(0);
   });
 });

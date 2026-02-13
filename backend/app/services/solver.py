@@ -413,7 +413,7 @@ def _define_materials(materials: list[dict]) -> None:
             # Friction model, not a uniaxial material
             mu_slow = params.get("mu_slow", 0.01)
             mu_fast = params.get("mu_fast", 0.02)
-            trans_rate = params.get("transRate", 0.4)
+            trans_rate = params.get("trans_rate", 0.4)
             ops.frictionModel("VelDependent", mid, mu_slow, mu_fast, trans_rate)
         else:
             logger.warning(
@@ -460,7 +460,7 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
                 ftag,
                 fm["mu_slow"],
                 fm["mu_fast"],
-                fm["transRate"],
+                fm["trans_rate"],
             )
             fm_tags.append(ftag)
 

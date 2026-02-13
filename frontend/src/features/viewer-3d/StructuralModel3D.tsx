@@ -2,6 +2,7 @@ import { useModelStore } from '../../stores/modelStore';
 import { NodePoints } from './NodePoints';
 import { MemberLines } from './MemberLines';
 import { SupportSymbols } from './SupportSymbols';
+import { BearingSymbols } from './BearingSymbols';
 import { NodeLabels, ElementLabels } from './Labels';
 
 export function StructuralModel3D() {
@@ -16,6 +17,7 @@ export function StructuralModel3D() {
       <MemberLines />
       <NodePoints />
       <SupportSymbols />
+      <BearingSymbols />
       <NodeLabels />
       <ElementLabels />
     </group>

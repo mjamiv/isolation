@@ -25,8 +25,10 @@ interface DisplayState {
   // Selection
   selectedNodeIds: Set<number>;
   selectedElementIds: Set<number>;
+  selectedBearingIds: Set<number>;
   hoveredElementId: number | null;
   hoveredNodeId: number | null;
+  hoveredBearingId: number | null;
 
   // Setters
   setDisplayMode: (mode: DisplayMode) => void;
@@ -42,9 +44,11 @@ interface DisplayState {
   // Selection actions
   selectNode: (id: number, multi?: boolean) => void;
   selectElement: (id: number, multi?: boolean) => void;
+  selectBearing: (id: number, multi?: boolean) => void;
   clearSelection: () => void;
   setHoveredElement: (id: number | null) => void;
   setHoveredNode: (id: number | null) => void;
+  setHoveredBearing: (id: number | null) => void;
 }
 
 // ── Store implementation ──────────────────────────────────────────────
@@ -64,8 +68,10 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   // Default selection state
   selectedNodeIds: new Set(),
   selectedElementIds: new Set(),
+  selectedBearingIds: new Set(),
   hoveredElementId: null,
   hoveredNodeId: null,
+  hoveredBearingId: null,
 
   // ── Display setters ──────────────────────────────
   setDisplayMode: (mode) => set({ displayMode: mode }),
@@ -101,12 +107,25 @@ export const useDisplayStore = create<DisplayState>((set) => ({
       return { selectedElementIds };
     }),
 
+  selectBearing: (id, multi = false) =>
+    set((state) => {
+      const selectedBearingIds = new Set(multi ? state.selectedBearingIds : []);
+      if (selectedBearingIds.has(id)) {
+        selectedBearingIds.delete(id);
+      } else {
+        selectedBearingIds.add(id);
+      }
+      return { selectedBearingIds };
+    }),
+
   clearSelection: () =>
     set({
       selectedNodeIds: new Set(),
       selectedElementIds: new Set(),
+      selectedBearingIds: new Set(),
     }),
 
   setHoveredElement: (id) => set({ hoveredElementId: id }),
   setHoveredNode: (id) => set({ hoveredNodeId: id }),
+  setHoveredBearing: (id) => set({ hoveredBearingId: id }),
 }));

@@ -9,6 +9,7 @@ import type {
   Element,
   Section,
   Material,
+  TFPBearing,
   PointLoad,
   GroundMotionRecord,
 } from '@/types/storeModel';
@@ -96,6 +97,28 @@ function serializeGroundMotion(gm: GroundMotionRecord): StructuralModel['groundM
   };
 }
 
+function serializeBearing(bearing: TFPBearing): StructuralModel['bearings'][number] {
+  return {
+    id: bearing.id,
+    nodes: [bearing.nodeI, bearing.nodeJ],
+    frictionModels: bearing.surfaces.map((s) => ({
+      type: s.type,
+      params: {
+        muSlow: s.muSlow,
+        muFast: s.muFast,
+        transRate: s.transRate,
+      },
+    })) as [any, any, any, any],
+    radii: [...bearing.radii],
+    dispCapacities: [...bearing.dispCapacities],
+    weight: bearing.weight,
+    yieldDisp: bearing.yieldDisp,
+    vertStiffness: bearing.vertStiffness,
+    minVertForce: bearing.minVertForce,
+    tolerance: bearing.tolerance,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -106,6 +129,7 @@ interface StoreSnapshot {
   elements: Map<number, Element>;
   sections: Map<number, Section>;
   materials: Map<number, Material>;
+  bearings: Map<number, TFPBearing>;
   loads: Map<number, PointLoad>;
   groundMotions: Map<number, GroundMotionRecord>;
 }
@@ -128,7 +152,7 @@ export function serializeModel(store: StoreSnapshot): StructuralModel {
       serializeSection(s, firstMaterialId),
     ),
     elements: Array.from(store.elements.values()).map(serializeElement),
-    bearings: [],
+    bearings: Array.from(store.bearings.values()).map(serializeBearing),
     loads: Array.from(store.loads.values()).map(serializeLoad),
     groundMotions: Array.from(store.groundMotions.values()).map(serializeGroundMotion),
   };

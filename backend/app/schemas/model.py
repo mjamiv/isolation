@@ -125,7 +125,7 @@ class TFPBearingSchema(BaseModel):
         ...,
         min_length=4,
         max_length=4,
-        description="4 friction model dicts with mu_slow, mu_fast, transRate",
+        description="4 friction model dicts with mu_slow, mu_fast, trans_rate",
     )
     radii: list[float] = Field(
         ...,
@@ -149,7 +149,7 @@ class TFPBearingSchema(BaseModel):
     @classmethod
     def validate_friction_models(cls, v: list[dict]) -> list[dict]:
         """Ensure each friction model has the required keys."""
-        required_keys = {"mu_slow", "mu_fast", "transRate"}
+        required_keys = {"mu_slow", "mu_fast", "trans_rate"}
         for i, fm in enumerate(v):
             missing = required_keys - set(fm.keys())
             if missing:

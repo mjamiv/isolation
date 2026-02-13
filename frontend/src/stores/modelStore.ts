@@ -5,13 +5,15 @@ import type {
   Section,
   Material,
   TFPBearing,
+  FrictionSurface,
+  FrictionModelType,
   PointLoad,
   GroundMotionRecord,
   StructuralModel,
 } from '@/types/storeModel';
 
 // Re-export types for backward compat
-export type { Node, Element, Section, Material, TFPBearing, PointLoad, GroundMotionRecord, StructuralModel };
+export type { Node, Element, Section, Material, TFPBearing, FrictionSurface, FrictionModelType, PointLoad, GroundMotionRecord, StructuralModel };
 
 // ── Store interface ───────────────────────────────────────────────────
 
@@ -283,6 +285,20 @@ export const useModelStore = create<ModelState>((set) => ({
     const columnXPositions = [0, 288, 576]; // inches
     const storyHeights = [0, 144, 288, 432]; // inches
 
+    // Ground nodes (fixed) — IDs 101, 102, 103
+    for (let i = 0; i < 3; i++) {
+      const gndId = 101 + i;
+      nodes.set(gndId, {
+        id: gndId,
+        x: columnXPositions[i]!,
+        y: -1,
+        z: 0,
+        restraint: fixedRestraint,
+        label: `GND${gndId}`,
+      });
+    }
+
+    // Structure nodes — base nodes (y=0) are now free (bearing tops)
     let nodeId = 1;
     for (const y of storyHeights) {
       for (const x of columnXPositions) {
@@ -291,7 +307,7 @@ export const useModelStore = create<ModelState>((set) => ({
           x,
           y,
           z: 0,
-          restraint: y === 0 ? fixedRestraint : freeRestraint,
+          restraint: freeRestraint,
           label: `N${nodeId}`,
         });
         nodeId++;
@@ -371,7 +387,39 @@ export const useModelStore = create<ModelState>((set) => ({
       }
     }
 
-    // Gravity loads on floor nodes (-50 kip vertical on each free node)
+    // 3 TFP bearings connecting ground nodes to base nodes
+    const defaultInnerSurface: FrictionSurface = {
+      type: 'VelDependent', muSlow: 0.012, muFast: 0.018, transRate: 0.4,
+    };
+    const defaultOuterSurface: FrictionSurface = {
+      type: 'VelDependent', muSlow: 0.018, muFast: 0.030, transRate: 0.4,
+    };
+
+    const bearings = new Map<number, TFPBearing>();
+    for (let i = 0; i < 3; i++) {
+      const bId = i + 1;
+      bearings.set(bId, {
+        id: bId,
+        nodeI: 101 + i,       // ground node
+        nodeJ: i + 1,         // base node
+        surfaces: [
+          { ...defaultInnerSurface },
+          { ...defaultInnerSurface },
+          { ...defaultOuterSurface },
+          { ...defaultOuterSurface },
+        ],
+        radii: [16, 84, 16],                 // inches
+        dispCapacities: [2, 16, 2],           // inches
+        weight: 150,                          // kips
+        yieldDisp: 0.04,                      // inches
+        vertStiffness: 10000,                 // kip/in
+        minVertForce: 0.1,
+        tolerance: 1e-8,
+        label: `TFP${bId}`,
+      });
+    }
+
+    // Gravity loads on floor nodes (-50 kip vertical on each free structural node above base)
     const loads = new Map<number, PointLoad>();
     let loadId = 1;
     for (const [id, node] of nodes) {
@@ -388,16 +436,16 @@ export const useModelStore = create<ModelState>((set) => ({
 
     set({
       model: {
-        name: '3-Story 2-Bay Steel Moment Frame',
+        name: '3-Story 2-Bay Base-Isolated Frame',
         units: 'kip-in',
         description:
-          'Sample 3-story, 2-bay steel moment frame with W14x68 columns and W24x68 beams. Fixed base supports.',
+          'Sample 3-story, 2-bay steel moment frame with TFP bearing isolation at the base.',
       },
       nodes,
       elements,
       sections,
       materials,
-      bearings: new Map(),
+      bearings,
       loads,
       groundMotions: new Map(),
     });
