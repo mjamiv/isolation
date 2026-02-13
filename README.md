@@ -6,7 +6,7 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 ## Current Status
 
-Phases 1 and 2 are complete. The app provides:
+Phases 1 through 3 are complete. The app provides:
 
 ### Phase 1 — Model Editor & 3D Viewer
 - **3D structural viewer** with interactive node/element selection, hover highlighting, and support symbols
@@ -27,7 +27,16 @@ Phases 1 and 2 are complete. The app provides:
   - Time-History: Plotly charts for displacement vs time and bearing hysteresis
 - **Model Serializer** — converts Zustand store format to backend `StructuralModel` schema
 
-Phase 3 (advanced bearing modeling, nonlinear analysis, pushover) is not yet started.
+### Phase 3 — TFP Bearing Model
+- **4-surface friction model** — full OpenSeesPy `TripleFrictionPendulum` type with `FrictionSurface` (Coulomb, VelDependent, VelPressureDep), inner/outer pair editing (surfaces 1-2 share values, surfaces 3-4 share values)
+- **Bearing CRUD** — BearingList with add/delete and BearingRow with full edit mode (node connectivity, friction params, radii, displacement capacities, advanced section)
+- **3D bearing symbols** — purple semi-transparent cylinders at bearing midpoints, click-to-select with shift-multiselect
+- **Bearing property inspector** — read-only tables for connectivity, geometry, friction surfaces, and advanced params
+- **Bearing serialization** — full round-trip serialization to backend `TripleFrictionPendulum` format
+- **Base-isolated sample model** — 3 ground nodes (fixed), 3 base nodes (free), 3 TFP bearings with realistic VelDependent friction
+- **Backend consistency** — `transRate` to `trans_rate` snake_case fix across schemas, solver, tests, and fixtures
+
+Phase 4 (nonlinear analysis, pushover, mode shape visualization) is not yet started.
 
 ## Tech Stack
 
@@ -62,8 +71,8 @@ isolation/
       components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
       features/
         layout/      # AppLayout, Toolbar, StatusBar
-        viewer-3d/   # 3D canvas, NodePoints, MemberLines, SupportSymbols, Labels
-        model-editor/# Accordion-based model tree with inline editing (loads, ground motions)
+        viewer-3d/   # 3D canvas, NodePoints, MemberLines, SupportSymbols, BearingSymbols, Labels
+        model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
         analysis/    # AnalysisDialog, useRunAnalysis hook
@@ -119,7 +128,7 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (75 tests across 5 suites)
+# Frontend tests (85 tests across 5 suites)
 cd frontend && npm test
 
 # Frontend lint
