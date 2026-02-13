@@ -4,12 +4,25 @@ A web-based Triple Friction Pendulum (TFP) bearing simulation and visualization 
 
 IsoVis provides an interactive 3D environment for modeling, simulating, and analyzing the seismic response of Triple Friction Pendulum isolators using OpenSeesPy as the computational engine and React Three Fiber for real-time 3D rendering.
 
+## Current Status
+
+Phase 1 scaffolding is complete. The app provides:
+- **3D structural viewer** with interactive node/element selection, hover highlighting, and support symbols
+- **Model Editor** (left panel) with accordion sections for nodes, elements, sections, materials, and bearings — all with inline editing
+- **Property Inspector** (right panel) showing read-only details for selected nodes and elements
+- **3D labels** on nodes and elements, visible on hover, selection, or global toggle
+- **Viewer controls** for display mode, grid, axes, labels, deformation scale, force diagrams, and color maps
+- **Sample model** — 3-story 2-bay steel moment frame loadable from the toolbar
+
+Phase 2 (load editing, analysis runner, results visualization) is not yet started.
+
 ## Tech Stack
 
 ### Frontend
 - **React 18** with TypeScript (strict mode)
 - **React Three Fiber / Drei** for 3D visualization
 - **Zustand** for state management
+- **Radix UI** for accessible accordion, dialog, and select primitives
 - **Tailwind CSS** for styling
 - **Plotly.js** for response plots
 - **Vite** for build tooling
@@ -33,10 +46,15 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 isolation/
   frontend/          # React + Three.js client
     src/
-      components/    # Shared UI components
-      features/      # Feature-based modules
-      stores/        # Zustand state stores
-      types/         # TypeScript type definitions
+      components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
+      features/
+        layout/      # AppLayout, Toolbar, StatusBar
+        viewer-3d/   # 3D canvas, NodePoints, MemberLines, SupportSymbols, Labels
+        model-editor/# Accordion-based model tree with inline editing
+        property-inspector/ # Read-only property panel for selections
+        controls/    # ViewerControls (display toggles, scale, color map)
+      stores/        # Zustand stores (modelStore, displayStore, analysisStore)
+      types/         # Shared TypeScript interfaces (storeModel.ts)
   backend/           # FastAPI server
     app/
       core/          # Configuration, settings
