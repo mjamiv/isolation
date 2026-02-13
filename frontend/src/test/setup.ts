@@ -126,7 +126,7 @@ class WebGLRenderingContextStub {
 }
 
 // Patch HTMLCanvasElement to return our stub WebGL context
-HTMLCanvasElement.prototype.getContext = function (contextId: string) {
+HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, contextId: string) {
   if (contextId === 'webgl' || contextId === 'webgl2' || contextId === 'experimental-webgl') {
     return new WebGLRenderingContextStub() as unknown as RenderingContext;
   }

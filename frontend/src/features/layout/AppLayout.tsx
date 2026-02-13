@@ -5,6 +5,8 @@ import {
 } from 'react-resizable-panels';
 import { Viewer3D } from '../viewer-3d/Viewer3D';
 import { ViewerControls } from '../controls/ViewerControls';
+import { ModelEditor } from '../model-editor/ModelEditor';
+import { PropertyInspector } from '../property-inspector/PropertyInspector';
 import { Toolbar } from './Toolbar';
 import { StatusBar } from './StatusBar';
 
@@ -22,14 +24,8 @@ function LeftPanel() {
       <div className="border-b border-gray-700 px-3 py-2">
         <h2 className="text-sm font-semibold text-gray-300">Model Tree</h2>
       </div>
-      <div className="flex-1 overflow-y-auto p-3">
-        <div className="space-y-2 text-xs text-gray-500">
-          <p>Model tree and property editor will appear here.</p>
-          <p>
-            Click <span className="text-blue-400">Load Sample Model</span> in
-            the toolbar to load a 3-story steel frame.
-          </p>
-        </div>
+      <div className="flex-1 overflow-y-auto">
+        <ModelEditor />
       </div>
       <div className="border-t border-gray-700 p-3">
         <ViewerControls />
@@ -42,19 +38,10 @@ function RightPanel() {
   return (
     <div className="flex h-full flex-col bg-gray-900">
       <div className="border-b border-gray-700 px-3 py-2">
-        <h2 className="text-sm font-semibold text-gray-300">Results</h2>
+        <h2 className="text-sm font-semibold text-gray-300">Properties</h2>
       </div>
-      <div className="flex-1 overflow-y-auto p-3">
-        <div className="space-y-2 text-xs text-gray-500">
-          <p>
-            Charts and analysis results will be displayed here after running an
-            analysis.
-          </p>
-          <p>
-            Response spectra, hysteresis loops, and time history plots will be
-            available.
-          </p>
-        </div>
+      <div className="flex-1 overflow-y-auto">
+        <PropertyInspector />
       </div>
     </div>
   );
@@ -85,7 +72,7 @@ export function AppLayout() {
 
           <ResizeHandle />
 
-          {/* Right panel: Results & charts */}
+          {/* Right panel: Properties */}
           <Panel defaultSize={20} minSize={15} maxSize={35}>
             <RightPanel />
           </Panel>

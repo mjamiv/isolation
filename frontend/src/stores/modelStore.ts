@@ -1,69 +1,15 @@
 import { create } from 'zustand';
+import type {
+  Node,
+  Element,
+  Section,
+  Material,
+  TFPBearing,
+  StructuralModel,
+} from '@/types/storeModel';
 
-// ── Inline types (to be consolidated into /src/types/ later) ──────────
-
-export interface Node {
-  id: number;
-  x: number;
-  y: number;
-  z: number;
-  restraint: [boolean, boolean, boolean, boolean, boolean, boolean]; // Tx,Ty,Tz,Rx,Ry,Rz
-  mass?: number;
-  label?: string;
-}
-
-export interface Element {
-  id: number;
-  type: 'column' | 'beam' | 'brace' | 'bearing';
-  nodeI: number;
-  nodeJ: number;
-  sectionId: number;
-  materialId: number;
-  releases?: [boolean, boolean, boolean, boolean, boolean, boolean]; // moment releases at I,J
-  label?: string;
-}
-
-export interface Section {
-  id: number;
-  name: string;
-  area: number;       // in^2
-  Ix: number;         // in^4 — strong axis
-  Iy: number;         // in^4 — weak axis
-  Zx: number;         // in^3 — plastic modulus
-  d: number;          // depth in inches
-  bf: number;         // flange width in inches
-  tw: number;         // web thickness in inches
-  tf: number;         // flange thickness in inches
-}
-
-export interface Material {
-  id: number;
-  name: string;
-  E: number;          // ksi
-  Fy: number;         // ksi
-  density: number;    // pcf
-  nu: number;         // Poisson ratio
-}
-
-export interface TFPBearing {
-  id: number;
-  nodeId: number;
-  R1: number;         // radius of curvature surface 1 (in)
-  R2: number;         // radius of curvature surface 2 (in)
-  R3: number;         // radius of curvature surface 3 (in)
-  mu1: number;        // friction coefficient surface 1
-  mu2: number;        // friction coefficient surface 2
-  mu3: number;        // friction coefficient surface 3
-  d1: number;         // displacement capacity surface 1 (in)
-  d2: number;         // displacement capacity surface 2 (in)
-  d3: number;         // displacement capacity surface 3 (in)
-}
-
-export interface StructuralModel {
-  name: string;
-  units: string;
-  description: string;
-}
+// Re-export types for backward compat
+export type { Node, Element, Section, Material, TFPBearing, StructuralModel };
 
 // ── Store interface ───────────────────────────────────────────────────
 
@@ -264,11 +210,6 @@ export const useModelStore = create<ModelState>((set) => ({
     const freeRestraint: [boolean, boolean, boolean, boolean, boolean, boolean] =
       [false, false, false, false, false, false];
 
-    // ── Nodes: 3 stories x 3 columns = 12 nodes (including base) ──
-    // Base level (y=0): nodes 1, 2, 3
-    // 1st floor  (y=144): nodes 4, 5, 6
-    // 2nd floor  (y=288): nodes 7, 8, 9
-    // 3rd floor  (y=432): nodes 10, 11, 12
     const nodes = new Map<number, Node>();
 
     const columnXPositions = [0, 288, 576]; // inches
@@ -289,18 +230,16 @@ export const useModelStore = create<ModelState>((set) => ({
       }
     }
 
-    // ── Materials ──────────────────────────────────
     const materials = new Map<number, Material>();
     materials.set(1, {
       id: 1,
       name: 'A992 Steel',
-      E: 29000,          // ksi
-      Fy: 50,            // ksi
-      density: 490,      // pcf
+      E: 29000,
+      Fy: 50,
+      density: 490,
       nu: 0.3,
     });
 
-    // ── Sections ───────────────────────────────────
     const sections = new Map<number, Section>();
     sections.set(1, {
       id: 1,
@@ -327,14 +266,9 @@ export const useModelStore = create<ModelState>((set) => ({
       tf: 0.585,
     });
 
-    // ── Elements ───────────────────────────────────
     const elements = new Map<number, Element>();
     let elemId = 1;
 
-    // Columns: 3 columns x 3 stories = 9 columns
-    // Story 1: base (1,2,3) -> 1st floor (4,5,6)
-    // Story 2: 1st floor (4,5,6) -> 2nd floor (7,8,9)
-    // Story 3: 2nd floor (7,8,9) -> 3rd floor (10,11,12)
     for (let story = 0; story < 3; story++) {
       for (let col = 0; col < 3; col++) {
         const iNode = story * 3 + col + 1;
@@ -344,7 +278,7 @@ export const useModelStore = create<ModelState>((set) => ({
           type: 'column',
           nodeI: iNode,
           nodeJ: jNode,
-          sectionId: 1, // W14x68
+          sectionId: 1,
           materialId: 1,
           label: `COL${elemId}`,
         });
@@ -352,10 +286,6 @@ export const useModelStore = create<ModelState>((set) => ({
       }
     }
 
-    // Beams: 2 bays x 3 floors = 6 beams
-    // 1st floor: 4-5, 5-6
-    // 2nd floor: 7-8, 8-9
-    // 3rd floor: 10-11, 11-12
     for (let floor = 1; floor <= 3; floor++) {
       for (let bay = 0; bay < 2; bay++) {
         const iNode = floor * 3 + bay + 1;
@@ -365,7 +295,7 @@ export const useModelStore = create<ModelState>((set) => ({
           type: 'beam',
           nodeI: iNode,
           nodeJ: jNode,
-          sectionId: 2, // W24x68
+          sectionId: 2,
           materialId: 1,
           label: `BM${elemId}`,
         });
