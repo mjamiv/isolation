@@ -1,0 +1,98 @@
+import { useMemo } from 'react';
+import { Line } from '@react-three/drei';
+import * as THREE from 'three';
+import { useModelStore } from '@/stores/modelStore';
+import { useDisplayStore } from '@/stores/displayStore';
+import { useAnalysisStore } from '@/stores/analysisStore';
+import type { StaticResults, TimeHistoryResults } from '@/types/analysis';
+
+const DEFORMED_COLOR = '#3b82f6';
+const DEFORMED_OPACITY = 0.5;
+const NODE_RADIUS = 2;
+const NODE_SEGMENTS = 8;
+
+export function DeformedShape() {
+  const nodes = useModelStore((s) => s.nodes);
+  const elements = useModelStore((s) => s.elements);
+  const showDeformed = useDisplayStore((s) => s.showDeformed);
+  const scaleFactor = useDisplayStore((s) => s.scaleFactor);
+  const results = useAnalysisStore((s) => s.results);
+  const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
+
+  const displacements = useMemo(() => {
+    if (!results?.results) return null;
+
+    if (results.type === 'static') {
+      return (results.results as StaticResults).nodeDisplacements;
+    }
+
+    if (results.type === 'time_history') {
+      const thResults = results.results as TimeHistoryResults;
+      const step = thResults.timeSteps[currentTimeStep];
+      return step?.nodeDisplacements ?? null;
+    }
+
+    return null;
+  }, [results, currentTimeStep]);
+
+  const displacedNodes = useMemo(() => {
+    if (!displacements) return null;
+    const map = new Map<number, THREE.Vector3>();
+    for (const [nodeId, node] of nodes) {
+      const disp = displacements[nodeId];
+      if (disp) {
+        map.set(nodeId, new THREE.Vector3(
+          node.x + disp[0] * scaleFactor,
+          node.y + disp[1] * scaleFactor,
+          node.z + disp[2] * scaleFactor,
+        ));
+      } else {
+        map.set(nodeId, new THREE.Vector3(node.x, node.y, node.z));
+      }
+    }
+    return map;
+  }, [nodes, displacements, scaleFactor]);
+
+  const elementArray = useMemo(() => Array.from(elements.values()), [elements]);
+
+  const nodePositions = useMemo(() => {
+    if (!displacedNodes) return [];
+    return Array.from(displacedNodes.values());
+  }, [displacedNodes]);
+
+  if (!showDeformed || !displacedNodes) return null;
+
+  return (
+    <group>
+      {/* Deformed members */}
+      {elementArray.map((element) => {
+        const posI = displacedNodes.get(element.nodeI);
+        const posJ = displacedNodes.get(element.nodeJ);
+        if (!posI || !posJ) return null;
+
+        return (
+          <Line
+            key={element.id}
+            points={[posI, posJ]}
+            color={DEFORMED_COLOR}
+            lineWidth={2}
+            transparent
+            opacity={DEFORMED_OPACITY}
+          />
+        );
+      })}
+
+      {/* Deformed node points */}
+      {nodePositions.map((pos, i) => (
+        <mesh key={i} position={pos}>
+          <sphereGeometry args={[NODE_RADIUS, NODE_SEGMENTS, NODE_SEGMENTS]} />
+          <meshStandardMaterial
+            color={DEFORMED_COLOR}
+            transparent
+            opacity={DEFORMED_OPACITY}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}

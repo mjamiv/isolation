@@ -203,20 +203,38 @@ class AnalysisParamsSchema(BaseModel):
     Attributes:
         type: Analysis type.
         dt: Time step for time-history analysis.
-        num_steps: Number of analysis steps for time-history.
+        num_steps: Number of analysis steps for time-history or pushover.
         num_modes: Number of modes to extract in modal analysis.
         ground_motions: List of ground motion records for time-history.
+        control_node: Node tag for displacement-controlled pushover.
+        control_dof: DOF direction for pushover control (1=X, 2=Y).
+        target_displacement: Target roof displacement for pushover.
+        load_pattern: Lateral load distribution for pushover ('linear', 'first_mode').
     """
 
     model_config = ConfigDict(strict=False)
 
-    type: Literal["static", "modal", "time_history"] = Field(..., description="Analysis type")
+    type: Literal["static", "modal", "time_history", "pushover"] = Field(
+        ..., description="Analysis type"
+    )
     dt: float | None = Field(default=None, gt=0, description="Analysis time step (s)")
     num_steps: int | None = Field(default=None, gt=0, description="Number of analysis steps")
     num_modes: int | None = Field(default=None, gt=0, description="Number of modes to extract")
     ground_motions: list[GroundMotionSchema] | None = Field(
         default=None,
         description="Ground motion records for time-history",
+    )
+    control_node: int | None = Field(
+        default=None, gt=0, description="Control node tag for pushover"
+    )
+    control_dof: int | None = Field(
+        default=None, ge=1, le=3, description="Control DOF for pushover (1=X, 2=Y)"
+    )
+    target_displacement: float | None = Field(
+        default=None, gt=0, description="Target roof displacement for pushover"
+    )
+    load_pattern: str | None = Field(
+        default=None, description="Lateral load pattern: 'linear' or 'first_mode'"
     )
 
     @model_validator(mode="after")
@@ -232,6 +250,15 @@ class AnalysisParamsSchema(BaseModel):
                 raise ValueError("num_steps is required for time_history analysis")
             if not self.ground_motions:
                 raise ValueError("ground_motions required for time_history analysis")
+        elif self.type == "pushover":
+            if self.target_displacement is None:
+                raise ValueError("target_displacement is required for pushover analysis")
+            if self.num_steps is None:
+                self.num_steps = 100  # sensible default
+            if self.control_dof is None:
+                self.control_dof = 1  # default to X direction
+            if self.load_pattern is None:
+                self.load_pattern = "linear"
         return self
 
 

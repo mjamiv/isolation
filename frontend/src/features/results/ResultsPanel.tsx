@@ -3,10 +3,12 @@ import type {
   StaticResults as StaticResultsType,
   ModalResults as ModalResultsType,
   TimeHistoryResults as THResultsType,
+  PushoverResults as PushoverResultsType,
 } from '@/types/analysis';
 import { StaticResults } from './StaticResults';
 import { ModalResults } from './ModalResults';
 import { TimeHistoryResults } from './TimeHistoryResults';
+import { PushoverResults } from './PushoverResults';
 
 export function ResultsPanel() {
   const results = useAnalysisStore((s) => s.results);
@@ -29,6 +31,7 @@ export function ResultsPanel() {
             {analysisType === 'static' && 'Static Analysis'}
             {analysisType === 'modal' && 'Modal Analysis'}
             {analysisType === 'time_history' && 'Time-History Analysis'}
+            {analysisType === 'pushover' && 'Pushover Analysis'}
             {!analysisType && 'Analysis'}
           </span>
           <span className="text-[10px] text-gray-500">
@@ -48,6 +51,12 @@ export function ResultsPanel() {
       )}
       {results.results && results.type === 'time_history' && (
         <TimeHistoryResults data={results.results as THResultsType} />
+      )}
+      {results.results && results.type === 'pushover' && (
+        <PushoverResults
+          data={results.results as PushoverResultsType}
+          hingeStates={results.hingeStates}
+        />
       )}
     </div>
   );

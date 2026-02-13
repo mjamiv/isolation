@@ -67,10 +67,11 @@ class RunAnalysisRequest(BaseModel):
 async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
     """Execute a structural analysis synchronously and return results.
 
-    Supports three analysis types:
+    Supports four analysis types:
     - ``static``: Gravity / load-based analysis.
     - ``modal``: Eigenvalue analysis for natural periods and mode shapes.
     - ``time_history``: Nonlinear time-history with ground motion input.
+    - ``pushover``: Nonlinear static pushover with displacement control.
 
     Args:
         request: Contains the ``model_id`` and ``params`` (analysis type
@@ -110,6 +111,7 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
         # Lazy import to avoid loading openseespy at module import time
         from app.services.solver import (
             run_modal_analysis,
+            run_pushover_analysis,
             run_static_analysis,
             run_time_history,
         )
@@ -132,6 +134,18 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
                 ground_motion=accel,
                 dt=params.dt or gm.dt,
                 num_steps=params.num_steps or len(accel),
+            )
+
+        elif analysis_type == "pushover":
+            if params.target_displacement is None:
+                raise ValueError("target_displacement is required for pushover")
+            results = run_pushover_analysis(
+                model_data,
+                target_displacement=params.target_displacement,
+                num_steps=params.num_steps or 100,
+                control_node=params.control_node,
+                control_dof=params.control_dof or 1,
+                load_pattern=params.load_pattern or "linear",
             )
 
         else:

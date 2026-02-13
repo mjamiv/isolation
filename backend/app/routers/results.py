@@ -120,6 +120,8 @@ async def get_results_summary(analysis_id: str) -> dict[str, Any]:
         summary.update(_summarise_modal(results))
     elif analysis_type == "time_history":
         summary.update(_summarise_time_history(results))
+    elif analysis_type == "pushover":
+        summary.update(_summarise_pushover(results))
 
     return summary
 
@@ -205,4 +207,40 @@ def _summarise_time_history(results: dict) -> dict[str, Any]:
         "num_steps": len(time_vals),
         "peak_node_displacements": peak_node_disps,
         "peak_bearing_responses": peak_bearing,
+    }
+
+
+def _summarise_pushover(results: dict) -> dict[str, Any]:
+    """Compute summary statistics for pushover analysis results."""
+    capacity_curve = results.get("capacity_curve", [])
+    hinge_states = results.get("hinge_states", [])
+
+    max_base_shear = results.get("max_base_shear", 0.0)
+    max_roof_displacement = results.get("max_roof_displacement", 0.0)
+
+    # Count hinges by performance level
+    hinge_counts: dict[str, int] = {"elastic": 0, "IO": 0, "LS": 0, "CP": 0}
+    for hs in hinge_states:
+        level = hs.get("performance_level")
+        if level is None:
+            hinge_counts["elastic"] += 1
+        elif level in hinge_counts:
+            hinge_counts[level] += 1
+
+    # Ductility ratio (approximate)
+    yield_disp = None
+    for pt in capacity_curve:
+        if yield_disp is None and pt.get("base_shear", 0) > 0.8 * max_base_shear:
+            yield_disp = pt.get("roof_displacement", 0)
+            break
+
+    ductility = (max_roof_displacement / yield_disp) if yield_disp and yield_disp > 0 else 0.0
+
+    return {
+        "max_base_shear": max_base_shear,
+        "max_roof_displacement": max_roof_displacement,
+        "num_steps": len(capacity_curve),
+        "num_hinges": len(hinge_states),
+        "hinge_counts": hinge_counts,
+        "ductility_ratio": ductility,
     }

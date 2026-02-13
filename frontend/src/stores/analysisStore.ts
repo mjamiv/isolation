@@ -24,6 +24,7 @@ interface AnalysisState {
   currentTimeStep: number;
   isPlaying: boolean;
   playbackSpeed: number;   // multiplier: 0.25, 0.5, 1, 2, 4
+  selectedModeNumber: number | null;
   error: string | null;
 
   // Actions
@@ -38,6 +39,7 @@ interface AnalysisState {
   togglePlayback: () => void;
   setPlaybackSpeed: (speed: number) => void;
   setIsPlaying: (playing: boolean) => void;
+  setSelectedModeNumber: (mode: number | null) => void;
 }
 
 // ── Store implementation ──────────────────────────────────────────────
@@ -53,6 +55,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   currentTimeStep: 0,
   isPlaying: false,
   playbackSpeed: 1,
+  selectedModeNumber: null,
   error: null,
 
   startAnalysis: () =>
@@ -98,6 +101,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       results: null,
       currentTimeStep: 0,
       isPlaying: false,
+      selectedModeNumber: null,
       error: null,
     }),
 
@@ -112,4 +116,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
 
   setIsPlaying: (playing) =>
     set({ isPlaying: playing }),
+
+  setSelectedModeNumber: (mode) =>
+    set({ selectedModeNumber: mode }),
 }));

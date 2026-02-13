@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Cross2Icon } from '@radix-ui/react-icons';
-import type { AnalysisType, AnalysisParams } from '@/types/analysis';
+import type { AnalysisType, AnalysisParams, PushDirection, LoadPattern } from '@/types/analysis';
 import { useModelStore } from '@/stores/modelStore';
 import { useRunAnalysis } from './useRunAnalysis';
 
@@ -14,6 +14,7 @@ const ANALYSIS_TYPES: { value: AnalysisType; label: string }[] = [
   { value: 'static', label: 'Static' },
   { value: 'modal', label: 'Modal' },
   { value: 'time_history', label: 'Time-History' },
+  { value: 'pushover', label: 'Pushover' },
 ];
 
 export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
@@ -22,6 +23,10 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const [selectedGmId, setSelectedGmId] = useState('');
   const [dt, setDt] = useState('0.01');
   const [numSteps, setNumSteps] = useState('1000');
+  const [targetDisplacement, setTargetDisplacement] = useState('10');
+  const [pushDirection, setPushDirection] = useState<PushDirection>('X');
+  const [loadPattern, setLoadPattern] = useState<LoadPattern>('uniform');
+  const [displacementIncrement, setDisplacementIncrement] = useState('0.1');
 
   const loads = useModelStore((s) => s.loads);
   const groundMotions = useModelStore((s) => s.groundMotions);
@@ -38,6 +43,9 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     }
     if (analysisType === 'time_history' && !selectedGmId) {
       return 'Please select a ground motion record.';
+    }
+    if (analysisType === 'pushover' && loads.size === 0) {
+      return 'Pushover analysis requires at least one load defined.';
     }
     return null;
   };
@@ -57,6 +65,13 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
       params.groundMotionIds = [Number(selectedGmId)];
       params.dt = Number(dt) || 0.01;
       params.numSteps = Number(numSteps) || 1000;
+    }
+
+    if (analysisType === 'pushover') {
+      params.targetDisplacement = Number(targetDisplacement) || 10;
+      params.pushDirection = pushDirection;
+      params.loadPattern = loadPattern;
+      params.displacementIncrement = Number(displacementIncrement) || 0.1;
     }
 
     onOpenChange(false);
@@ -156,6 +171,77 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                       min={1}
                       className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-blue-500"
                     />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Pushover params */}
+            {analysisType === 'pushover' && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-medium text-gray-400">Target Disp (in)</label>
+                    <input
+                      type="number"
+                      value={targetDisplacement}
+                      onChange={(e) => setTargetDisplacement(e.target.value)}
+                      min={0.1}
+                      step={1}
+                      className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-400">Disp Increment (in)</label>
+                    <input
+                      type="number"
+                      value={displacementIncrement}
+                      onChange={(e) => setDisplacementIncrement(e.target.value)}
+                      min={0.01}
+                      step={0.01}
+                      className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-400">Push Direction</label>
+                  <div className="mt-1 flex gap-1 rounded-lg bg-gray-800 p-0.5">
+                    {(['X', 'Y'] as const).map((dir) => (
+                      <button
+                        key={dir}
+                        type="button"
+                        onClick={() => setPushDirection(dir)}
+                        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                          pushDirection === dir
+                            ? 'bg-gray-600 text-white'
+                            : 'text-gray-400 hover:text-gray-200'
+                        }`}
+                      >
+                        {dir}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-400">Load Pattern</label>
+                  <div className="mt-1 flex gap-1 rounded-lg bg-gray-800 p-0.5">
+                    {([
+                      { value: 'uniform' as const, label: 'Uniform' },
+                      { value: 'firstMode' as const, label: 'First-Mode' },
+                    ]).map((lp) => (
+                      <button
+                        key={lp.value}
+                        type="button"
+                        onClick={() => setLoadPattern(lp.value)}
+                        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                          loadPattern === lp.value
+                            ? 'bg-gray-600 text-white'
+                            : 'text-gray-400 hover:text-gray-200'
+                        }`}
+                      >
+                        {lp.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </>

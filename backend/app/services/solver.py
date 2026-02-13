@@ -131,7 +131,7 @@ def run_static_analysis(model_data: dict) -> dict:
 
     Returns:
         A dict with keys ``node_displacements``, ``element_forces``,
-        and ``reactions``, each mapping string IDs to lists of floats.
+        ``reactions``, and ``deformed_shape``.
     """
     ops.wipe()
     try:
@@ -159,6 +159,7 @@ def run_static_analysis(model_data: dict) -> dict:
 
         # Gather results
         ndf = model_data.get("model_info", {}).get("ndf", 3)
+        ndm = model_data.get("model_info", {}).get("ndm", 2)
         node_displacements: dict[str, list[float]] = {}
         reactions: dict[str, list[float]] = {}
 
@@ -182,10 +183,14 @@ def run_static_analysis(model_data: dict) -> dict:
             except Exception:
                 element_forces[str(eid)] = []
 
+        # Compute deformed shape: original coords + scaled displacements
+        deformed_shape = _compute_deformed_shape(model_data, node_displacements, ndm)
+
         return {
             "node_displacements": node_displacements,
             "element_forces": element_forces,
             "reactions": reactions,
+            "deformed_shape": deformed_shape,
         }
 
     finally:
@@ -221,6 +226,29 @@ def run_modal_analysis(model_data: dict, num_modes: int = 3) -> dict:
         mode_shapes: dict[str, dict[str, list[float]]] = {}
 
         ndf = model_data.get("model_info", {}).get("ndf", 3)
+        ndm = model_data.get("model_info", {}).get("ndm", 2)
+
+        # Collect free nodes and their masses for participation ratio calc
+        free_nodes: list[dict] = []
+        for node in model_data.get("nodes", []):
+            fixity = node.get("fixity", [])
+            if fixity and all(f_val == 1 for f_val in fixity):
+                continue
+            free_nodes.append(node)
+
+        # Build node mass lookup from loads (same logic as _assign_mass)
+        g = 9.81
+        node_masses: dict[int, float] = {}
+        for load in model_data.get("loads", []):
+            if load.get("type") == "nodal" and load.get("node_id"):
+                values = load.get("values", [])
+                if len(values) >= 2 and values[1] < 0:
+                    node_masses[load["node_id"]] = -values[1] / g
+        for bearing in model_data.get("bearings", []):
+            W = bearing.get("weight", 0)
+            if W > 0:
+                top_node = bearing["nodes"][1]
+                node_masses[top_node] = W / g
 
         for i, ev in enumerate(eigenvalues):
             if ev > 0:
@@ -235,21 +263,41 @@ def run_modal_analysis(model_data: dict, num_modes: int = 3) -> dict:
 
             mode_key = str(i + 1)
             mode_shapes[mode_key] = {}
-            for node in model_data.get("nodes", []):
+            for node in free_nodes:
                 nid = node["id"]
-                fixity = node.get("fixity", [])
-                if fixity and all(f_val == 1 for f_val in fixity):
-                    continue
                 shape = [
                     ops.nodeEigenvector(nid, i + 1, dof + 1) for dof in range(ndf)
                 ]
                 mode_shapes[mode_key][str(nid)] = shape
 
+        # Compute mass participation ratios per translational direction
+        direction_labels = ["X", "Y", "Z"][:ndm]
+        mass_participation: dict[str, list[float]] = {d: [] for d in direction_labels}
+        total_mass = sum(node_masses.values()) if node_masses else 1.0
+
+        for i in range(len(eigenvalues)):
+            for dof_idx, direction in enumerate(direction_labels):
+                # L_n = sum(m_i * phi_i_n) for direction dof_idx
+                L_n = 0.0
+                M_n = 0.0
+                for node in free_nodes:
+                    nid = node["id"]
+                    m = node_masses.get(nid, 0.0)
+                    phi = ops.nodeEigenvector(nid, i + 1, dof_idx + 1)
+                    L_n += m * phi
+                    M_n += m * phi * phi
+
+                if M_n > 0 and total_mass > 0:
+                    ratio = (L_n * L_n) / (M_n * total_mass)
+                else:
+                    ratio = 0.0
+                mass_participation[direction].append(ratio)
+
         return {
             "periods": periods,
             "frequencies": frequencies,
             "mode_shapes": mode_shapes,
-            "mass_participation": {},  # placeholder -- full implementation needs modal mass extraction
+            "mass_participation": mass_participation,
         }
 
     finally:
@@ -390,8 +438,353 @@ def run_time_history(
 
 
 # ---------------------------------------------------------------------------
+# Pushover analysis
+# ---------------------------------------------------------------------------
+
+
+def run_pushover_analysis(
+    model_data: dict,
+    target_displacement: float,
+    num_steps: int = 100,
+    control_node: int | None = None,
+    control_dof: int = 1,
+    load_pattern: str = "linear",
+) -> dict:
+    """Run a nonlinear static (pushover) analysis.
+
+    Applies a lateral load pattern and incrementally pushes the structure
+    using displacement control until the target displacement is reached.
+
+    Args:
+        model_data: A dict conforming to :class:`StructuralModelSchema`.
+        target_displacement: Target roof displacement.
+        num_steps: Number of displacement increments.
+        control_node: Node tag for displacement control. If None, the
+            topmost free node is used automatically.
+        control_dof: DOF for displacement control (1=X, 2=Y).
+        load_pattern: Lateral load distribution ('linear' or 'first_mode').
+
+    Returns:
+        A dict with pushover results including capacity curve, hinge states,
+        step data, and final deformed shape.
+    """
+    ops.wipe()
+    try:
+        build_model(model_data)
+        _assign_mass(model_data)
+
+        ndf = model_data.get("model_info", {}).get("ndf", 3)
+        ndm = model_data.get("model_info", {}).get("ndm", 2)
+
+        # Identify free nodes and fixed nodes
+        free_nodes: list[dict] = []
+        fixed_nodes: list[dict] = []
+        for node in model_data.get("nodes", []):
+            fixity = node.get("fixity", [])
+            if fixity and all(f_val == 1 for f_val in fixity):
+                fixed_nodes.append(node)
+            else:
+                free_nodes.append(node)
+
+        if not free_nodes:
+            raise RuntimeError("No free nodes found for pushover analysis")
+
+        # Auto-detect control node: topmost free node (highest Y coord)
+        if control_node is None:
+            control_node = max(free_nodes, key=lambda n: n["coords"][1] if len(n["coords"]) > 1 else 0)["id"]
+
+        # Determine lateral load distribution
+        mode_shape_factors: dict[int, float] = {}
+        if load_pattern == "first_mode":
+            try:
+                eigenvalues = ops.eigen(1)
+                if eigenvalues and eigenvalues[0] > 0:
+                    for node in free_nodes:
+                        nid = node["id"]
+                        phi = ops.nodeEigenvector(nid, 1, control_dof)
+                        mode_shape_factors[nid] = phi
+            except Exception:
+                logger.warning("First-mode extraction failed, falling back to linear pattern")
+                load_pattern = "linear"
+
+        # Apply gravity loads first
+        ops.timeSeries("Linear", 1)
+        ops.pattern("Plain", 1, 1)
+        for load in model_data.get("loads", []):
+            if load.get("type") == "nodal" and load.get("node_id"):
+                ops.load(load["node_id"], *load["values"])
+
+        # Run gravity analysis
+        ops.constraints("Transformation")
+        ops.numberer("RCM")
+        ops.system("BandGeneral")
+        ops.test("NormDispIncr", 1.0e-6, 10)
+        ops.algorithm("Newton")
+        ops.integrator("LoadControl", 1.0)
+        ops.analysis("Static")
+        gravity_result = ops.analyze(1)
+        if gravity_result != 0:
+            logger.warning("Gravity analysis did not converge, proceeding anyway")
+
+        ops.loadConst("-time", 0.0)
+
+        # Apply lateral load pattern for pushover
+        ops.timeSeries("Linear", 2)
+        ops.pattern("Plain", 2, 2)
+
+        # Get max height for linear distribution
+        max_height = 0.0
+        for node in free_nodes:
+            coords = node["coords"]
+            h = coords[1] if len(coords) > 1 else 0.0
+            if h > max_height:
+                max_height = h
+
+        for node in free_nodes:
+            nid = node["id"]
+            coords = node["coords"]
+            height = coords[1] if len(coords) > 1 else 0.0
+
+            if load_pattern == "first_mode" and nid in mode_shape_factors:
+                factor = abs(mode_shape_factors[nid])
+            elif max_height > 0:
+                factor = height / max_height
+            else:
+                factor = 1.0
+
+            if factor > 0:
+                load_values = [0.0] * ndf
+                load_values[control_dof - 1] = factor
+                ops.load(nid, *load_values)
+
+        # Pushover analysis configuration
+        dU = target_displacement / num_steps
+        ops.constraints("Transformation")
+        ops.numberer("RCM")
+        ops.system("BandGeneral")
+        ops.test("NormDispIncr", 1.0e-6, 50)
+        ops.algorithm("Newton")
+        ops.integrator("DisplacementControl", control_node, control_dof, dU)
+        ops.analysis("Static")
+
+        # Result containers
+        capacity_curve: list[dict] = []
+        steps: list[dict] = []
+
+        for step_num in range(num_steps):
+            result = ops.analyze(1)
+
+            if result != 0:
+                # Try alternative algorithms
+                ops.algorithm("ModifiedNewton")
+                result = ops.analyze(1)
+                ops.algorithm("Newton")
+                if result != 0:
+                    ops.algorithm("KrylovNewton")
+                    result = ops.analyze(1)
+                    ops.algorithm("Newton")
+                    if result != 0:
+                        logger.warning(
+                            "Pushover failed at step %d / %d", step_num, num_steps
+                        )
+                        break
+
+            # Get control node displacement
+            roof_disp = ops.nodeDisp(control_node, control_dof)
+
+            # Compute base shear from reactions at fixed nodes
+            ops.reactions()
+            base_shear = 0.0
+            for node in fixed_nodes:
+                nid = node["id"]
+                rxn = ops.nodeReaction(nid, control_dof)
+                base_shear += rxn
+            base_shear = -base_shear  # Convention: positive base shear
+
+            capacity_curve.append({
+                "base_shear": base_shear,
+                "roof_displacement": roof_disp,
+            })
+
+            # Collect step data (every 10th step to keep payload reasonable)
+            if step_num % max(1, num_steps // 20) == 0 or step_num == num_steps - 1:
+                step_disps: dict[str, list[float]] = {}
+                for node in model_data.get("nodes", []):
+                    nid = node["id"]
+                    disps = [ops.nodeDisp(nid, dof + 1) for dof in range(ndf)]
+                    step_disps[str(nid)] = disps
+
+                steps.append({
+                    "step": step_num,
+                    "base_shear": base_shear,
+                    "roof_displacement": roof_disp,
+                    "node_displacements": step_disps,
+                })
+
+        # Final state results
+        node_displacements: dict[str, list[float]] = {}
+        reactions: dict[str, list[float]] = {}
+        for node in model_data.get("nodes", []):
+            nid = node["id"]
+            disps = [ops.nodeDisp(nid, dof + 1) for dof in range(ndf)]
+            node_displacements[str(nid)] = disps
+
+            fixity = node.get("fixity", [])
+            if fixity and any(f_val == 1 for f_val in fixity):
+                ops.reactions()
+                rxns = [ops.nodeReaction(nid, dof + 1) for dof in range(ndf)]
+                reactions[str(nid)] = rxns
+
+        element_forces: dict[str, list[float]] = {}
+        for elem in model_data.get("elements", []):
+            eid = elem["id"]
+            try:
+                forces = list(ops.eleResponse(eid, "force"))
+                element_forces[str(eid)] = forces
+            except Exception:
+                element_forces[str(eid)] = []
+
+        # Compute hinge states from element forces
+        hinge_states = _compute_hinge_states(model_data, element_forces)
+
+        # Deformed shape
+        deformed_shape = _compute_deformed_shape(model_data, node_displacements, ndm)
+
+        max_base_shear = max(abs(pt["base_shear"]) for pt in capacity_curve) if capacity_curve else 0.0
+        max_roof_disp = max(abs(pt["roof_displacement"]) for pt in capacity_curve) if capacity_curve else 0.0
+
+        return {
+            "capacity_curve": capacity_curve,
+            "hinge_states": hinge_states,
+            "max_base_shear": max_base_shear,
+            "max_roof_displacement": max_roof_disp,
+            "steps": steps,
+            "node_displacements": node_displacements,
+            "element_forces": element_forces,
+            "reactions": reactions,
+            "deformed_shape": deformed_shape,
+        }
+
+    finally:
+        ops.wipe()
+
+
+# ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
+
+def _compute_deformed_shape(
+    model_data: dict,
+    node_displacements: dict[str, list[float]],
+    ndm: int,
+    scale_factor: float = 1.0,
+) -> dict[str, list[float]]:
+    """Compute deformed node coordinates for visualization.
+
+    Args:
+        model_data: Model data containing node definitions.
+        node_displacements: node_id (str) -> displacement list.
+        ndm: Number of spatial dimensions.
+        scale_factor: Multiplier for displacements (default 1.0 = true scale).
+
+    Returns:
+        node_id (str) -> [original_x + scale*disp_x, ...] for each spatial dim.
+    """
+    deformed: dict[str, list[float]] = {}
+    for node in model_data.get("nodes", []):
+        nid = str(node["id"])
+        coords = node["coords"]
+        disps = node_displacements.get(nid, [0.0] * ndm)
+        deformed[nid] = [
+            coords[i] + scale_factor * disps[i] for i in range(min(ndm, len(coords), len(disps)))
+        ]
+    return deformed
+
+
+def _compute_hinge_states(
+    model_data: dict,
+    element_forces: dict[str, list[float]],
+) -> list[dict]:
+    """Estimate plastic hinge states from element end forces.
+
+    Uses element forces to compute demand/capacity ratios and classify
+    performance levels (IO, LS, CP) based on typical steel moment frame
+    rotation limits from ASCE 41.
+
+    Args:
+        model_data: Model data with element and section info.
+        element_forces: element_id (str) -> local force list.
+
+    Returns:
+        List of hinge state dicts.
+    """
+    hinge_states: list[dict] = []
+
+    for elem in model_data.get("elements", []):
+        eid = str(elem["id"])
+        forces = element_forces.get(eid, [])
+        if not forces:
+            continue
+
+        # For beam-column elements, forces are [N_i, V_i, M_i, N_j, V_j, M_j]
+        if len(forces) >= 6:
+            # I-end
+            moment_i = abs(forces[2])
+            # J-end
+            moment_j = abs(forces[5])
+        elif len(forces) >= 3:
+            moment_i = abs(forces[2]) if len(forces) > 2 else 0.0
+            moment_j = 0.0
+        else:
+            continue
+
+        # Estimate plastic rotation from moment (simplified)
+        # Use section properties to estimate yield moment
+        sec = _find_section(model_data, elem.get("section_id", 0))
+        if sec:
+            props = sec.get("properties", {})
+            Iz = props.get("Iz", 1.0)
+            E = props.get("E", _get_material_E(model_data, sec.get("material_id")))
+            # Approximate yield moment: My = Fy * S ≈ (E/200) * Iz / (d/2)
+            # Use a simplified D/C ratio based on moment capacity
+            depth = props.get("d", 14.0)  # approximate section depth
+            S = Iz / (depth / 2.0) if depth > 0 else Iz
+            My = (E / 200.0) * S  # rough yield moment estimate
+        else:
+            My = 1.0
+
+        for end_label, moment in [("I", moment_i), ("J", moment_j)]:
+            if moment < 1e-10:
+                continue
+
+            dc_ratio = moment / My if My > 0 else 0.0
+
+            # Classify performance level based on D/C ratio
+            # IO < 1.0, LS < 2.0, CP < 3.0
+            if dc_ratio < 1.0:
+                perf_level = None  # elastic
+                rotation = 0.0
+            elif dc_ratio < 2.0:
+                perf_level = "IO"
+                rotation = (dc_ratio - 1.0) * 0.01  # approximate plastic rotation
+            elif dc_ratio < 3.0:
+                perf_level = "LS"
+                rotation = (dc_ratio - 1.0) * 0.01
+            else:
+                perf_level = "CP"
+                rotation = (dc_ratio - 1.0) * 0.01
+
+            hinge_states.append({
+                "element_id": elem["id"],
+                "end": end_label,
+                "rotation": rotation,
+                "moment": moment,
+                "performance_level": perf_level,
+                "demand_capacity_ratio": dc_ratio,
+            })
+
+    return hinge_states
 
 
 def _define_materials(materials: list[dict]) -> None:

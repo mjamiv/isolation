@@ -15,6 +15,9 @@ export type AnalysisType = 'static' | 'modal' | 'time_history' | 'pushover';
 export type Algorithm = 'Newton' | 'ModifiedNewton' | 'BFGS' | 'KrylovNewton';
 export type Integrator = 'Newmark' | 'HHT' | 'GeneralizedAlpha';
 
+export type PushDirection = 'X' | 'Y';
+export type LoadPattern = 'uniform' | 'firstMode';
+
 export interface AnalysisParams {
   type: AnalysisType;
   /** Time step for transient analysis (seconds). */
@@ -35,6 +38,14 @@ export interface AnalysisParams {
   convergenceTol?: number;
   /** Maximum Newton-Raphson iterations per step. */
   maxIterations?: number;
+  /** Target roof displacement for pushover (inches). */
+  targetDisplacement?: number;
+  /** Push direction for pushover analysis. */
+  pushDirection?: PushDirection;
+  /** Lateral load pattern for pushover analysis. */
+  loadPattern?: LoadPattern;
+  /** Displacement increment for pushover analysis (inches). */
+  displacementIncrement?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +115,17 @@ export interface TimeHistoryResults {
 }
 
 // ---------------------------------------------------------------------------
+// Pushover Results
+// ---------------------------------------------------------------------------
+
+export interface PushoverResults {
+  capacityCurve: { baseShear: number; roofDisplacement: number }[];
+  maxBaseShear: number;
+  maxRoofDisplacement: number;
+  ductilityRatio: number;
+}
+
+// ---------------------------------------------------------------------------
 // Plastic Hinge State (for pushover / nonlinear results)
 // ---------------------------------------------------------------------------
 
@@ -139,7 +161,7 @@ export interface AnalysisResults {
   /** Progress fraction 0..1. */
   progress: number;
   /** Typed results payload; null until status === 'complete'. */
-  results: StaticResults | ModalResults | TimeHistoryResults | null;
+  results: StaticResults | ModalResults | TimeHistoryResults | PushoverResults | null;
   /** Plastic hinge states (populated for pushover / nonlinear analyses). */
   hingeStates?: HingeState[];
   /** Error description if status === 'error'. */

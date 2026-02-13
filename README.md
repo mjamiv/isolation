@@ -36,7 +36,17 @@ Phases 1 through 3 are complete. The app provides:
 - **Base-isolated sample model** — 3 ground nodes (fixed), 3 base nodes (free), 3 TFP bearings with realistic VelDependent friction
 - **Backend consistency** — `transRate` to `trans_rate` snake_case fix across schemas, solver, tests, and fixtures
 
-Phase 4 (nonlinear analysis, pushover, mode shape visualization) is not yet started.
+### Phase 4 — Pushover Analysis, Mode Shapes & Playback
+- **Pushover analysis** — displacement-controlled static pushover via OpenSeesPy `DisplacementControl` integrator with linear or first-mode proportional load patterns
+- **Pushover UI** — AnalysisDialog supports pushover type with target displacement, push direction, load pattern, and increment controls
+- **Pushover results** — capacity curve (base shear vs roof displacement) plotted with Plotly, summary stats (max base shear, ductility ratio), and plastic hinge state table
+- **Mode shape visualization** — 3D animated mode shapes using `useFrame()` sinusoidal oscillation; mode selector dropdown and Visualize toggle in ModalResults panel
+- **Deformed shape rendering** — semi-transparent blue overlay showing displaced node/member positions for static and time-history results, scaled by user-configurable scale factor
+- **Plastic hinge visualization** — color-coded spheres at element ends showing IO/LS/CP performance levels (7 states from elastic/gray to collapse/black)
+- **Time-history playback** — play/pause, speed control (0.25x-4x), time scrub slider, and `useFrame`-based step driver synchronized with 3D viewer
+- **Enhanced backend results** — static results include deformed shape data; modal results include real mass participation ratios; pushover returns capacity curve, hinge states, and deformed shape
+
+Phase 5 (ductile vs isolated comparison, upper/lower bound analysis, summary dashboards) is not yet started.
 
 ## Tech Stack
 
@@ -71,12 +81,12 @@ isolation/
       components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
       features/
         layout/      # AppLayout, Toolbar, StatusBar
-        viewer-3d/   # 3D canvas, NodePoints, MemberLines, SupportSymbols, BearingSymbols, Labels
+        viewer-3d/   # 3D canvas, NodePoints, MemberLines, SupportSymbols, BearingSymbols, Labels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
         analysis/    # AnalysisDialog, useRunAnalysis hook
-        results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults
+        results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults, PushoverResults, PlaybackControls
       services/      # API client, WebSocket client, model serializer
       stores/        # Zustand stores (modelStore, displayStore, analysisStore)
       types/         # Shared TypeScript interfaces (storeModel.ts, analysis.ts, model.ts)
@@ -128,7 +138,7 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (85 tests across 5 suites)
+# Frontend tests (151 tests across 12 suites)
 cd frontend && npm test
 
 # Frontend lint

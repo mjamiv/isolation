@@ -1,5 +1,6 @@
 import { useState, useMemo, lazy, Suspense } from 'react';
 import type { TimeHistoryResults as THResultsType } from '@/types/analysis';
+import { TimeHistoryPlaybackControls } from './TimeHistoryPlaybackControls';
 
 const Plot = lazy(() => import('react-plotly.js'));
 
@@ -54,6 +55,9 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
 
   return (
     <div className="space-y-3">
+      {/* Playback controls */}
+      <TimeHistoryPlaybackControls totalSteps={data.timeSteps.length} dt={data.dt} />
+
       {/* Summary stats */}
       <div className="rounded bg-gray-800/50 p-2 text-[10px]">
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-400">
