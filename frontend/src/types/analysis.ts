@@ -1,0 +1,149 @@
+/**
+ * Analysis configuration and result type definitions for IsoVis.
+ *
+ * Mirrors backend/app/schemas/results.py while adding the richer
+ * TypeScript discriminated-union patterns the frontend needs for
+ * safe result handling.
+ */
+
+// ---------------------------------------------------------------------------
+// Analysis Configuration
+// ---------------------------------------------------------------------------
+
+export type AnalysisType = 'static' | 'modal' | 'time_history' | 'pushover';
+
+export type Algorithm = 'Newton' | 'ModifiedNewton' | 'BFGS' | 'KrylovNewton';
+export type Integrator = 'Newmark' | 'HHT' | 'GeneralizedAlpha';
+
+export interface AnalysisParams {
+  type: AnalysisType;
+  /** Time step for transient analysis (seconds). */
+  dt?: number;
+  /** Total number of analysis steps. */
+  numSteps?: number;
+  /** Number of modes to extract (modal analysis). */
+  numModes?: number;
+  /** IDs of GroundMotion records to apply (time-history). */
+  groundMotionIds?: number[];
+  /** Nonlinear solution algorithm. */
+  algorithm?: Algorithm;
+  /** Time integration scheme. */
+  integrator?: Integrator;
+  /** Parameters for the selected integrator (e.g. [gamma, beta] for Newmark). */
+  integratorParams?: number[];
+  /** Newton-Raphson convergence tolerance. */
+  convergenceTol?: number;
+  /** Maximum Newton-Raphson iterations per step. */
+  maxIterations?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Static Results
+// ---------------------------------------------------------------------------
+
+export interface StaticResults {
+  /** nodeId -> [dx, dy, dz, rx, ry, rz] */
+  nodeDisplacements: Record<number, [number, number, number, number, number, number]>;
+  /** elementId -> local force vector */
+  elementForces: Record<number, number[]>;
+  /** Fixed nodeId -> [Fx, Fy, Fz, Mx, My, Mz] */
+  reactions: Record<number, [number, number, number, number, number, number]>;
+}
+
+// ---------------------------------------------------------------------------
+// Modal Results
+// ---------------------------------------------------------------------------
+
+export interface ModalResults {
+  /** Natural periods for each mode (seconds). */
+  periods: number[];
+  /** Natural frequencies for each mode (Hz). */
+  frequencies: number[];
+  /** mode number -> nodeId -> [dx, dy, dz] */
+  modeShapes: Record<number, Record<number, [number, number, number]>>;
+  /** mode number -> { x, y, z } mass participation ratios (0..1). */
+  massParticipation: Record<number, { x: number; y: number; z: number }>;
+}
+
+// ---------------------------------------------------------------------------
+// Time-History Results
+// ---------------------------------------------------------------------------
+
+export interface BearingResponse {
+  /** Lateral displacement [x, y]. */
+  displacement: [number, number];
+  /** Lateral force [x, y]. */
+  force: [number, number];
+  /** Vertical (axial) force. */
+  axialForce: number;
+}
+
+export interface TimeStep {
+  step: number;
+  time: number;
+  /** nodeId -> [dx, dy, dz, rx, ry, rz] */
+  nodeDisplacements: Record<number, [number, number, number, number, number, number]>;
+  /** elementId -> local force vector */
+  elementForces: Record<number, number[]>;
+  /** bearingId -> response */
+  bearingResponses: Record<number, BearingResponse>;
+}
+
+export interface PeakValues {
+  maxDrift: { value: number; story: number; step: number };
+  maxAcceleration: { value: number; floor: number; step: number };
+  maxBaseShear: { value: number; step: number };
+  maxBearingDisp: { value: number; bearingId: number; step: number };
+}
+
+export interface TimeHistoryResults {
+  timeSteps: TimeStep[];
+  dt: number;
+  totalTime: number;
+  peakValues: PeakValues;
+}
+
+// ---------------------------------------------------------------------------
+// Plastic Hinge State (for pushover / nonlinear results)
+// ---------------------------------------------------------------------------
+
+export type PerformanceLevel =
+  | 'elastic'
+  | 'yield'
+  | 'IO'   // Immediate Occupancy
+  | 'LS'   // Life Safety
+  | 'CP'   // Collapse Prevention
+  | 'beyondCP'
+  | 'collapse';
+
+export interface HingeState {
+  elementId: number;
+  end: 'i' | 'j';
+  rotation: number;
+  moment: number;
+  performanceLevel: PerformanceLevel;
+  demandCapacityRatio: number;
+}
+
+// ---------------------------------------------------------------------------
+// Unified Analysis Result Envelope
+// ---------------------------------------------------------------------------
+
+export type AnalysisStatus = 'pending' | 'running' | 'complete' | 'error';
+
+export interface AnalysisResults {
+  analysisId: string;
+  modelId: string;
+  type: AnalysisType;
+  status: AnalysisStatus;
+  /** Progress fraction 0..1. */
+  progress: number;
+  /** Typed results payload; null until status === 'complete'. */
+  results: StaticResults | ModalResults | TimeHistoryResults | null;
+  /** Plastic hinge states (populated for pushover / nonlinear analyses). */
+  hingeStates?: HingeState[];
+  /** Error description if status === 'error'. */
+  error?: string;
+  /** Wall-clock time of the analysis in seconds. */
+  wallTime?: number;
+}

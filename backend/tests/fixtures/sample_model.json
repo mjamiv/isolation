@@ -1,0 +1,76 @@
+{
+  "modelInfo": {
+    "name": "3-Story Steel MRF",
+    "units": { "force": "kip", "length": "in", "time": "sec" },
+    "ndm": 3,
+    "ndf": 6
+  },
+  "nodes": [
+    { "id": 1,  "coords": [0, 0, 0],     "fixity": [1, 1, 1, 1, 1, 1] },
+    { "id": 2,  "coords": [288, 0, 0],   "fixity": [1, 1, 1, 1, 1, 1] },
+    { "id": 3,  "coords": [576, 0, 0],   "fixity": [1, 1, 1, 1, 1, 1] },
+    { "id": 4,  "coords": [0, 144, 0],   "fixity": [0, 0, 0, 0, 0, 0] },
+    { "id": 5,  "coords": [288, 144, 0], "fixity": [0, 0, 0, 0, 0, 0] },
+    { "id": 6,  "coords": [576, 144, 0], "fixity": [0, 0, 0, 0, 0, 0] },
+    { "id": 7,  "coords": [0, 288, 0],   "fixity": [0, 0, 0, 0, 0, 0] },
+    { "id": 8,  "coords": [288, 288, 0], "fixity": [0, 0, 0, 0, 0, 0] },
+    { "id": 9,  "coords": [576, 288, 0], "fixity": [0, 0, 0, 0, 0, 0] },
+    { "id": 10, "coords": [0, 432, 0],   "fixity": [0, 0, 0, 0, 0, 0] },
+    { "id": 11, "coords": [288, 432, 0], "fixity": [0, 0, 0, 0, 0, 0] },
+    { "id": 12, "coords": [576, 432, 0], "fixity": [0, 0, 0, 0, 0, 0] }
+  ],
+  "materials": [
+    {
+      "id": 1,
+      "type": "Steel02",
+      "name": "A992 Steel",
+      "params": { "Fy": 50.0, "E0": 29000.0, "b": 0.01 }
+    }
+  ],
+  "sections": [
+    {
+      "id": 1,
+      "type": "WideFlange",
+      "name": "W14x68",
+      "properties": { "A": 20.0, "Iz": 722.0, "Iy": 121.0, "J": 3.01, "E": 29000.0, "G": 11200.0 },
+      "materialId": 1
+    },
+    {
+      "id": 2,
+      "type": "WideFlange",
+      "name": "W24x68",
+      "properties": { "A": 20.1, "Iz": 1830.0, "Iy": 70.4, "J": 1.87, "E": 29000.0, "G": 11200.0 },
+      "materialId": 1
+    }
+  ],
+  "elements": [
+    { "id": 1,  "type": "elasticBeamColumn", "nodes": [1, 4],   "sectionId": 1, "transform": "PDelta" },
+    { "id": 2,  "type": "elasticBeamColumn", "nodes": [2, 5],   "sectionId": 1, "transform": "PDelta" },
+    { "id": 3,  "type": "elasticBeamColumn", "nodes": [3, 6],   "sectionId": 1, "transform": "PDelta" },
+    { "id": 4,  "type": "elasticBeamColumn", "nodes": [4, 7],   "sectionId": 1, "transform": "PDelta" },
+    { "id": 5,  "type": "elasticBeamColumn", "nodes": [5, 8],   "sectionId": 1, "transform": "PDelta" },
+    { "id": 6,  "type": "elasticBeamColumn", "nodes": [6, 9],   "sectionId": 1, "transform": "PDelta" },
+    { "id": 7,  "type": "elasticBeamColumn", "nodes": [7, 10],  "sectionId": 1, "transform": "PDelta" },
+    { "id": 8,  "type": "elasticBeamColumn", "nodes": [8, 11],  "sectionId": 1, "transform": "PDelta" },
+    { "id": 9,  "type": "elasticBeamColumn", "nodes": [9, 12],  "sectionId": 1, "transform": "PDelta" },
+    { "id": 10, "type": "elasticBeamColumn", "nodes": [4, 5],   "sectionId": 2, "transform": "Linear" },
+    { "id": 11, "type": "elasticBeamColumn", "nodes": [5, 6],   "sectionId": 2, "transform": "Linear" },
+    { "id": 12, "type": "elasticBeamColumn", "nodes": [7, 8],   "sectionId": 2, "transform": "Linear" },
+    { "id": 13, "type": "elasticBeamColumn", "nodes": [8, 9],   "sectionId": 2, "transform": "Linear" },
+    { "id": 14, "type": "elasticBeamColumn", "nodes": [10, 11], "sectionId": 2, "transform": "Linear" },
+    { "id": 15, "type": "elasticBeamColumn", "nodes": [11, 12], "sectionId": 2, "transform": "Linear" }
+  ],
+  "bearings": [],
+  "loads": [
+    { "type": "nodeLoad", "nodeId": 4,  "values": [0, -36, 0, 0, 0, 0] },
+    { "type": "nodeLoad", "nodeId": 5,  "values": [0, -72, 0, 0, 0, 0] },
+    { "type": "nodeLoad", "nodeId": 6,  "values": [0, -36, 0, 0, 0, 0] },
+    { "type": "nodeLoad", "nodeId": 7,  "values": [0, -36, 0, 0, 0, 0] },
+    { "type": "nodeLoad", "nodeId": 8,  "values": [0, -72, 0, 0, 0, 0] },
+    { "type": "nodeLoad", "nodeId": 9,  "values": [0, -36, 0, 0, 0, 0] },
+    { "type": "nodeLoad", "nodeId": 10, "values": [0, -36, 0, 0, 0, 0] },
+    { "type": "nodeLoad", "nodeId": 11, "values": [0, -72, 0, 0, 0, 0] },
+    { "type": "nodeLoad", "nodeId": 12, "values": [0, -36, 0, 0, 0, 0] }
+  ],
+  "groundMotions": []
+}
