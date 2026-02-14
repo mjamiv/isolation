@@ -26,7 +26,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const [numSteps, setNumSteps] = useState('1000');
   const [targetDisplacement, setTargetDisplacement] = useState('10');
   const [pushDirection, setPushDirection] = useState<PushDirection>('X');
-  const [loadPattern, setLoadPattern] = useState<LoadPattern>('uniform');
+  const [loadPattern, setLoadPattern] = useState<LoadPattern>('linear');
   const [displacementIncrement, setDisplacementIncrement] = useState('0.1');
 
   // Comparison options
@@ -276,8 +276,8 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   <label className="text-xs font-medium text-gray-400">Load Pattern</label>
                   <div className="mt-1 flex gap-1 rounded-lg bg-gray-800 p-0.5">
                     {[
-                      { value: 'uniform' as const, label: 'Uniform' },
-                      { value: 'firstMode' as const, label: 'First-Mode' },
+                      { value: 'linear' as const, label: 'Linear' },
+                      { value: 'first_mode' as const, label: 'First-Mode' },
                     ].map((lp) => (
                       <button
                         key={lp.value}

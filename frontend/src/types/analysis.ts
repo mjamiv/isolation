@@ -16,7 +16,7 @@ export type Algorithm = 'Newton' | 'ModifiedNewton' | 'BFGS' | 'KrylovNewton';
 export type Integrator = 'Newmark' | 'HHT' | 'GeneralizedAlpha';
 
 export type PushDirection = 'X' | 'Y';
-export type LoadPattern = 'uniform' | 'firstMode';
+export type LoadPattern = 'linear' | 'first_mode';
 
 export interface AnalysisParams {
   type: AnalysisType;
@@ -132,9 +132,9 @@ export interface PushoverResults {
 export type PerformanceLevel =
   | 'elastic'
   | 'yield'
-  | 'IO'   // Immediate Occupancy
-  | 'LS'   // Life Safety
-  | 'CP'   // Collapse Prevention
+  | 'IO' // Immediate Occupancy
+  | 'LS' // Life Safety
+  | 'CP' // Collapse Prevention
   | 'beyondCP'
   | 'collapse';
 

@@ -430,6 +430,17 @@ export const useModelStore = create<ModelState>((set) => ({
     const toMap = <T extends { id: number }>(arr: T[]): Map<number, T> =>
       new Map(arr.map((item) => [item.id, item]));
 
+    // Generate default ground motions if the JSON has none
+    const gmMap: Map<number, GroundMotionRecord> =
+      json.groundMotions.length > 0
+        ? toMap(json.groundMotions)
+        : new Map<number, GroundMotionRecord>([
+            [GM_IDS.EL_CENTRO, generateElCentro()],
+            [GM_IDS.NEAR_FAULT, generateNearFaultPulse()],
+            [GM_IDS.HARMONIC, generateHarmonicSweep()],
+            [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
+          ]);
+
     set({
       model: {
         name: json.modelInfo.name,
@@ -442,7 +453,7 @@ export const useModelStore = create<ModelState>((set) => ({
       materials: toMap(json.materials),
       bearings: toMap(json.bearings),
       loads: toMap(json.loads),
-      groundMotions: toMap(json.groundMotions),
+      groundMotions: gmMap,
     });
   },
 

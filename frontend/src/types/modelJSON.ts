@@ -32,6 +32,7 @@ export interface PresetModel {
 
 export const PRESET_MODELS: PresetModel[] = [
   { label: '3-Story Hospital Frame', url: null },
+  { label: '20-Story Steel Tower', url: '/models/twenty-story.json' },
   { label: 'IBR Alt A: Ductile Bridge', url: '/models/alt-a-ductile.json' },
   { label: 'IBR Alt B: TFP Isolated', url: '/models/alt-b-isolated.json' },
   { label: 'IBR Alt C: Extradosed + TFP', url: '/models/alt-c-extradosed.json' },

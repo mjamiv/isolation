@@ -68,12 +68,12 @@ describe('AnalysisDialog — pushover params', () => {
     expect(screen.getByText('Y')).toBeInTheDocument();
   });
 
-  it('shows Uniform and First-Mode load pattern buttons', () => {
+  it('shows Linear and First-Mode load pattern buttons', () => {
     render(<AnalysisDialog open={true} onOpenChange={vi.fn()} />);
 
     fireEvent.click(screen.getByText('Pushover'));
 
-    expect(screen.getByText('Uniform')).toBeInTheDocument();
+    expect(screen.getByText('Linear')).toBeInTheDocument();
     expect(screen.getByText('First-Mode')).toBeInTheDocument();
   });
 
@@ -97,7 +97,9 @@ describe('AnalysisDialog — pushover validation', () => {
 
     fireEvent.click(screen.getByText('Pushover'));
 
-    expect(screen.getByText('Pushover analysis requires at least one load defined.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Pushover analysis requires at least one load defined.'),
+    ).toBeInTheDocument();
   });
 
   it('does not show validation error when pushover selected with loads', () => {
@@ -117,7 +119,9 @@ describe('AnalysisDialog — pushover validation', () => {
 
     fireEvent.click(screen.getByText('Pushover'));
 
-    expect(screen.queryByText('Pushover analysis requires at least one load defined.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Pushover analysis requires at least one load defined.'),
+    ).not.toBeInTheDocument();
   });
 
   it('disables run button when validation fails', () => {

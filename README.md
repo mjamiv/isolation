@@ -79,8 +79,10 @@ Phases 1 through 5 are complete. The app provides:
 - **Supporting documents**: `analysis_calculations.md` (984 lines of step-by-step calculations), `aashto_compliance.md` (1,029 lines of detailed code compliance review)
 
 ### Model Import & IBR Bridge Models
-- **Load Model dropdown** — toolbar dropdown replaces the old "Load Sample Model" button, with 4 presets and a "Import JSON File..." option
-- **Preset models**: 3-Story Hospital Frame (built-in), IBR Alt A: Ductile Bridge, IBR Alt B: TFP Isolated, IBR Alt C: Extradosed + TFP
+- **Load Model dropdown** — toolbar dropdown with 5 presets and a "Import JSON File..." option
+- **Preset models**: 3-Story Hospital Frame (built-in), 20-Story Steel Tower, IBR Alt A: Ductile Bridge, IBR Alt B: TFP Isolated, IBR Alt C: Extradosed + TFP
+- **20-story steel tower** — 1-bay 20'x20' moment frame, 3 column tiers (W14x500/370/257), 3 beam tiers (W36x300/W30x211/W24x146), T1=1.41s, fully verified with all 4 analysis types
+- **Auto-generated ground motions** — models imported without ground motion records automatically get 4 synthetic records (El Centro, Near-Fault, Harmonic, Subduction), enabling immediate time-history analysis
 - **JSON file import** — load any arbitrary model JSON via file picker with validation and toast notifications
 - **IBR bridge models** — 3 structural models for the Interstate Bridge Replacement seismic isolation study (3-span bridge, Cascadia Subduction Zone)
 - **Analysis/comparison reset** — switching models automatically clears stale analysis and comparison results
@@ -96,6 +98,7 @@ Phases 1 through 5 are complete. The app provides:
 ### Bug Fixes & Polish
 - **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
+- **Load pattern fix** — pushover load pattern values now match backend expectations (`linear`/`first_mode` instead of `uniform`/`firstMode`)
 - **Empty tab states** — Results and Compare tabs show centered placeholder messages when no analysis/comparison data exists, with guidance on what to do next
 
 ### Review Sprint — Security, UX & Code Quality
