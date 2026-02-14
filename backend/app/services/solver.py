@@ -62,7 +62,7 @@ def build_model(model_data: dict) -> None:
     _define_materials(model_data.get("materials", []))
 
     # --- Sections ---
-    _define_sections(model_data.get("sections", []))
+    _define_sections(model_data.get("sections", []), model_data, ndm)
 
     # --- Geometric transformations ---
     _transform_tags: dict[str, int] = {}
@@ -70,7 +70,11 @@ def build_model(model_data: dict) -> None:
     for elem in model_data.get("elements", []):
         tname = elem.get("transform", "Linear")
         if tname not in _transform_tags:
-            ops.geomTransf(tname, _next_transform)
+            if ndm >= 3:
+                # 3D transforms require a vecxz vector defining the local xz plane
+                ops.geomTransf(tname, _next_transform, 0.0, 0.0, 1.0)
+            else:
+                ops.geomTransf(tname, _next_transform)
             _transform_tags[tname] = _next_transform
             _next_transform += 1
 
@@ -814,7 +818,9 @@ def _define_materials(materials: list[dict]) -> None:
             )
 
 
-def _define_sections(sections: list[dict]) -> None:
+def _define_sections(
+    sections: list[dict], model_data: dict, ndm: int = 2
+) -> None:
     """Create OpenSees section commands from section definitions."""
     for sec in sections:
         sid = sec["id"]
@@ -822,10 +828,18 @@ def _define_sections(sections: list[dict]) -> None:
         props = sec.get("properties", {})
 
         if stype == "Elastic":
-            E = props.get("E", 1.0)
+            E = props.get("E") or _get_material_E(
+                model_data, sec.get("material_id")
+            )
             A = props.get("A", 1.0)
             Iz = props.get("Iz", 1.0)
-            ops.section("Elastic", sid, E, A, Iz)
+            if ndm >= 3:
+                Iy = props.get("Iy", Iz)
+                G = E / 2.6  # approximate shear modulus
+                J = props.get("J", 1.0)
+                ops.section("Elastic", sid, E, A, Iz, Iy, G, J)
+            else:
+                ops.section("Elastic", sid, E, A, Iz)
         else:
             logger.warning(
                 "Unsupported section type '%s' for section %d", stype, sid
@@ -835,18 +849,35 @@ def _define_sections(sections: list[dict]) -> None:
 def _define_bearings(bearings: list[dict], ndm: int) -> None:
     """Create Triple Friction Pendulum bearing elements.
 
-    Each bearing requires four friction models and uses the
-    ``TripleFrictionPendulum`` element from OpenSeesPy.
+    Each bearing requires three friction models (one per sliding interface)
+    and four uniaxial materials (vertical compression + 3 rotational DOFs).
+    Uses the ``TripleFrictionPendulum`` element from OpenSeesPy.
+
+    Element signature::
+
+        element('TripleFrictionPendulum', tag, iNode, jNode,
+                frnTag1, frnTag2, frnTag3,
+                vertMatTag, rotZMatTag, rotXMatTag, rotYMatTag,
+                L1, L2, L3, d1, d2, d3,
+                W, uy, kvt, minFv, tol)
     """
     friction_tag_base = 1000
+    mat_tag_base = 5000  # avoid collisions with user-defined materials
+    ele_tag_base = 10000  # offset bearing element tags to avoid collisions
 
     for bearing in bearings:
         bid = bearing["id"]
+        ele_tag = ele_tag_base + bid  # unique element tag
         bnodes = bearing["nodes"]
 
-        # Create friction models for this bearing
+        # Create 3 friction models (one per sliding interface)
+        # Frontend sends 4 surfaces; interfaces 1&2 share inner, 3&4 share outer
+        # We use surfaces [0], [2], [3] → inner1, outer1, outer2
+        fm_list = bearing["friction_models"]
         fm_tags: list[int] = []
-        for j, fm in enumerate(bearing["friction_models"]):
+        for j in range(3):
+            idx = j if j < len(fm_list) else len(fm_list) - 1
+            fm = fm_list[idx]
             ftag = friction_tag_base + (bid - 1) * 10 + j + 1
             ops.frictionModel(
                 "VelDependent",
@@ -857,22 +888,40 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
             )
             fm_tags.append(ftag)
 
+        # Create uniaxial materials for vertical and rotational DOFs
+        # Vertical: stiff elastic in compression
+        W = bearing["weight"]
+        kvt_factor = bearing.get("kvt", 100.0)
+        vert_stiff = kvt_factor * W if W > 0 else 1.0e6
+        vert_mat_tag = mat_tag_base + bid * 10 + 1
+        ops.uniaxialMaterial("Elastic", vert_mat_tag, vert_stiff)
+
+        # Rotational DOFs: very stiff elastic (essentially rigid)
+        rot_stiff = 1.0e10
+        rot_z_tag = mat_tag_base + bid * 10 + 2
+        rot_x_tag = mat_tag_base + bid * 10 + 3
+        rot_y_tag = mat_tag_base + bid * 10 + 4
+        ops.uniaxialMaterial("Elastic", rot_z_tag, rot_stiff)
+        ops.uniaxialMaterial("Elastic", rot_x_tag, rot_stiff)
+        ops.uniaxialMaterial("Elastic", rot_y_tag, rot_stiff)
+
         L1, L2, L3 = bearing["radii"]
         d1, d2, d3 = bearing["disp_capacities"]
-        W = bearing["weight"]
         uy = bearing.get("uy", 0.001)
-        kvt = bearing.get("kvt", 100.0)
         min_fv = bearing.get("min_fv", 0.1)
         tol = bearing.get("tol", 1e-8)
 
         ops.element(
             "TripleFrictionPendulum",
-            bid,
+            ele_tag,
             *bnodes,
             fm_tags[0],
             fm_tags[1],
             fm_tags[2],
-            fm_tags[3],
+            vert_mat_tag,
+            rot_z_tag,
+            rot_x_tag,
+            rot_y_tag,
             L1,
             L2,
             L3,
@@ -881,11 +930,11 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
             d3,
             W,
             uy,
-            kvt,
+            kvt_factor,
             min_fv,
             tol,
         )
-        logger.info("TFP bearing %d created with friction tags %s", bid, fm_tags)
+        logger.info("TFP bearing %d (ele_tag=%d) created", bid, ele_tag)
 
 
 def generate_fixed_base_variant(model_data: dict) -> dict:

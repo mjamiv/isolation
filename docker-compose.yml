@@ -1,33 +1,17 @@
-version: "3.9"
-
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:8000
-    command: npm run dev -- --host 0.0.0.0
-
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CORS_ORIGINS=http://localhost:5173
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    depends_on:
-      - redis
 
   redis:
     image: redis:7-alpine
@@ -36,17 +20,5 @@ services:
     volumes:
       - redis_data:/data
 
-  # postgres:
-  #   image: postgres:16-alpine
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_USER: isovis
-  #     POSTGRES_PASSWORD: isovis_dev
-  #     POSTGRES_DB: isovis
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-
 volumes:
   redis_data:
-  # postgres_data:
