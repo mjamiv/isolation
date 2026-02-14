@@ -6,7 +6,7 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 ## Current Status
 
-Phases 1 through 3 are complete. The app provides:
+Phases 1 through 5 are complete. The app provides:
 
 ### Phase 1 — Model Editor & 3D Viewer
 - **3D structural viewer** with interactive node/element selection, hover highlighting, and support symbols
@@ -46,7 +46,19 @@ Phases 1 through 3 are complete. The app provides:
 - **Time-history playback** — play/pause, speed control (0.25x-4x), time scrub slider, and `useFrame`-based step driver synchronized with 3D viewer
 - **Enhanced backend results** — static results include deformed shape data; modal results include real mass participation ratios; pushover returns capacity curve, hinge states, and deformed shape
 
-Phase 5 (ductile vs isolated comparison, upper/lower bound analysis, summary dashboards) is not yet started.
+### Phase 5 — Ductile vs Isolated Comparison, Lambda Factors & Summary Dashboards
+- **Comparison framework** — side-by-side pushover analysis of isolated (with bearings) vs fixed-base (ductile) structural systems via a single "Run Comparison" workflow
+- **Auto-generated fixed-base variant** — backend removes bearings and fixes base nodes to create the ductile comparison model automatically
+- **ASCE 7-22 Chapter 17 lambda factors** — optional upper/lower bound property modification factors (default 0.85/1.8) that scale bearing friction coefficients for bounding analysis
+- **Comparison dashboard** — accordion-based "Compare" tab in the right panel with:
+  - Capacity curve overlay (isolated nominal + upper/lower bounds + fixed-base, 4 traces)
+  - Key metrics bar (base shear reduction %, isolated/fixed-base shear values)
+  - Inter-story drift profile (horizontal bar chart, both variants)
+  - Base shear comparison (bar chart + reduction percentage)
+  - Bearing demand/capacity ratios (color-coded green/yellow/red with D/C table)
+  - Hinge distribution (IO/LS/CP counts grouped by variant)
+- **3D overlay visualization** — dual deformed shapes in the 3D viewer (blue for isolated, orange for fixed-base) toggled from the comparison panel
+- **AnalysisDialog integration** — "Run Comparison" checkbox appears when model has bearings and pushover is selected; lambda min/max inputs toggle below
 
 ## Tech Stack
 
@@ -85,15 +97,16 @@ isolation/
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
-        analysis/    # AnalysisDialog, useRunAnalysis hook
+        analysis/    # AnalysisDialog, useRunAnalysis, useRunComparison hooks
         results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults, PushoverResults, PlaybackControls
-      services/      # API client, WebSocket client, model serializer
-      stores/        # Zustand stores (modelStore, displayStore, analysisStore)
+        comparison/  # ComparisonPanel, DriftProfileChart, BaseShearComparison, BearingDemandCapacity, HingeDistribution
+      services/      # API client, WebSocket client, model serializer, comparison metrics
+      stores/        # Zustand stores (modelStore, displayStore, analysisStore, comparisonStore)
       types/         # Shared TypeScript interfaces (storeModel.ts, analysis.ts, model.ts)
   backend/           # FastAPI server
     app/
       core/          # Configuration, settings
-      routers/       # API route handlers
+      routers/       # API route handlers (analysis, models, results, comparison)
       services/      # Business logic, OpenSeesPy
       schemas/       # Pydantic models
 ```
@@ -138,7 +151,7 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (151 tests across 12 suites)
+# Frontend tests (184 tests across 16 suites)
 cd frontend && npm test
 
 # Frontend lint

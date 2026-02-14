@@ -29,7 +29,9 @@ async def health_check() -> dict[str, str]:
 from app.routers.models import router as models_router
 from app.routers.analysis import router as analysis_router
 from app.routers.results import router as results_router
+from app.routers.comparison import router as comparison_router
 
 app.include_router(models_router)
 app.include_router(analysis_router)
 app.include_router(results_router)
+app.include_router(comparison_router)

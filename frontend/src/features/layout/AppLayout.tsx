@@ -9,9 +9,11 @@ import { ViewerControls } from '../controls/ViewerControls';
 import { ModelEditor } from '../model-editor/ModelEditor';
 import { PropertyInspector } from '../property-inspector/PropertyInspector';
 import { ResultsPanel } from '../results/ResultsPanel';
+import { ComparisonPanel } from '../comparison/ComparisonPanel';
 import { Toolbar } from './Toolbar';
 import { StatusBar } from './StatusBar';
 import { useAnalysisStore } from '../../stores/analysisStore';
+import { useComparisonStore } from '../../stores/comparisonStore';
 
 function ResizeHandle() {
   return (
@@ -37,16 +39,23 @@ function LeftPanel() {
   );
 }
 
-type RightTab = 'properties' | 'results';
+type RightTab = 'properties' | 'results' | 'comparison';
 
 function RightPanel() {
   const analysisStatus = useAnalysisStore((s) => s.status);
+  const comparisonStatus = useComparisonStore((s) => s.status);
   const hasResults = analysisStatus === 'complete';
+  const hasComparison = comparisonStatus === 'complete' || comparisonStatus === 'running';
 
   const [activeTab, setActiveTab] = useState<RightTab>('properties');
 
-  // Auto-switch to results when analysis completes
-  const effectiveTab = activeTab === 'results' && !hasResults ? 'properties' : activeTab;
+  // Fall back to properties if the selected tab isn't available
+  let effectiveTab: RightTab = activeTab;
+  if (activeTab === 'results' && !hasResults) {
+    effectiveTab = 'properties';
+  } else if (activeTab === 'comparison' && !hasComparison) {
+    effectiveTab = 'properties';
+  }
 
   return (
     <div className="flex h-full flex-col bg-gray-900">
@@ -74,9 +83,23 @@ function RightPanel() {
         >
           Results
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('comparison')}
+          disabled={!hasComparison}
+          className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${
+            effectiveTab === 'comparison'
+              ? 'border-b-2 border-amber-500 text-gray-200'
+              : 'text-gray-500 hover:text-gray-300'
+          } disabled:cursor-not-allowed disabled:opacity-40`}
+        >
+          Compare
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {effectiveTab === 'results' ? <ResultsPanel /> : <PropertyInspector />}
+        {effectiveTab === 'results' && <ResultsPanel />}
+        {effectiveTab === 'comparison' && <ComparisonPanel />}
+        {effectiveTab === 'properties' && <PropertyInspector />}
       </div>
     </div>
   );
@@ -107,7 +130,7 @@ export function AppLayout() {
 
           <ResizeHandle />
 
-          {/* Right panel: Properties / Results */}
+          {/* Right panel: Properties / Results / Comparison */}
           <Panel defaultSize={20} minSize={15} maxSize={35}>
             <RightPanel />
           </Panel>

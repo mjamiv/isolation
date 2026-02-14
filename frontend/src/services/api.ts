@@ -11,6 +11,7 @@
 
 import type { AnalysisParams, AnalysisResults } from '../types/analysis.ts';
 import type { StructuralModel } from '../types/model.ts';
+import type { ComparisonRun, LambdaFactors } from '../types/comparison.ts';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -183,4 +184,25 @@ export async function getAnalysisStatus(
 ): Promise<{ status: string; progress: number }> {
   const response = await fetch(`${API_BASE}/analysis/${analysisId}/status`);
   return handleResponse<{ status: string; progress: number }>(response);
+}
+
+/**
+ * Run a ductile vs isolated comparison analysis.
+ * Posts the model and runs pushover on both isolated and fixed-base variants.
+ */
+export async function runComparison(
+  modelId: string,
+  params: AnalysisParams,
+  lambdaFactors?: LambdaFactors,
+): Promise<ComparisonRun> {
+  const body: Record<string, unknown> = { modelId, params };
+  if (lambdaFactors) {
+    body.lambdaFactors = lambdaFactors;
+  }
+  const response = await fetch(`${API_BASE}/comparison/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(keysToSnake(body)),
+  });
+  return handleResponse<ComparisonRun>(response);
 }

@@ -888,6 +888,81 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
         logger.info("TFP bearing %d created with friction tags %s", bid, fm_tags)
 
 
+def generate_fixed_base_variant(model_data: dict) -> dict:
+    """Generate a fixed-base variant by removing bearings and fixing base nodes.
+
+    Creates a deep copy of the model, removes all bearings, and sets the
+    top nodes of those bearings (i.e. the structure base nodes) to fully
+    fixed boundary conditions.
+
+    Args:
+        model_data: A dict conforming to :class:`StructuralModelSchema`.
+
+    Returns:
+        A modified copy with bearings removed and base nodes fixed.
+    """
+    import copy
+
+    variant = copy.deepcopy(model_data)
+
+    # Collect top nodes from bearings (these become the new fixed base)
+    bearing_top_nodes: set[int] = set()
+    for bearing in variant.get("bearings", []):
+        top_node = bearing["nodes"][1]
+        bearing_top_nodes.add(top_node)
+
+    # Remove all bearings
+    variant["bearings"] = []
+
+    # Also remove bearing bottom nodes (ground nodes) from the model
+    # since they only served as bearing anchors
+    bearing_bottom_nodes: set[int] = set()
+    for bearing in model_data.get("bearings", []):
+        bearing_bottom_nodes.add(bearing["nodes"][0])
+
+    # Fix the top nodes (structure base) with full fixity
+    ndf = variant.get("model_info", {}).get("ndf", 3)
+    for node in variant.get("nodes", []):
+        if node["id"] in bearing_top_nodes:
+            node["fixity"] = [1] * ndf
+
+    logger.info(
+        "Generated fixed-base variant: removed %d bearings, fixed nodes %s",
+        len(model_data.get("bearings", [])),
+        bearing_top_nodes,
+    )
+
+    return variant
+
+
+def apply_lambda_factor(model_data: dict, factor: float) -> dict:
+    """Apply a lambda property modification factor to bearing friction.
+
+    Creates a deep copy and multiplies all bearing friction coefficients
+    (mu_slow, mu_fast) by the given factor. Does NOT modify radii,
+    displacement capacities, weight, or other parameters.
+
+    Args:
+        model_data: A dict conforming to :class:`StructuralModelSchema`.
+        factor: Lambda factor to multiply friction values by.
+
+    Returns:
+        A modified copy with scaled friction coefficients.
+    """
+    import copy
+
+    variant = copy.deepcopy(model_data)
+
+    for bearing in variant.get("bearings", []):
+        for fm in bearing.get("friction_models", []):
+            fm["mu_slow"] = fm["mu_slow"] * factor
+            fm["mu_fast"] = fm["mu_fast"] * factor
+
+    logger.info("Applied lambda factor %.3f to all bearing friction models", factor)
+
+    return variant
+
+
 def _find_section(model_data: dict, section_id: int) -> dict | None:
     """Look up a section dict by ID from the model data."""
     for sec in model_data.get("sections", []):

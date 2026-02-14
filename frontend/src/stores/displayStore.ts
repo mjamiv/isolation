@@ -22,6 +22,9 @@ interface DisplayState {
   // Color mapping
   colorMap: ColorMapType;
 
+  // Comparison overlay
+  showComparisonOverlay: boolean;
+
   // Selection
   selectedNodeIds: Set<number>;
   selectedElementIds: Set<number>;
@@ -40,6 +43,7 @@ interface DisplayState {
   setShowForces: (show: boolean) => void;
   setForceType: (type: ForceType) => void;
   setColorMap: (map: ColorMapType) => void;
+  setShowComparisonOverlay: (show: boolean) => void;
 
   // Selection actions
   selectNode: (id: number, multi?: boolean) => void;
@@ -65,6 +69,9 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   forceType: 'none',
   colorMap: 'none',
 
+  // Default comparison state
+  showComparisonOverlay: false,
+
   // Default selection state
   selectedNodeIds: new Set(),
   selectedElementIds: new Set(),
@@ -83,6 +90,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   setShowForces: (show) => set({ showForces: show }),
   setForceType: (type) => set({ forceType: type }),
   setColorMap: (map) => set({ colorMap: map }),
+  setShowComparisonOverlay: (show) => set({ showComparisonOverlay: show }),
 
   // ── Selection actions ────────────────────────────
   selectNode: (id, multi = false) =>

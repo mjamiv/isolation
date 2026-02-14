@@ -4,6 +4,7 @@ import { Cross2Icon } from '@radix-ui/react-icons';
 import type { AnalysisType, AnalysisParams, PushDirection, LoadPattern } from '@/types/analysis';
 import { useModelStore } from '@/stores/modelStore';
 import { useRunAnalysis } from './useRunAnalysis';
+import { useRunComparison } from './useRunComparison';
 
 interface AnalysisDialogProps {
   open: boolean;
@@ -28,11 +29,22 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const [loadPattern, setLoadPattern] = useState<LoadPattern>('uniform');
   const [displacementIncrement, setDisplacementIncrement] = useState('0.1');
 
+  // Comparison options
+  const [runComparisonMode, setRunComparisonMode] = useState(false);
+  const [enableLambda, setEnableLambda] = useState(false);
+  const [lambdaMin, setLambdaMin] = useState('0.85');
+  const [lambdaMax, setLambdaMax] = useState('1.8');
+
   const loads = useModelStore((s) => s.loads);
+  const bearings = useModelStore((s) => s.bearings);
   const groundMotions = useModelStore((s) => s.groundMotions);
   const gmArray = useMemo(() => Array.from(groundMotions.values()), [groundMotions]);
 
-  const { run, submitting } = useRunAnalysis();
+  const { run: runAnalysis, submitting: analysisSubmitting } = useRunAnalysis();
+  const { run: runComparison, submitting: comparisonSubmitting } = useRunComparison();
+  const submitting = analysisSubmitting || comparisonSubmitting;
+
+  const hasBearings = bearings.size > 0;
 
   const validate = (): string | null => {
     if (analysisType === 'static' && loads.size === 0) {
@@ -46,6 +58,12 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     }
     if (analysisType === 'pushover' && loads.size === 0) {
       return 'Pushover analysis requires at least one load defined.';
+    }
+    if (runComparisonMode && !hasBearings) {
+      return 'Comparison requires bearings in the model.';
+    }
+    if (runComparisonMode && analysisType !== 'pushover') {
+      return 'Comparison mode requires pushover analysis type.';
     }
     return null;
   };
@@ -75,7 +93,15 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     }
 
     onOpenChange(false);
-    void run(params);
+
+    if (runComparisonMode && analysisType === 'pushover') {
+      const lambdaFactors = enableLambda
+        ? { min: Number(lambdaMin) || 0.85, max: Number(lambdaMax) || 1.8 }
+        : undefined;
+      void runComparison(params, lambdaFactors);
+    } else {
+      void runAnalysis(params);
+    }
   };
 
   return (
@@ -244,6 +270,72 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                     ))}
                   </div>
                 </div>
+
+                {/* Comparison toggle */}
+                {hasBearings && (
+                  <div className="rounded-lg bg-gray-800/50 p-3 space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={runComparisonMode}
+                        onChange={(e) => setRunComparisonMode(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-emerald-500 focus:ring-emerald-500"
+                      />
+                      <span className="text-xs font-medium text-gray-300">
+                        Run Comparison (Isolated vs Fixed-Base)
+                      </span>
+                    </label>
+
+                    {runComparisonMode && (
+                      <>
+                        <p className="text-[10px] text-gray-500">
+                          Runs pushover on both the isolated model and an auto-generated fixed-base variant.
+                        </p>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={enableLambda}
+                            onChange={(e) => setEnableLambda(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-amber-500 focus:ring-amber-500"
+                          />
+                          <span className="text-xs text-gray-400">
+                            Lambda Factors (ASCE 7-22 Ch. 17)
+                          </span>
+                        </label>
+
+                        {enableLambda && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] font-medium text-gray-500">Lambda Min</label>
+                              <input
+                                type="number"
+                                value={lambdaMin}
+                                onChange={(e) => setLambdaMin(e.target.value)}
+                                min={0.1}
+                                max={1}
+                                step={0.05}
+                                className="mt-0.5 w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-amber-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-medium text-gray-500">Lambda Max</label>
+                              <input
+                                type="number"
+                                value={lambdaMax}
+                                onChange={(e) => setLambdaMax(e.target.value)}
+                                min={1}
+                                max={3}
+                                step={0.1}
+                                className="mt-0.5 w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-amber-500"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </>
             )}
 
@@ -269,7 +361,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
               disabled={!!validationError || submitting}
               className="rounded bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? 'Submitting...' : 'Run'}
+              {submitting ? 'Submitting...' : runComparisonMode ? 'Run Comparison' : 'Run'}
             </button>
           </div>
         </Dialog.Content>
