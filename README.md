@@ -85,6 +85,14 @@ Phases 1 through 5 are complete. The app provides:
 - **IBR bridge models** — 3 structural models for the Interstate Bridge Replacement seismic isolation study (3-span bridge, Cascadia Subduction Zone)
 - **Analysis/comparison reset** — switching models automatically clears stale analysis and comparison results
 
+### Integration Testing & Solver Hardening
+- **23/23 integration tests passing** — end-to-end tests through real OpenSeesPy backend across 4 models (Hospital SMRF, Alt A Ductile Bridge, Alt B Isolated Bridge, Alt C Extradosed+TFP) and 5 analysis types (static, modal, pushover, time-history, comparison)
+- **Z-up convention for TFP bearings** — TripleFrictionPendulum element requires DOF 3 (Z) as compression direction; solver and test harness auto-convert Y-up models to Z-up for bearing models
+- **Bearing parameter separation** — `vert_stiffness` (elastic spring, can be large) vs `kvt` (TFP tension stiffness, must be low ~1.0); prevents convergence failures on bridge-scale models
+- **Robust gravity preload** — 50 incremental steps with sub-stepping fallback (10 mini-steps), loosened tolerance (1e-4), multi-algorithm cascade (Newton → ModifiedNewton → KrylovNewton)
+- **Time-history robustness** — `wipeAnalysis()` between gravity (Static) and transient phases, sub-stepping for failed time steps, relaxed tolerance (1e-5)
+- **Per-element vecxz vectors** — 3D elements compute geometric transformation vectors from element direction (vertical→(1,0,0), horizontal→(0,0,1)) to avoid singularities
+
 ### Bug Fixes & Polish
 - **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
@@ -153,8 +161,10 @@ isolation/
     app/
       core/          # Configuration, settings
       routers/       # API route handlers (analysis, models, results, comparison)
-      services/      # Business logic, OpenSeesPy
+      services/      # Business logic, OpenSeesPy solver
       schemas/       # Pydantic models
+    tests/           # Backend unit tests (mocked OpenSeesPy)
+  tests/             # Integration tests (real OpenSeesPy end-to-end)
 ```
 
 ## Getting Started
@@ -174,14 +184,19 @@ npm run dev
 
 The dev server starts at `http://localhost:5173`.
 
-### Backend Setup
+### Backend Setup (OpenSeesPy via Rosetta)
+
+On Apple Silicon Macs, OpenSeesPy requires an x86_64 conda environment:
 
 ```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+# One-time setup
+CONDA_SUBDIR=osx-64 conda create -n isovis-x86 python=3.11 -y
+conda activate isovis-x86 && conda config --env --set subdir osx-64
+pip install openseespy fastapi 'uvicorn[standard]' numpy scipy pydantic pydantic-settings python-multipart websockets
+
+# Start the backend
+./start-backend.sh          # normal
+./start-backend.sh --reload # with hot-reload
 ```
 
 The API server starts at `http://localhost:8000`.
@@ -203,8 +218,12 @@ cd frontend && npm test
 # Frontend lint
 cd frontend && npm run lint
 
-# Backend tests (69 unit tests for solver)
+# Backend unit tests (69 tests with mocked OpenSeesPy)
 cd backend && pytest
+
+# Integration tests (23 tests, requires running backend)
+./start-backend.sh &
+python3 tests/integration_test.py
 
 # Type checking
 cd frontend && npx tsc --noEmit

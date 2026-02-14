@@ -23,6 +23,121 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# Unit-aware gravity constant
+# ---------------------------------------------------------------------------
+
+_GRAVITY_CONSTANTS: dict[str, float] = {
+    "kip-in": 386.4,    # in/s²
+    "kip-ft": 32.174,   # ft/s²
+    "kN-m": 9.81,       # m/s²
+    "kN-mm": 9810.0,    # mm/s²
+    "N-m": 9.81,        # m/s²
+    "N-mm": 9810.0,     # mm/s²
+    "lb-in": 386.4,     # in/s²
+    "lb-ft": 32.174,    # ft/s²
+}
+
+
+def _get_gravity(model_data: dict) -> float:
+    """Return the gravitational acceleration constant for the model's unit system."""
+    units = model_data.get("model_info", {}).get("units", "kN-m")
+    return _GRAVITY_CONSTANTS.get(units, 9.81)
+
+
+def _is_z_up(model_data: dict) -> bool:
+    """Check if the model uses Z-up convention.
+
+    Z-up is required for 3D models with TFP bearings (the
+    TripleFrictionPendulum element assumes DOF 3 = compression).
+    The flag persists in ``model_info["z_up"]`` so that derived
+    models (e.g. fixed-base variants with bearings removed) retain
+    the convention.
+    """
+    info = model_data.get("model_info", {})
+    if info.get("z_up"):
+        return True
+    ndm = info.get("ndm", 2)
+    return ndm == 3 and bool(model_data.get("bearings"))
+
+
+def _vert_coord_idx(model_data: dict) -> int:
+    """Return the coordinate index for the vertical direction.
+
+    Returns 2 for Z-up 3D models, 1 for Y-up models.
+    """
+    return 2 if _is_z_up(model_data) else 1
+
+
+# ---------------------------------------------------------------------------
+# Gravity pre-load helper (for TFP bearing models)
+# ---------------------------------------------------------------------------
+
+
+def _run_gravity_preload(model_data: dict, num_steps: int = 10) -> int:
+    """Apply gravity loads incrementally for TFP bearing convergence.
+
+    TFP bearings are highly nonlinear and cannot accept full gravity
+    in a single load step. This helper applies gravity in ``num_steps``
+    incremental steps with automatic algorithm fallback and sub-stepping.
+
+    Args:
+        model_data: Model definition (loads are read from here).
+        num_steps: Number of incremental gravity steps.
+
+    Returns:
+        0 on success, non-zero on failure.
+    """
+    ops.timeSeries("Linear", 1)
+    ops.pattern("Plain", 1, 1)
+    _apply_nodal_loads(model_data)
+
+    ops.constraints("Transformation")
+    ops.numberer("RCM")
+    ops.system("BandGeneral")
+    ops.test("NormDispIncr", 1.0e-4, 200)
+    ops.algorithm("Newton")
+
+    dLambda = 1.0 / num_steps
+    ops.integrator("LoadControl", dLambda)
+    ops.analysis("Static")
+
+    for step in range(num_steps):
+        result = ops.analyze(1)
+        if result != 0:
+            # Fallback 1: ModifiedNewton
+            ops.algorithm("ModifiedNewton")
+            result = ops.analyze(1)
+            ops.algorithm("Newton")
+        if result != 0:
+            # Fallback 2: KrylovNewton
+            ops.algorithm("KrylovNewton")
+            result = ops.analyze(1)
+            ops.algorithm("Newton")
+        if result != 0:
+            # Fallback 3: sub-step (split into 10 mini-steps)
+            mini = dLambda / 10.0
+            ops.integrator("LoadControl", mini)
+            sub_ok = True
+            for _sub in range(10):
+                r = ops.analyze(1)
+                if r != 0:
+                    ops.algorithm("ModifiedNewton")
+                    r = ops.analyze(1)
+                    ops.algorithm("Newton")
+                if r != 0:
+                    sub_ok = False
+                    break
+            ops.integrator("LoadControl", dLambda)  # restore
+            if not sub_ok:
+                logger.warning("Gravity preload failed at step %d/%d", step + 1, num_steps)
+                return -3
+
+    ops.loadConst("-time", 0.0)
+    logger.info("Gravity preload complete (%d steps)", num_steps)
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Model builder
 # ---------------------------------------------------------------------------
 
@@ -33,6 +148,11 @@ def build_model(model_data: dict) -> None:
     This function assumes ``ops.wipe()`` has already been called and
     constructs the full model (nodes, fixities, materials, sections,
     geometric transformations, elements, and TFP bearings).
+
+    3D models with bearings **must** use the Z-up convention because the
+    TripleFrictionPendulum element assumes DOF 3 (Z) is the vertical/
+    compression direction. Clients sending Y-up models should swap Y↔Z
+    before submission (the test script and frontend serializer handle this).
 
     Args:
         model_data: A dict conforming to :class:`StructuralModelSchema`.
@@ -49,14 +169,24 @@ def build_model(model_data: dict) -> None:
     ops.model("basic", "-ndm", ndm, "-ndf", ndf)
     logger.info("Model initialised: ndm=%d, ndf=%d", ndm, ndf)
 
+    # Build node lookup for element vecxz computation
+    node_coords: dict[int, list[float]] = {}
+
     # --- Nodes and fixities ---
     for node in model_data.get("nodes", []):
         nid = node["id"]
-        coords = node["coords"]
-        ops.node(nid, *coords)
-        fixity = node.get("fixity", [])
+        coords = list(node["coords"])
+        while len(coords) < ndm:
+            coords.append(0.0)
+        ops.node(nid, *coords[:ndm])
+        node_coords[nid] = coords[:ndm]
+
+        fixity = list(node.get("fixity", []))
+        while len(fixity) < ndf:
+            fixity.append(1 if fixity and all(f == 1 for f in fixity) else 0)
+
         if fixity and any(f == 1 for f in fixity):
-            ops.fix(nid, *fixity)
+            ops.fix(nid, *fixity[:ndf])
 
     # --- Materials ---
     _define_materials(model_data.get("materials", []))
@@ -64,54 +194,11 @@ def build_model(model_data: dict) -> None:
     # --- Sections ---
     _define_sections(model_data.get("sections", []), model_data, ndm)
 
-    # --- Geometric transformations ---
-    _transform_tags: dict[str, int] = {}
-    _next_transform = 1
-    for elem in model_data.get("elements", []):
-        tname = elem.get("transform", "Linear")
-        if tname not in _transform_tags:
-            if ndm >= 3:
-                # 3D transforms require a vecxz vector defining the local xz plane
-                ops.geomTransf(tname, _next_transform, 0.0, 0.0, 1.0)
-            else:
-                ops.geomTransf(tname, _next_transform)
-            _transform_tags[tname] = _next_transform
-            _next_transform += 1
-
-    # --- Elements ---
-    for elem in model_data.get("elements", []):
-        eid = elem["id"]
-        etype = elem["type"]
-        enodes = elem["nodes"]
-        tname = elem.get("transform", "Linear")
-        transf_tag = _transform_tags.get(tname, 1)
-
-        if etype == "elasticBeamColumn":
-            sec = _find_section(model_data, elem.get("section_id", 0))
-            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
-            E = _get_material_E(model_data, sec.get("material_id")) if sec else 1.0
-            Iz = sec.get("properties", {}).get("Iz", 1.0) if sec else 1.0
-            if ndm == 2:
-                ops.element("elasticBeamColumn", eid, *enodes, A, E, Iz, transf_tag)
-            else:
-                Iy = sec.get("properties", {}).get("Iy", Iz) if sec else Iz
-                J = sec.get("properties", {}).get("J", 1.0) if sec else 1.0
-                G = E / 2.6  # approximate shear modulus
-                ops.element(
-                    "elasticBeamColumn", eid, *enodes, A, E, G, J, Iy, Iz, transf_tag
-                )
-        elif etype == "truss":
-            sec = _find_section(model_data, elem.get("section_id", 0))
-            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
-            mat_id = sec.get("material_id", 1) if sec else 1
-            ops.element("Truss", eid, *enodes, A, mat_id)
-        elif etype == "zeroLength":
-            mat_id = elem.get("section_id", 1)
-            ops.element("zeroLength", eid, *enodes, "-mat", mat_id, "-dir", 1)
-        else:
-            logger.warning(
-                "Unknown element type '%s' for element %d, skipping", etype, eid
-            )
+    # --- Geometric transformations (per-element for 3D) ---
+    if ndm >= 3:
+        _build_3d_elements(model_data, node_coords)
+    else:
+        _build_2d_elements(model_data)
 
     # --- TFP Bearings ---
     _define_bearings(model_data.get("bearings", []), ndm)
@@ -141,22 +228,25 @@ def run_static_analysis(model_data: dict) -> dict:
     try:
         build_model(model_data)
 
-        # Apply loads
-        ops.timeSeries("Linear", 1)
-        ops.pattern("Plain", 1, 1)
-        for load in model_data.get("loads", []):
-            if load.get("type") == "nodal" and load.get("node_id"):
-                ops.load(load["node_id"], *load["values"])
+        has_bearings = bool(model_data.get("bearings"))
 
-        # Analysis setup
-        ops.constraints("Transformation")
-        ops.numberer("RCM")
-        ops.system("BandGeneral")
-        ops.test("NormDispIncr", 1.0e-8, 10)
-        ops.algorithm("Newton")
-        ops.integrator("LoadControl", 1.0)
-        ops.analysis("Static")
-        result = ops.analyze(1)
+        if has_bearings:
+            # TFP bearings need incremental gravity loading
+            result = _run_gravity_preload(model_data, num_steps=50)
+        else:
+            # Simple single-step gravity for non-bearing models
+            ops.timeSeries("Linear", 1)
+            ops.pattern("Plain", 1, 1)
+            _apply_nodal_loads(model_data)
+
+            ops.constraints("Transformation")
+            ops.numberer("RCM")
+            ops.system("BandGeneral")
+            ops.test("NormDispIncr", 1.0e-8, 10)
+            ops.algorithm("Newton")
+            ops.integrator("LoadControl", 1.0)
+            ops.analysis("Static")
+            result = ops.analyze(1)
 
         if result != 0:
             raise RuntimeError("Static analysis failed to converge")
@@ -224,6 +314,14 @@ def run_modal_analysis(model_data: dict, num_modes: int = 3) -> dict:
         # Need mass -- assign from loads or explicit mass
         _assign_mass(model_data)
 
+        # TFP bearings need gravity preload before eigenvalue analysis
+        # so the bearing has the correct vertical force for stiffness
+        has_bearings = bool(model_data.get("bearings"))
+        if has_bearings:
+            gravity_result = _run_gravity_preload(model_data, num_steps=50)
+            if gravity_result != 0:
+                logger.warning("Gravity preload failed for modal analysis")
+
         eigenvalues = ops.eigen(num_modes)
         periods: list[float] = []
         frequencies: list[float] = []
@@ -241,13 +339,14 @@ def run_modal_analysis(model_data: dict, num_modes: int = 3) -> dict:
             free_nodes.append(node)
 
         # Build node mass lookup from loads (same logic as _assign_mass)
-        g = 9.81
+        g = _get_gravity(model_data)
+        vert_dof_idx = _vert_coord_idx(model_data)
         node_masses: dict[int, float] = {}
         for load in model_data.get("loads", []):
             if load.get("type") == "nodal" and load.get("node_id"):
                 values = load.get("values", [])
-                if len(values) >= 2 and values[1] < 0:
-                    node_masses[load["node_id"]] = -values[1] / g
+                if len(values) > vert_dof_idx and values[vert_dof_idx] < 0:
+                    node_masses[load["node_id"]] = -values[vert_dof_idx] / g
         for bearing in model_data.get("bearings", []):
             W = bearing.get("weight", 0)
             if W > 0:
@@ -339,6 +438,35 @@ def run_time_history(
         build_model(model_data)
         _assign_mass(model_data)
 
+        # --- Gravity pre-load (critical for TFP bearing models) ---
+        has_bearings = bool(model_data.get("bearings"))
+        if has_bearings:
+            gravity_result = _run_gravity_preload(model_data, num_steps=50)
+            if gravity_result != 0:
+                logger.warning("Gravity preload failed for time-history, proceeding anyway")
+        else:
+            # Simple gravity for non-bearing models
+            ops.timeSeries("Linear", 1)
+            ops.pattern("Plain", 1, 1)
+            _apply_nodal_loads(model_data)
+            ops.constraints("Transformation")
+            ops.numberer("RCM")
+            ops.system("BandGeneral")
+            ops.test("NormDispIncr", 1.0e-6, 10)
+            ops.algorithm("Newton")
+            ops.integrator("LoadControl", 1.0)
+            ops.analysis("Static")
+            grav_result = ops.analyze(1)
+            if grav_result != 0:
+                logger.warning("Gravity analysis failed for time-history")
+            ops.loadConst("-time", 0.0)
+
+        # --- Clear static analysis state before transient setup ---
+        try:
+            ops.wipeAnalysis()
+        except Exception:
+            pass  # wipeAnalysis may not exist in all versions
+
         # --- Ground motion time series ---
         gm_tag = 100
         ops.timeSeries("Path", gm_tag, "-dt", dt, "-values", *ground_motion)
@@ -361,7 +489,7 @@ def run_time_history(
         ops.constraints("Transformation")
         ops.numberer("RCM")
         ops.system("BandGeneral")
-        ops.test("NormDispIncr", 1.0e-6, 20)
+        ops.test("NormDispIncr", 1.0e-5, 50)
         ops.algorithm("Newton")
         ops.integrator("Newmark", 0.5, 0.25)
         ops.analysis("Transient")
@@ -394,11 +522,29 @@ def run_time_history(
         for step in range(num_steps):
             result = ops.analyze(1, dt)
             if result != 0:
-                # Try modified Newton if standard fails
+                # Fallback 1: ModifiedNewton
                 ops.algorithm("ModifiedNewton")
                 result = ops.analyze(1, dt)
                 ops.algorithm("Newton")
-                if result != 0:
+            if result != 0:
+                # Fallback 2: KrylovNewton
+                ops.algorithm("KrylovNewton")
+                result = ops.analyze(1, dt)
+                ops.algorithm("Newton")
+            if result != 0:
+                # Fallback 3: sub-step (split dt into 10 sub-steps)
+                sub_dt = dt / 10.0
+                sub_ok = True
+                for _sub in range(10):
+                    r = ops.analyze(1, sub_dt)
+                    if r != 0:
+                        ops.algorithm("ModifiedNewton")
+                        r = ops.analyze(1, sub_dt)
+                        ops.algorithm("Newton")
+                    if r != 0:
+                        sub_ok = False
+                        break
+                if not sub_ok:
                     logger.warning(
                         "Analysis failed at step %d / %d", step, num_steps
                     )
@@ -416,10 +562,10 @@ def run_time_history(
 
             for bearing in model_data.get("bearings", []):
                 bkey = str(bearing["id"])
-                bid = bearing["id"]
+                ele_tag = 10000 + bearing["id"]  # bearing element tags are offset
                 try:
-                    disp_resp = ops.eleResponse(bid, "basicDisplacement")
-                    force_resp = ops.eleResponse(bid, "basicForce")
+                    disp_resp = ops.eleResponse(ele_tag, "basicDisplacement")
+                    force_resp = ops.eleResponse(ele_tag, "basicForce")
                     bearing_resp_history[bkey]["displacement"].append(
                         disp_resp[0] if disp_resp else 0.0
                     )
@@ -493,9 +639,10 @@ def run_pushover_analysis(
         if not free_nodes:
             raise RuntimeError("No free nodes found for pushover analysis")
 
-        # Auto-detect control node: topmost free node (highest Y coord)
+        # Auto-detect control node: topmost free node (highest vertical coord)
+        vert_idx = _vert_coord_idx(model_data)
         if control_node is None:
-            control_node = max(free_nodes, key=lambda n: n["coords"][1] if len(n["coords"]) > 1 else 0)["id"]
+            control_node = max(free_nodes, key=lambda n: n["coords"][vert_idx] if len(n["coords"]) > vert_idx else 0)["id"]
 
         # Determine lateral load distribution
         mode_shape_factors: dict[int, float] = {}
@@ -511,26 +658,27 @@ def run_pushover_analysis(
                 logger.warning("First-mode extraction failed, falling back to linear pattern")
                 load_pattern = "linear"
 
-        # Apply gravity loads first
-        ops.timeSeries("Linear", 1)
-        ops.pattern("Plain", 1, 1)
-        for load in model_data.get("loads", []):
-            if load.get("type") == "nodal" and load.get("node_id"):
-                ops.load(load["node_id"], *load["values"])
+        # Apply gravity loads
+        has_bearings = bool(model_data.get("bearings"))
+        if has_bearings:
+            # TFP bearings need incremental gravity loading
+            gravity_result = _run_gravity_preload(model_data, num_steps=50)
+        else:
+            ops.timeSeries("Linear", 1)
+            ops.pattern("Plain", 1, 1)
+            _apply_nodal_loads(model_data)
 
-        # Run gravity analysis
-        ops.constraints("Transformation")
-        ops.numberer("RCM")
-        ops.system("BandGeneral")
-        ops.test("NormDispIncr", 1.0e-6, 10)
-        ops.algorithm("Newton")
-        ops.integrator("LoadControl", 1.0)
-        ops.analysis("Static")
-        gravity_result = ops.analyze(1)
-        if gravity_result != 0:
-            logger.warning("Gravity analysis did not converge, proceeding anyway")
-
-        ops.loadConst("-time", 0.0)
+            ops.constraints("Transformation")
+            ops.numberer("RCM")
+            ops.system("BandGeneral")
+            ops.test("NormDispIncr", 1.0e-6, 10)
+            ops.algorithm("Newton")
+            ops.integrator("LoadControl", 1.0)
+            ops.analysis("Static")
+            gravity_result = ops.analyze(1)
+            if gravity_result != 0:
+                logger.warning("Gravity analysis did not converge, proceeding anyway")
+            ops.loadConst("-time", 0.0)
 
         # Apply lateral load pattern for pushover
         ops.timeSeries("Linear", 2)
@@ -540,14 +688,14 @@ def run_pushover_analysis(
         max_height = 0.0
         for node in free_nodes:
             coords = node["coords"]
-            h = coords[1] if len(coords) > 1 else 0.0
+            h = coords[vert_idx] if len(coords) > vert_idx else 0.0
             if h > max_height:
                 max_height = h
 
         for node in free_nodes:
             nid = node["id"]
             coords = node["coords"]
-            height = coords[1] if len(coords) > 1 else 0.0
+            height = coords[vert_idx] if len(coords) > vert_idx else 0.0
 
             if load_pattern == "first_mode" and nid in mode_shape_factors:
                 factor = abs(mode_shape_factors[nid])
@@ -566,7 +714,7 @@ def run_pushover_analysis(
         ops.constraints("Transformation")
         ops.numberer("RCM")
         ops.system("BandGeneral")
-        ops.test("NormDispIncr", 1.0e-6, 50)
+        ops.test("NormDispIncr", 1.0e-5, 100)
         ops.algorithm("Newton")
         ops.integrator("DisplacementControl", control_node, control_dof, dU)
         ops.analysis("Static")
@@ -676,6 +824,131 @@ def run_pushover_analysis(
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
+
+def _build_2d_elements(model_data: dict) -> None:
+    """Build elements for 2D models (ndm=2, ndf=3)."""
+    _transform_tags: dict[str, int] = {}
+    _next_transform = 1
+    for elem in model_data.get("elements", []):
+        tname = elem.get("transform", "Linear")
+        if tname not in _transform_tags:
+            ops.geomTransf(tname, _next_transform)
+            _transform_tags[tname] = _next_transform
+            _next_transform += 1
+
+    for elem in model_data.get("elements", []):
+        eid = elem["id"]
+        etype = elem["type"]
+        enodes = elem["nodes"]
+        tname = elem.get("transform", "Linear")
+        transf_tag = _transform_tags.get(tname, 1)
+
+        if etype == "elasticBeamColumn":
+            sec = _find_section(model_data, elem.get("section_id", 0))
+            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
+            E = _get_material_E(model_data, sec.get("material_id")) if sec else 1.0
+            Iz = sec.get("properties", {}).get("Iz", 1.0) if sec else 1.0
+            ops.element("elasticBeamColumn", eid, *enodes, A, E, Iz, transf_tag)
+        elif etype == "truss":
+            sec = _find_section(model_data, elem.get("section_id", 0))
+            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
+            mat_id = sec.get("material_id", 1) if sec else 1
+            ops.element("Truss", eid, *enodes, A, mat_id)
+        elif etype == "zeroLength":
+            mat_id = elem.get("section_id", 1)
+            ops.element("zeroLength", eid, *enodes, "-mat", mat_id, "-dir", 1)
+        else:
+            logger.warning(
+                "Unknown element type '%s' for element %d, skipping", etype, eid
+            )
+
+
+def _build_3d_elements(
+    model_data: dict, node_coords: dict[int, list[float]]
+) -> None:
+    """Build elements for 3D models (ndm=3, ndf=6).
+
+    Each element gets its own geometric transformation with a vecxz
+    vector computed from the element direction to avoid singularities.
+    For a planar frame in the XZ plane (Z-up convention):
+
+    * Vertical columns (along Z) use vecxz = (1, 0, 0)
+    * Horizontal beams (along X) use vecxz = (0, 0, 1)
+    * Diagonal elements use whichever avoids singularity
+
+    In Z-up convention the strong-axis section property (``Iz`` in the
+    JSON) maps to the element's ``Iy`` parameter (bending producing
+    in-plane deflection), and the weak-axis property (``Iy`` in JSON)
+    maps to the element's ``Iz`` parameter.
+    """
+    _next_transform = 1
+
+    for elem in model_data.get("elements", []):
+        eid = elem["id"]
+        etype = elem["type"]
+        enodes = elem["nodes"]
+
+        if etype == "elasticBeamColumn":
+            sec = _find_section(model_data, elem.get("section_id", 0))
+            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
+            E = _get_material_E(model_data, sec.get("material_id")) if sec else 1.0
+            # Section "Iz" = strong axis (in-plane in 2D) → element Iy in 3D Z-up
+            Iz_section = sec.get("properties", {}).get("Iz", 1.0) if sec else 1.0
+            Iy_section = sec.get("properties", {}).get("Iy", Iz_section) if sec else Iz_section
+            J = sec.get("properties", {}).get("J", 1.0) if sec else 1.0
+            G = sec.get("properties", {}).get("G", E / 2.6)
+
+            # Compute element direction for vecxz
+            ci = node_coords.get(enodes[0], [0, 0, 0])
+            cj = node_coords.get(enodes[1], [0, 0, 0])
+            dx = cj[0] - ci[0]
+            dy = cj[1] - ci[1] if len(ci) > 1 else 0.0
+            dz = cj[2] - ci[2] if len(ci) > 2 else 0.0
+            length = math.sqrt(dx * dx + dy * dy + dz * dz)
+
+            if length < 1e-12:
+                vecxz = (0.0, 0.0, 1.0)
+            else:
+                # Normalised local x-axis
+                lx = dx / length
+                ly = dy / length
+                lz = dz / length
+                # Choose vecxz that is NOT parallel to local_x
+                # For mostly-vertical elements (large |lz|): use (1, 0, 0)
+                # Otherwise: use (0, 0, 1)
+                if abs(lz) > 0.9:
+                    vecxz = (1.0, 0.0, 0.0)
+                else:
+                    vecxz = (0.0, 0.0, 1.0)
+
+            tname = elem.get("transform", "Linear")
+            ops.geomTransf(tname, _next_transform, *vecxz)
+            transf_tag = _next_transform
+            _next_transform += 1
+
+            # In Z-up convention: section Iz (strong) → element Iy (in-plane)
+            Iy_elem = Iz_section
+            Iz_elem = Iy_section
+            ops.element(
+                "elasticBeamColumn", eid, *enodes,
+                A, E, G, J, Iy_elem, Iz_elem, transf_tag,
+            )
+
+        elif etype == "truss":
+            sec = _find_section(model_data, elem.get("section_id", 0))
+            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
+            mat_id = sec.get("material_id", 1) if sec else 1
+            ops.element("Truss", eid, *enodes, A, mat_id)
+
+        elif etype == "zeroLength":
+            mat_id = elem.get("section_id", 1)
+            ops.element("zeroLength", eid, *enodes, "-mat", mat_id, "-dir", 1)
+
+        else:
+            logger.warning(
+                "Unknown element type '%s' for element %d, skipping", etype, eid
+            )
 
 
 def _compute_deformed_shape(
@@ -891,8 +1164,9 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
         # Create uniaxial materials for vertical and rotational DOFs
         # Vertical: stiff elastic in compression
         W = bearing["weight"]
-        kvt_factor = bearing.get("kvt", 100.0)
-        vert_stiff = kvt_factor * W if W > 0 else 1.0e6
+        # vert_stiffness is the actual spring stiffness (kip/in or kN/m)
+        # kvt is the TFP element's tension force-loss stiffness (should be low)
+        vert_stiff = bearing.get("vert_stiffness", 100.0 * W if W > 0 else 1.0e6)
         vert_mat_tag = mat_tag_base + bid * 10 + 1
         ops.uniaxialMaterial("Elastic", vert_mat_tag, vert_stiff)
 
@@ -907,9 +1181,10 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
 
         L1, L2, L3 = bearing["radii"]
         d1, d2, d3 = bearing["disp_capacities"]
-        uy = bearing.get("uy", 0.001)
+        uy = bearing.get("uy", 0.04)
+        kvt = bearing.get("kvt", 1.0)  # tension stiffness (should be low)
         min_fv = bearing.get("min_fv", 0.1)
-        tol = bearing.get("tol", 1e-8)
+        tol = bearing.get("tol", 1e-5)
 
         ops.element(
             "TripleFrictionPendulum",
@@ -930,7 +1205,7 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
             d3,
             W,
             uy,
-            kvt_factor,
+            kvt,
             min_fv,
             tol,
         )
@@ -953,6 +1228,11 @@ def generate_fixed_base_variant(model_data: dict) -> dict:
     import copy
 
     variant = copy.deepcopy(model_data)
+
+    # Preserve Z-up convention flag so mass/height logic still works
+    # after bearings are removed
+    if _is_z_up(model_data):
+        variant.setdefault("model_info", {})["z_up"] = True
 
     # Collect top nodes from bearings (these become the new fixed base)
     bearing_top_nodes: set[int] = set()
@@ -1012,6 +1292,17 @@ def apply_lambda_factor(model_data: dict, factor: float) -> dict:
     return variant
 
 
+def _apply_nodal_loads(model_data: dict) -> None:
+    """Apply nodal loads from model, padding values to ndf if needed."""
+    ndf = model_data.get("model_info", {}).get("ndf", 3)
+    for load in model_data.get("loads", []):
+        if load.get("type") == "nodal" and load.get("node_id"):
+            values = list(load["values"])
+            while len(values) < ndf:
+                values.append(0.0)
+            ops.load(load["node_id"], *values[:ndf])
+
+
 def _find_section(model_data: dict, section_id: int) -> dict | None:
     """Look up a section dict by ID from the model data."""
     for sec in model_data.get("sections", []):
@@ -1033,18 +1324,29 @@ def _get_material_E(model_data: dict, mat_id: int | None) -> float:
 def _assign_mass(model_data: dict) -> None:
     """Assign lumped masses to nodes from load definitions or explicit mass.
 
-    For nodal gravity loads the mass is computed as ``-Fy / g``.
+    For nodal gravity loads the mass is computed as ``-F_vert / g``
+    using the unit-appropriate gravity constant.  The vertical DOF is
+    DOF 2 (Y) for 2D/Y-up models and DOF 3 (Z) for Z-up 3D models.
     """
-    g = 9.81
+    g = _get_gravity(model_data)
     ndf = model_data.get("model_info", {}).get("ndf", 3)
+
+    # Determine which DOF index carries vertical load
+    vert_dof_idx = _vert_coord_idx(model_data)
 
     for load in model_data.get("loads", []):
         if load.get("type") == "nodal" and load.get("node_id"):
             values = load.get("values", [])
-            # Infer mass from vertical load (DOF 2 in 2D)
-            if len(values) >= 2 and values[1] < 0:
-                mass = -values[1] / g
-                mass_args = [mass] * ndf
+            # Infer mass from vertical load
+            if len(values) > vert_dof_idx and values[vert_dof_idx] < 0:
+                mass = -values[vert_dof_idx] / g
+                # Mass for translational DOFs only; use negligible for rotational
+                mass_args = []
+                for dof_idx in range(ndf):
+                    if dof_idx < 3:
+                        mass_args.append(mass)  # translational DOFs
+                    else:
+                        mass_args.append(1.0e-10)  # rotational DOFs (near-zero)
                 ops.mass(load["node_id"], *mass_args)
 
     # Also check for explicit mass in bearing weight
@@ -1053,7 +1355,12 @@ def _assign_mass(model_data: dict) -> None:
         if W > 0:
             top_node = bearing["nodes"][1]
             mass = W / g
-            mass_args = [mass] * ndf
+            mass_args = []
+            for dof_idx in range(ndf):
+                if dof_idx < 3:
+                    mass_args.append(mass)
+                else:
+                    mass_args.append(1.0e-10)
             try:
                 ops.mass(top_node, *mass_args)
             except Exception:
