@@ -60,6 +60,15 @@ Phases 1 through 5 are complete. The app provides:
 - **3D overlay visualization** — dual deformed shapes in the 3D viewer (blue for isolated, orange for fixed-base) toggled from the comparison panel
 - **AnalysisDialog integration** — "Run Comparison" checkbox appears when model has bearings and pushover is selected; lambda min/max inputs toggle below
 
+### Auto-Load & Default Analysis Setup
+- **Auto-load on startup** — sample model loads automatically on first render, so the app is immediately interactive with a 3D model visible
+- **4 built-in ground motions** — sample model ships with realistic synthetic records:
+  - El Centro 1940 (Approx) — multi-frequency with envelope, ~0.35g peak, 15s
+  - Near-Fault Pulse — Gabor wavelet, ~0.5g peak, 8s
+  - Harmonic Sweep — chirp 0.5-10Hz, 0.25g peak, 12s
+  - Long-Duration Subduction — low-frequency dominated, ~0.15g sustained, 30s
+- **Auto-select ground motion** — switching to Time-History analysis auto-selects the first available record, eliminating the manual selection step
+
 ### Bug Fixes & Polish
 - **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
@@ -156,7 +165,7 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (184 tests across 16 suites)
+# Frontend tests (201 tests across 19 suites)
 cd frontend && npm test
 
 # Frontend lint

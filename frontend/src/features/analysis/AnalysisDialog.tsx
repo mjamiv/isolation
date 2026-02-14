@@ -54,6 +54,13 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     }
   }, [open]);
 
+  // Auto-select first ground motion when switching to time-history
+  useEffect(() => {
+    if (analysisType === 'time_history' && selectedGmId === '' && gmArray.length > 0) {
+      setSelectedGmId(String(gmArray[0]!.id));
+    }
+  }, [analysisType, gmArray, selectedGmId]);
+
   const validate = (): string | null => {
     if (analysisType === 'static' && loads.size === 0) {
       return 'Static analysis requires at least one load.';

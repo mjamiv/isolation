@@ -15,6 +15,129 @@ import type {
 // Re-export types for backward compat
 export type { Node, Element, Section, Material, TFPBearing, FrictionSurface, FrictionModelType, PointLoad, GroundMotionRecord, StructuralModel };
 
+// ── Ground motion generators ─────────────────────────────────────────
+
+function generateElCentro(): GroundMotionRecord {
+  const dt = 0.02;
+  const n = 750; // 15 seconds
+  const acc: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const t = i * dt;
+    // Envelope: ramp up 0-2s, sustain 2-6s, decay 6-15s
+    let env: number;
+    if (t < 2) env = t / 2;
+    else if (t < 6) env = 1;
+    else env = Math.exp(-0.3 * (t - 6));
+    // Multi-frequency content
+    const sig =
+      0.18 * Math.sin(2 * Math.PI * 1.5 * t) +
+      0.12 * Math.sin(2 * Math.PI * 3.2 * t + 0.7) +
+      0.08 * Math.sin(2 * Math.PI * 5.8 * t + 1.3) +
+      0.05 * Math.sin(2 * Math.PI * 8.1 * t + 2.1);
+    acc.push(env * sig);
+  }
+  // Normalize to ~0.35g peak
+  const peak = Math.max(...acc.map(Math.abs));
+  const scale = 0.35 / peak;
+  return {
+    id: 1,
+    name: 'El Centro 1940 (Approx)',
+    dt,
+    acceleration: acc.map((a) => a * scale),
+    direction: 1,
+    scaleFactor: 1.0,
+  };
+}
+
+function generateNearFaultPulse(): GroundMotionRecord {
+  const dt = 0.02;
+  const n = 400; // 8 seconds
+  const acc: number[] = [];
+  const tp = 1.5; // pulse period
+  const t0 = 2.5; // pulse center time
+  for (let i = 0; i < n; i++) {
+    const t = i * dt;
+    // Gabor wavelet: Gaussian-enveloped cosine
+    const tau = (t - t0) / (tp / 2);
+    const envelope = Math.exp(-tau * tau);
+    acc.push(envelope * Math.cos(2 * Math.PI * t / tp));
+  }
+  // Normalize to ~0.5g peak
+  const peak = Math.max(...acc.map(Math.abs));
+  const scale = 0.5 / peak;
+  return {
+    id: 2,
+    name: 'Near-Fault Pulse',
+    dt,
+    acceleration: acc.map((a) => a * scale),
+    direction: 1,
+    scaleFactor: 1.0,
+  };
+}
+
+function generateHarmonicSweep(): GroundMotionRecord {
+  const dt = 0.01;
+  const n = 1200; // 12 seconds
+  const acc: number[] = [];
+  const f0 = 0.5; // start freq Hz
+  const f1 = 10;  // end freq Hz
+  const dur = n * dt;
+  for (let i = 0; i < n; i++) {
+    const t = i * dt;
+    // Linear chirp: instantaneous freq = f0 + (f1-f0)*t/dur
+    const phase = 2 * Math.PI * (f0 * t + 0.5 * (f1 - f0) * t * t / dur);
+    // Trapezoidal envelope
+    let env: number;
+    if (t < 1) env = t;
+    else if (t > dur - 1) env = dur - t;
+    else env = 1;
+    acc.push(env * Math.sin(phase));
+  }
+  // Normalize to 0.25g peak
+  const peak = Math.max(...acc.map(Math.abs));
+  const scale = 0.25 / peak;
+  return {
+    id: 3,
+    name: 'Harmonic Sweep',
+    dt,
+    acceleration: acc.map((a) => a * scale),
+    direction: 1,
+    scaleFactor: 1.0,
+  };
+}
+
+function generateLongDurationSubduction(): GroundMotionRecord {
+  const dt = 0.02;
+  const n = 1500; // 30 seconds
+  const acc: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const t = i * dt;
+    // Slow envelope: ramp 0-5s, sustain 5-20s, decay 20-30s
+    let env: number;
+    if (t < 5) env = t / 5;
+    else if (t < 20) env = 1;
+    else env = Math.exp(-0.2 * (t - 20));
+    // Low-frequency dominated content
+    const sig =
+      0.08 * Math.sin(2 * Math.PI * 0.3 * t) +
+      0.06 * Math.sin(2 * Math.PI * 0.7 * t + 0.5) +
+      0.04 * Math.sin(2 * Math.PI * 1.2 * t + 1.0) +
+      0.03 * Math.sin(2 * Math.PI * 2.0 * t + 1.5);
+    acc.push(env * sig);
+  }
+  // Normalize to ~0.15g peak
+  const peak = Math.max(...acc.map(Math.abs));
+  const scale = 0.15 / peak;
+  return {
+    id: 4,
+    name: 'Long-Duration Subduction',
+    dt,
+    acceleration: acc.map((a) => a * scale),
+    direction: 1,
+    scaleFactor: 1.0,
+  };
+}
+
 // ── Store interface ───────────────────────────────────────────────────
 
 interface ModelState {
@@ -447,7 +570,12 @@ export const useModelStore = create<ModelState>((set) => ({
       materials,
       bearings,
       loads,
-      groundMotions: new Map(),
+      groundMotions: new Map<number, GroundMotionRecord>([
+        [1, generateElCentro()],
+        [2, generateNearFaultPulse()],
+        [3, generateHarmonicSweep()],
+        [4, generateLongDurationSubduction()],
+      ]),
     });
   },
 }));
