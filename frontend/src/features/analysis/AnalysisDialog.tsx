@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import type { AnalysisType, AnalysisParams, PushDirection, LoadPattern } from '@/types/analysis';
@@ -45,6 +45,14 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const submitting = analysisSubmitting || comparisonSubmitting;
 
   const hasBearings = bearings.size > 0;
+
+  // Reset comparison state every time the dialog opens
+  useEffect(() => {
+    if (open) {
+      setRunComparisonMode(false);
+      setEnableLambda(false);
+    }
+  }, [open]);
 
   const validate = (): string | null => {
     if (analysisType === 'static' && loads.size === 0) {
@@ -133,7 +141,11 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   <button
                     key={t.value}
                     type="button"
-                    onClick={() => setAnalysisType(t.value)}
+                    onClick={() => {
+                      setAnalysisType(t.value);
+                      setRunComparisonMode(false);
+                      setEnableLambda(false);
+                    }}
                     className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                       analysisType === t.value
                         ? 'bg-gray-600 text-white'
@@ -361,7 +373,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
               disabled={!!validationError || submitting}
               className="rounded bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? 'Submitting...' : runComparisonMode ? 'Run Comparison' : 'Run'}
+              {submitting ? 'Submitting...' : (runComparisonMode && analysisType === 'pushover') ? 'Run Comparison' : 'Run'}
             </button>
           </div>
         </Dialog.Content>

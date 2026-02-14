@@ -51,7 +51,7 @@ beforeEach(() => {
 describe('ComparisonPanel — empty state', () => {
   it('shows empty message when idle', () => {
     render(<ComparisonPanel />);
-    expect(screen.getByText(/no comparison results available/i)).toBeInTheDocument();
+    expect(screen.getByText(/no comparison data/i)).toBeInTheDocument();
   });
 });
 

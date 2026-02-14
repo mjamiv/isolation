@@ -56,8 +56,11 @@ export function ComparisonPanel() {
 
   if (status === 'idle') {
     return (
-      <div className="p-3 text-xs text-gray-500">
-        No comparison results available. Run a pushover comparison to see results here.
+      <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+        <p className="text-sm font-medium text-slate-400">No comparison data</p>
+        <p className="mt-1 text-xs text-slate-600">
+          Run a pushover comparison to compare isolated vs fixed-base performance
+        </p>
       </div>
     );
   }

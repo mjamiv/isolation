@@ -12,8 +12,6 @@ import { ResultsPanel } from '../results/ResultsPanel';
 import { ComparisonPanel } from '../comparison/ComparisonPanel';
 import { Toolbar } from './Toolbar';
 import { StatusBar } from './StatusBar';
-import { useAnalysisStore } from '../../stores/analysisStore';
-import { useComparisonStore } from '../../stores/comparisonStore';
 
 function ResizeHandle() {
   return (
@@ -42,20 +40,7 @@ function LeftPanel() {
 type RightTab = 'properties' | 'results' | 'comparison';
 
 function RightPanel() {
-  const analysisStatus = useAnalysisStore((s) => s.status);
-  const comparisonStatus = useComparisonStore((s) => s.status);
-  const hasResults = analysisStatus === 'complete';
-  const hasComparison = comparisonStatus === 'complete' || comparisonStatus === 'running';
-
   const [activeTab, setActiveTab] = useState<RightTab>('properties');
-
-  // Fall back to properties if the selected tab isn't available
-  let effectiveTab: RightTab = activeTab;
-  if (activeTab === 'results' && !hasResults) {
-    effectiveTab = 'properties';
-  } else if (activeTab === 'comparison' && !hasComparison) {
-    effectiveTab = 'properties';
-  }
 
   return (
     <div className="flex h-full flex-col bg-gray-900">
@@ -64,7 +49,7 @@ function RightPanel() {
           type="button"
           onClick={() => setActiveTab('properties')}
           className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${
-            effectiveTab === 'properties'
+            activeTab === 'properties'
               ? 'border-b-2 border-blue-500 text-gray-200'
               : 'text-gray-500 hover:text-gray-300'
           }`}
@@ -74,32 +59,30 @@ function RightPanel() {
         <button
           type="button"
           onClick={() => setActiveTab('results')}
-          disabled={!hasResults}
           className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${
-            effectiveTab === 'results'
+            activeTab === 'results'
               ? 'border-b-2 border-emerald-500 text-gray-200'
               : 'text-gray-500 hover:text-gray-300'
-          } disabled:cursor-not-allowed disabled:opacity-40`}
+          }`}
         >
           Results
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('comparison')}
-          disabled={!hasComparison}
           className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${
-            effectiveTab === 'comparison'
+            activeTab === 'comparison'
               ? 'border-b-2 border-amber-500 text-gray-200'
               : 'text-gray-500 hover:text-gray-300'
-          } disabled:cursor-not-allowed disabled:opacity-40`}
+          }`}
         >
           Compare
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {effectiveTab === 'results' && <ResultsPanel />}
-        {effectiveTab === 'comparison' && <ComparisonPanel />}
-        {effectiveTab === 'properties' && <PropertyInspector />}
+        {activeTab === 'results' && <ResultsPanel />}
+        {activeTab === 'comparison' && <ComparisonPanel />}
+        {activeTab === 'properties' && <PropertyInspector />}
       </div>
     </div>
   );

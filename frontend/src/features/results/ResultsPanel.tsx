@@ -16,8 +16,9 @@ export function ResultsPanel() {
 
   if (!results) {
     return (
-      <div className="p-3 text-xs text-gray-500">
-        No analysis results available. Run an analysis to see results here.
+      <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+        <p className="text-sm font-medium text-slate-400">No analysis results yet</p>
+        <p className="mt-1 text-xs text-slate-600">Run an analysis to see results here</p>
       </div>
     );
   }

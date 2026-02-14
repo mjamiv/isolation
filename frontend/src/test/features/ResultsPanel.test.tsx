@@ -30,7 +30,7 @@ beforeEach(() => {
 describe('ResultsPanel — no results', () => {
   it('shows placeholder when no results available', () => {
     render(<ResultsPanel />);
-    expect(screen.getByText(/No analysis results available/)).toBeInTheDocument();
+    expect(screen.getByText(/No analysis results yet/)).toBeInTheDocument();
   });
 });
 

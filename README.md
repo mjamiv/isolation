@@ -60,6 +60,11 @@ Phases 1 through 5 are complete. The app provides:
 - **3D overlay visualization** — dual deformed shapes in the 3D viewer (blue for isolated, orange for fixed-base) toggled from the comparison panel
 - **AnalysisDialog integration** — "Run Comparison" checkbox appears when model has bearings and pushover is selected; lambda min/max inputs toggle below
 
+### Bug Fixes & Polish
+- **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
+- **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
+- **Empty tab states** — Results and Compare tabs show centered placeholder messages when no analysis/comparison data exists, with guidance on what to do next
+
 ## Tech Stack
 
 ### Frontend
@@ -93,7 +98,7 @@ isolation/
       components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
       features/
         layout/      # AppLayout, Toolbar, StatusBar
-        viewer-3d/   # 3D canvas, NodePoints, MemberLines, SupportSymbols, BearingSymbols, Labels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver
+        viewer-3d/   # 3D canvas, NodePoints, MemberLines (wireframe/extruded/solid), SupportSymbols, BearingSymbols, Labels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
