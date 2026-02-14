@@ -74,6 +74,14 @@ Phases 1 through 5 are complete. The app provides:
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
 - **Empty tab states** — Results and Compare tabs show centered placeholder messages when no analysis/comparison data exists, with guidance on what to do next
 
+### Review Sprint — Security, UX & Code Quality
+- **Theme overhaul** — black/white/gold/yellow color scheme replacing all blue/emerald/amber accents, including Tailwind config, 3D viewer colors, and Plotly chart traces
+- **Accessibility** — `aria-label` on all icon buttons, `role="alert"` on validation errors, WCAG AA color contrast fixes, always-visible edit/delete buttons (no hover-only)
+- **Toast notifications** — lightweight toast system (Zustand store + Toast component) for analysis success/error feedback, auto-dismiss after 5s
+- **Security hardening** — CORS restricted to specific methods/headers, Pydantic `max_length` on all model list fields, sanitized error responses (generic client messages + server-side logging)
+- **Dependency pinning** — `~` ranges in package.json, `==` exact versions in requirements.txt, package-lock.json committed
+- **Code quality** — generic `useRunAsync()` hook extracted from duplicated analysis/comparison hooks, magic numbers replaced with named constants, 69 backend unit tests for solver.py, husky + lint-staged pre-commit hooks
+
 ## Tech Stack
 
 ### Frontend
@@ -85,6 +93,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Plotly.js** for response plots
 - **Vite** for build tooling
 - **Vitest** for testing
+- **Husky + lint-staged** for pre-commit hooks
 
 ### Backend
 - **FastAPI** with Python 3.11+
@@ -111,11 +120,11 @@ isolation/
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
-        analysis/    # AnalysisDialog, useRunAnalysis, useRunComparison hooks
+        analysis/    # AnalysisDialog, useRunAnalysis, useRunComparison, useRunAsync hooks
         results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults, PushoverResults, PlaybackControls
         comparison/  # ComparisonPanel, DriftProfileChart, BaseShearComparison, BearingDemandCapacity, HingeDistribution
       services/      # API client, WebSocket client, model serializer, comparison metrics
-      stores/        # Zustand stores (modelStore, displayStore, analysisStore, comparisonStore)
+      stores/        # Zustand stores (modelStore, displayStore, analysisStore, comparisonStore, toastStore)
       types/         # Shared TypeScript interfaces (storeModel.ts, analysis.ts, model.ts)
   backend/           # FastAPI server
     app/
@@ -171,12 +180,14 @@ cd frontend && npm test
 # Frontend lint
 cd frontend && npm run lint
 
-# Backend tests
+# Backend tests (69 unit tests for solver)
 cd backend && pytest
 
 # Type checking
 cd frontend && npx tsc --noEmit
 ```
+
+Pre-commit hooks (husky + lint-staged) automatically run ESLint and Prettier on staged `.ts`/`.tsx` files.
 
 ## License
 

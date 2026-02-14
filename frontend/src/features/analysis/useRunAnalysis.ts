@@ -1,15 +1,13 @@
-import { useState, useCallback } from 'react';
-import type { AnalysisParams } from '@/types/analysis';
-import { useModelStore } from '@/stores/modelStore';
+import { useMemo } from 'react';
+import type { AnalysisParams, AnalysisResults } from '@/types/analysis';
 import { useAnalysisStore } from '@/stores/analysisStore';
-import { serializeModel } from '@/services/modelSerializer';
-import { submitModel, runAnalysis, getAnalysisStatus, getResults } from '@/services/api';
+import { useToastStore } from '@/stores/toastStore';
+import { runAnalysis, getAnalysisStatus, getResults } from '@/services/api';
+import { useRunAsync } from './useRunAsync';
 
 const POLL_INTERVAL_MS = 500;
 
 export function useRunAnalysis() {
-  const [submitting, setSubmitting] = useState(false);
-
   const startAnalysis = useAnalysisStore((s) => s.startAnalysis);
   const setAnalysisId = useAnalysisStore((s) => s.setAnalysisId);
   const setAnalysisType = useAnalysisStore((s) => s.setAnalysisType);
@@ -17,50 +15,46 @@ export function useRunAnalysis() {
   const setResults = useAnalysisStore((s) => s.setResults);
   const setError = useAnalysisStore((s) => s.setError);
 
-  const run = useCallback(async (params: AnalysisParams) => {
-    setSubmitting(true);
-    try {
-      // 1. Serialize the current model
-      const storeState = useModelStore.getState();
-      const serialized = serializeModel(storeState);
+  const config = useMemo(
+    () => ({
+      runFn: async (modelId: string, params: AnalysisParams): Promise<AnalysisResults> => {
+        setAnalysisType(params.type);
+        const { analysisId } = await runAnalysis(modelId, params);
+        setAnalysisId(analysisId);
 
-      // 2. Submit model to backend
-      const { modelId } = await submitModel(serialized);
+        // Poll for status until complete/failed
+        const poll = async (): Promise<AnalysisResults> => {
+          const { status, progress } = await getAnalysisStatus(analysisId);
 
-      // 3. Start analysis
-      startAnalysis();
-      setAnalysisType(params.type);
-      const { analysisId } = await runAnalysis(modelId, params);
-      setAnalysisId(analysisId);
+          if (status === 'running' || status === 'pending') {
+            setProgress(progress * 100, Math.round(progress * 100), 100);
+            return new Promise((resolve, reject) => {
+              setTimeout(() => poll().then(resolve, reject), POLL_INTERVAL_MS);
+            });
+          }
 
-      // 4. Poll for status until complete/failed
-      const poll = async (): Promise<void> => {
-        const { status, progress } = await getAnalysisStatus(analysisId);
+          if (status === 'error' || status === 'failed') {
+            throw new Error(`Analysis failed (status: ${status})`);
+          }
 
-        if (status === 'running' || status === 'pending') {
-          setProgress(progress * 100, Math.round(progress * 100), 100);
-          return new Promise((resolve) => {
-            setTimeout(() => resolve(poll()), POLL_INTERVAL_MS);
-          });
-        }
+          // status === 'complete' or 'completed'
+          return getResults(analysisId);
+        };
 
-        if (status === 'error' || status === 'failed') {
-          setError(`Analysis failed (status: ${status})`);
-          return;
-        }
+        return poll();
+      },
+      onStart: () => startAnalysis(),
+      onResult: (result: AnalysisResults) => {
+        setResults(result);
+        useToastStore.getState().addToast('success', 'Analysis completed successfully.');
+      },
+      onError: (message: string) => {
+        setError(message);
+        useToastStore.getState().addToast('error', `Analysis failed: ${message}`);
+      },
+    }),
+    [startAnalysis, setAnalysisId, setAnalysisType, setProgress, setResults, setError],
+  );
 
-        // status === 'complete' or 'completed'
-        const results = await getResults(analysisId);
-        setResults(results);
-      };
-
-      await poll();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setSubmitting(false);
-    }
-  }, [startAnalysis, setAnalysisId, setAnalysisType, setProgress, setResults, setError]);
-
-  return { run, submitting };
+  return useRunAsync(config);
 }

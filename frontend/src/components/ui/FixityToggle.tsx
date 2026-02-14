@@ -24,10 +24,8 @@ export function FixityToggle({ value, onChange, disabled }: FixityToggleProps) {
             disabled={disabled}
             onClick={() => toggle(i)}
             className={`rounded px-1.5 py-0.5 text-[10px] font-mono transition-colors ${
-              value[i]
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-800 text-gray-500 ring-1 ring-gray-700'
-            } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:ring-blue-500 cursor-pointer'}`}
+              value[i] ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-500 ring-1 ring-gray-700'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:ring-yellow-500 cursor-pointer'}`}
             title={`${label}: ${value[i] ? 'Fixed' : 'Free'}`}
           >
             {label}

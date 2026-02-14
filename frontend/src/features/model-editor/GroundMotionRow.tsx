@@ -49,28 +49,46 @@ export function GroundMotionRow({ gm, onDelete }: GroundMotionRowProps) {
     return (
       <div className="space-y-1 rounded bg-gray-800/50 p-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-blue-400">GM {gm.id}</span>
+          <span className="text-xs font-medium text-yellow-400">GM {gm.id}</span>
           <div className="flex gap-0.5">
-            <IconButton onClick={save} title="Save"><CheckIcon className="h-3 w-3" /></IconButton>
-            <IconButton onClick={cancel} title="Cancel"><Cross2Icon className="h-3 w-3" /></IconButton>
+            <IconButton onClick={save} title="Save">
+              <CheckIcon className="h-3 w-3" />
+            </IconButton>
+            <IconButton onClick={cancel} title="Cancel">
+              <Cross2Icon className="h-3 w-3" />
+            </IconButton>
           </div>
         </div>
-        <FormField label="Name" value={draft.name} onChange={(v) => setDraft((d) => ({ ...d, name: v }))} />
+        <FormField
+          label="Name"
+          value={draft.name}
+          onChange={(v) => setDraft((d) => ({ ...d, name: v }))}
+        />
         <div className="grid grid-cols-3 gap-1">
-          <FormField label="dt" type="number" value={draft.dt} onChange={(v) => setDraft((d) => ({ ...d, dt: v }))} />
+          <FormField
+            label="dt"
+            type="number"
+            value={draft.dt}
+            onChange={(v) => setDraft((d) => ({ ...d, dt: v }))}
+          />
           <div className="flex items-center gap-2">
             <label className="shrink-0 text-xs text-gray-400 w-12">Dir</label>
             <select
               value={draft.direction}
               onChange={(e) => setDraft((d) => ({ ...d, direction: e.target.value }))}
-              className="w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-blue-500"
+              className="w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
             >
               <option value="1">X</option>
               <option value="2">Y</option>
               <option value="3">Z</option>
             </select>
           </div>
-          <FormField label="Scale" type="number" value={draft.scaleFactor} onChange={(v) => setDraft((d) => ({ ...d, scaleFactor: v }))} />
+          <FormField
+            label="Scale"
+            type="number"
+            value={draft.scaleFactor}
+            onChange={(v) => setDraft((d) => ({ ...d, scaleFactor: v }))}
+          />
         </div>
       </div>
     );
@@ -83,7 +101,10 @@ export function GroundMotionRow({ gm, onDelete }: GroundMotionRowProps) {
       <span className="text-[10px] text-gray-500">
         {DIR_LABELS[gm.direction] ?? '?'} dt={gm.dt}
       </span>
-      <div className="hidden gap-0.5 group-hover:flex" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex gap-0.5 opacity-60 hover:opacity-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         <IconButton onClick={startEdit} title="Edit">
           <Pencil1Icon className="h-3 w-3" />
         </IconButton>

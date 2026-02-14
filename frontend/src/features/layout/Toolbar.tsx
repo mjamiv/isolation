@@ -24,20 +24,18 @@ export function Toolbar() {
       {/* Left: App title */}
       <div className="flex items-center gap-3">
         <h1 className="text-lg font-bold tracking-wide text-white">
-          <span className="text-blue-400">Iso</span>
-          <span className="text-emerald-400">Vis</span>
+          <span className="text-yellow-400">Iso</span>
+          <span className="text-yellow-500">Vis</span>
         </h1>
         <div className="mx-2 h-6 w-px bg-gray-700" />
-        <span className="text-xs text-gray-400">
-          Triple Friction Pendulum Bearing Simulator
-        </span>
+        <span className="text-xs text-gray-400">Triple Friction Pendulum Bearing Simulator</span>
       </div>
 
       {/* Center: Action buttons */}
       <div className="flex items-center gap-2">
         <button
           onClick={loadSampleModel}
-          className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-500"
+          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500"
         >
           Load Sample Model
         </button>
@@ -45,7 +43,7 @@ export function Toolbar() {
         <button
           onClick={() => setDialogOpen(true)}
           disabled={analysisStatus === 'running'}
-          className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {analysisStatus === 'running' ? 'Running...' : 'Run Analysis'}
         </button>

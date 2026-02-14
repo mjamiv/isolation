@@ -1,4 +1,9 @@
-import { useDisplayStore, type DisplayMode, type ForceType, type ColorMapType } from '../../stores/displayStore';
+import {
+  useDisplayStore,
+  type DisplayMode,
+  type ForceType,
+  type ColorMapType,
+} from '../../stores/displayStore';
 
 const DISPLAY_MODE_OPTIONS: { value: DisplayMode; label: string }[] = [
   { value: 'wireframe', label: 'Wireframe' },
@@ -23,9 +28,7 @@ const COLOR_MAP_OPTIONS: { value: ColorMapType; label: string }[] = [
 function ControlSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-        {title}
-      </h3>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{title}</h3>
       {children}
     </div>
   );
@@ -48,7 +51,7 @@ function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative h-4 w-8 rounded-full transition-colors ${
-          checked ? 'bg-blue-600' : 'bg-gray-700'
+          checked ? 'bg-yellow-600' : 'bg-gray-700'
         }`}
       >
         <div
@@ -78,7 +81,7 @@ function SelectControl<T extends string>({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="rounded bg-gray-800 px-2 py-0.5 text-xs text-gray-300 outline-none ring-1 ring-gray-700 focus:ring-blue-500"
+        className="rounded bg-gray-800 px-2 py-0.5 text-xs text-gray-300 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -124,11 +127,7 @@ export function ViewerControls() {
       </ControlSection>
 
       <ControlSection title="Deformation">
-        <Toggle
-          label="Show Deformed"
-          checked={showDeformed}
-          onChange={setShowDeformed}
-        />
+        <Toggle label="Show Deformed" checked={showDeformed} onChange={setShowDeformed} />
         <label className="flex items-center justify-between">
           <span className="text-xs text-gray-400">Scale Factor</span>
           <div className="flex items-center gap-2">
@@ -138,11 +137,9 @@ export function ViewerControls() {
               max={1000}
               value={scaleFactor}
               onChange={(e) => setScaleFactor(Number(e.target.value))}
-              className="h-1 w-20 cursor-pointer accent-blue-500"
+              className="h-1 w-20 cursor-pointer accent-yellow-500"
             />
-            <span className="w-8 text-right text-xs text-gray-500">
-              {scaleFactor}
-            </span>
+            <span className="w-8 text-right text-xs text-gray-500">{scaleFactor}</span>
           </div>
         </label>
       </ControlSection>

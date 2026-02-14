@@ -57,8 +57,8 @@ export function ComparisonPanel() {
   if (status === 'idle') {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-        <p className="text-sm font-medium text-slate-400">No comparison data</p>
-        <p className="mt-1 text-xs text-slate-600">
+        <p className="text-sm font-medium text-gray-400">No comparison data</p>
+        <p className="mt-1 text-xs text-gray-500">
           Run a pushover comparison to compare isolated vs fixed-base performance
         </p>
       </div>
@@ -69,7 +69,7 @@ export function ComparisonPanel() {
     return (
       <div className="p-3 text-xs text-gray-400">
         <div className="flex items-center gap-2">
-          <div className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-yellow-500 border-t-transparent" />
           Running comparison analysis...
         </div>
       </div>
@@ -77,19 +77,11 @@ export function ComparisonPanel() {
   }
 
   if (status === 'error') {
-    return (
-      <div className="p-3 text-xs text-red-400">
-        Comparison failed: {error}
-      </div>
-    );
+    return <div className="p-3 text-xs text-red-400">Comparison failed: {error}</div>;
   }
 
   if (!isolated || !fixedBase || !summary) {
-    return (
-      <div className="p-3 text-xs text-gray-500">
-        Comparison data incomplete.
-      </div>
-    );
+    return <div className="p-3 text-xs text-gray-500">Comparison data incomplete.</div>;
   }
 
   // Build capacity curve traces
@@ -99,7 +91,7 @@ export function ComparisonPanel() {
       y: isolated.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
       type: 'scatter' as const,
       mode: 'lines' as const,
-      line: { color: '#10b981', width: 2 },
+      line: { color: '#D4AF37', width: 2 },
       name: 'Isolated (Nominal)',
     },
     {
@@ -107,7 +99,7 @@ export function ComparisonPanel() {
       y: fixedBase.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
       type: 'scatter' as const,
       mode: 'lines' as const,
-      line: { color: '#f59e0b', width: 2 },
+      line: { color: '#FACC15', width: 2 },
       name: 'Fixed-Base',
     },
   ];
@@ -118,7 +110,7 @@ export function ComparisonPanel() {
       y: isolatedUpper.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
       type: 'scatter' as const,
       mode: 'lines' as const,
-      line: { color: '#10b981', width: 1.5, dash: 'dash' },
+      line: { color: '#D4AF37', width: 1.5, dash: 'dash' },
       name: `Upper (${lambdaFactors?.max ?? 1.8})`,
     });
   }
@@ -129,7 +121,7 @@ export function ComparisonPanel() {
       y: isolatedLower.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
       type: 'scatter' as const,
       mode: 'lines' as const,
-      line: { color: '#10b981', width: 1.5, dash: 'dot' },
+      line: { color: '#D4AF37', width: 1.5, dash: 'dot' },
       name: `Lower (${lambdaFactors?.min ?? 0.85})`,
     });
   }
@@ -143,7 +135,7 @@ export function ComparisonPanel() {
             Isolated vs Fixed-Base Comparison
           </span>
           {lambdaFactors && (
-            <span className="text-[10px] text-amber-400">
+            <span className="text-[10px] text-yellow-400">
               Lambda {lambdaFactors.min}/{lambdaFactors.max}
             </span>
           )}
@@ -153,22 +145,22 @@ export function ComparisonPanel() {
       {/* Key metrics bar */}
       <div className="grid grid-cols-3 gap-1 text-center">
         <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-emerald-400">
+          <div className="text-sm font-bold text-yellow-400">
             {summary.baseShear.reductionPercent.toFixed(0)}%
           </div>
-          <div className="text-[9px] text-gray-500">Shear Reduction</div>
+          <div className="text-[9px] text-gray-400">Shear Reduction</div>
         </div>
         <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-emerald-400">
+          <div className="text-sm font-bold text-yellow-400">
             {isolated.maxBaseShear.toFixed(1)}
           </div>
-          <div className="text-[9px] text-gray-500">Iso Shear (kip)</div>
+          <div className="text-[9px] text-gray-400">Iso Shear (kip)</div>
         </div>
         <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-amber-400">
+          <div className="text-sm font-bold text-yellow-400">
             {fixedBase.maxBaseShear.toFixed(1)}
           </div>
-          <div className="text-[9px] text-gray-500">FB Shear (kip)</div>
+          <div className="text-[9px] text-gray-400">FB Shear (kip)</div>
         </div>
       </div>
 
@@ -178,7 +170,7 @@ export function ComparisonPanel() {
           type="checkbox"
           checked={showComparisonOverlay}
           onChange={(e) => setShowComparisonOverlay(e.target.checked)}
-          className="h-3 w-3 rounded border-gray-600 bg-gray-700 text-emerald-500 focus:ring-emerald-500"
+          className="h-3 w-3 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
         />
         <span className="text-[10px] text-gray-400">Show 3D overlay (both deformed shapes)</span>
       </label>
@@ -187,7 +179,13 @@ export function ComparisonPanel() {
       <Accordion.Root type="multiple" defaultValue={['capacity', 'drift', 'shear']}>
         <AccordionItem value="capacity" title="Capacity Curve">
           <div className="h-48 rounded bg-gray-800/50">
-            <Suspense fallback={<div className="flex h-full items-center justify-center text-xs text-gray-500">Loading chart...</div>}>
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center text-xs text-gray-500">
+                  Loading chart...
+                </div>
+              }
+            >
               <Plot
                 data={capacityTraces}
                 layout={{
@@ -195,8 +193,14 @@ export function ComparisonPanel() {
                   paper_bgcolor: 'transparent',
                   plot_bgcolor: 'transparent',
                   font: { color: '#9ca3af', size: 9 },
-                  xaxis: { title: { text: 'Roof Displacement (in)', font: { size: 9 } }, gridcolor: '#374151' },
-                  yaxis: { title: { text: 'Base Shear (kip)', font: { size: 9 } }, gridcolor: '#374151' },
+                  xaxis: {
+                    title: { text: 'Roof Displacement (in)', font: { size: 9 } },
+                    gridcolor: '#374151',
+                  },
+                  yaxis: {
+                    title: { text: 'Base Shear (kip)', font: { size: 9 } },
+                    gridcolor: '#374151',
+                  },
                   legend: { x: 0, y: 1, font: { size: 8 } },
                   showlegend: true,
                 }}

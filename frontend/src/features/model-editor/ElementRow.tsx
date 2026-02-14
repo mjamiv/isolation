@@ -15,8 +15,8 @@ const ELEMENT_TYPES: { value: string; label: string }[] = [
 ];
 
 const TYPE_COLORS: Record<Element['type'], string> = {
-  column: 'text-blue-400',
-  beam: 'text-emerald-400',
+  column: 'text-yellow-400',
+  beam: 'text-yellow-400',
   brace: 'text-orange-400',
   bearing: 'text-purple-400',
 };
@@ -82,19 +82,48 @@ export function ElementRow({ element, onDelete }: ElementRowProps) {
     return (
       <div className="space-y-1 rounded bg-gray-800/50 p-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-blue-400">Element {element.id}</span>
+          <span className="text-xs font-medium text-yellow-400">Element {element.id}</span>
           <div className="flex gap-0.5">
-            <IconButton onClick={save} title="Save"><CheckIcon className="h-3 w-3" /></IconButton>
-            <IconButton onClick={cancel} title="Cancel"><Cross2Icon className="h-3 w-3" /></IconButton>
+            <IconButton onClick={save} title="Save">
+              <CheckIcon className="h-3 w-3" />
+            </IconButton>
+            <IconButton onClick={cancel} title="Cancel">
+              <Cross2Icon className="h-3 w-3" />
+            </IconButton>
           </div>
         </div>
-        <SelectField label="Type" value={draft.type} options={ELEMENT_TYPES} onChange={(v) => setDraft((d) => ({ ...d, type: v }))} />
+        <SelectField
+          label="Type"
+          value={draft.type}
+          options={ELEMENT_TYPES}
+          onChange={(v) => setDraft((d) => ({ ...d, type: v }))}
+        />
         <div className="grid grid-cols-2 gap-1">
-          <FormField label="I" type="number" value={draft.nodeI} onChange={(v) => setDraft((d) => ({ ...d, nodeI: v }))} />
-          <FormField label="J" type="number" value={draft.nodeJ} onChange={(v) => setDraft((d) => ({ ...d, nodeJ: v }))} />
+          <FormField
+            label="I"
+            type="number"
+            value={draft.nodeI}
+            onChange={(v) => setDraft((d) => ({ ...d, nodeI: v }))}
+          />
+          <FormField
+            label="J"
+            type="number"
+            value={draft.nodeJ}
+            onChange={(v) => setDraft((d) => ({ ...d, nodeJ: v }))}
+          />
         </div>
-        <SelectField label="Sect" value={draft.sectionId} options={sectionOptions} onChange={(v) => setDraft((d) => ({ ...d, sectionId: v }))} />
-        <SelectField label="Mat" value={draft.materialId} options={materialOptions} onChange={(v) => setDraft((d) => ({ ...d, materialId: v }))} />
+        <SelectField
+          label="Sect"
+          value={draft.sectionId}
+          options={sectionOptions}
+          onChange={(v) => setDraft((d) => ({ ...d, sectionId: v }))}
+        />
+        <SelectField
+          label="Mat"
+          value={draft.materialId}
+          options={materialOptions}
+          onChange={(v) => setDraft((d) => ({ ...d, materialId: v }))}
+        />
       </div>
     );
   }
@@ -102,7 +131,7 @@ export function ElementRow({ element, onDelete }: ElementRowProps) {
   return (
     <div
       className={`group flex items-center gap-2 rounded px-2 py-1 text-xs cursor-pointer transition-colors ${
-        isSelected ? 'bg-blue-900/40 text-blue-300' : 'text-gray-400 hover:bg-gray-800/50'
+        isSelected ? 'bg-yellow-900/40 text-yellow-300' : 'text-gray-400 hover:bg-gray-800/50'
       }`}
       onClick={() => selectElement(element.id)}
     >
@@ -111,7 +140,10 @@ export function ElementRow({ element, onDelete }: ElementRowProps) {
       <span className="flex-1 truncate text-gray-500">
         {element.nodeI}-{element.nodeJ} {sectionName}
       </span>
-      <div className="hidden gap-0.5 group-hover:flex" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex gap-0.5 opacity-60 hover:opacity-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         <IconButton onClick={startEdit} title="Edit">
           <Pencil1Icon className="h-3 w-3" />
         </IconButton>

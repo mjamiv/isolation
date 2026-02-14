@@ -7,22 +7,22 @@ import { useDisplayStore, type DisplayMode } from '../../stores/displayStore';
 
 // Colors by element type
 const ELEMENT_COLORS: Record<Element['type'], string> = {
-  column: '#60a5fa',  // blue-400
-  beam: '#34d399',    // emerald-400
-  brace: '#fb923c',   // orange-400
-  bearing: '#c084fc',  // purple-400
+  column: '#facc15', // yellow-400
+  beam: '#fde047', // yellow-300
+  brace: '#fb923c', // orange-400
+  bearing: '#c084fc', // purple-400
 };
 
 // Slightly darker/saturated colors for solid mode to distinguish from extruded
 const SOLID_COLORS: Record<Element['type'], string> = {
-  column: '#3b82f6',  // blue-500
-  beam: '#10b981',    // emerald-500
-  brace: '#f97316',   // orange-500
-  bearing: '#a855f7',  // purple-500
+  column: '#eab308', // yellow-500
+  beam: '#ca8a04', // yellow-600
+  brace: '#f97316', // orange-500
+  bearing: '#a855f7', // purple-500
 };
 
-const COLOR_SELECTED = '#f59e0b';  // amber-500
-const COLOR_HOVERED = '#fbbf24';   // amber-400
+const COLOR_SELECTED = '#D4AF37'; // gold
+const COLOR_HOVERED = '#FACC15'; // yellow-400
 const LINE_WIDTH_DEFAULT = 2;
 const LINE_WIDTH_SELECTED = 4;
 const LINE_WIDTH_HOVERED = 3;
@@ -278,11 +278,7 @@ function MemberSolid({
       onPointerOut={handlePointerOut}
     >
       <boxGeometry args={[width, length, depth]} />
-      <meshStandardMaterial
-        color={color}
-        roughness={0.6}
-        metalness={0.2}
-      />
+      <meshStandardMaterial color={color} roughness={0.6} metalness={0.2} />
     </mesh>
   );
 }

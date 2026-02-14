@@ -44,16 +44,35 @@ export function NodeRow({ node, onDelete }: NodeRowProps) {
     return (
       <div className="space-y-1 rounded bg-gray-800/50 p-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-blue-400">Node {node.id}</span>
+          <span className="text-xs font-medium text-yellow-400">Node {node.id}</span>
           <div className="flex gap-0.5">
-            <IconButton onClick={save} title="Save"><CheckIcon className="h-3 w-3" /></IconButton>
-            <IconButton onClick={cancel} title="Cancel"><Cross2Icon className="h-3 w-3" /></IconButton>
+            <IconButton onClick={save} title="Save">
+              <CheckIcon className="h-3 w-3" />
+            </IconButton>
+            <IconButton onClick={cancel} title="Cancel">
+              <Cross2Icon className="h-3 w-3" />
+            </IconButton>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-1">
-          <FormField label="X" type="number" value={draft.x} onChange={(v) => setDraft((d) => ({ ...d, x: v }))} />
-          <FormField label="Y" type="number" value={draft.y} onChange={(v) => setDraft((d) => ({ ...d, y: v }))} />
-          <FormField label="Z" type="number" value={draft.z} onChange={(v) => setDraft((d) => ({ ...d, z: v }))} />
+          <FormField
+            label="X"
+            type="number"
+            value={draft.x}
+            onChange={(v) => setDraft((d) => ({ ...d, x: v }))}
+          />
+          <FormField
+            label="Y"
+            type="number"
+            value={draft.y}
+            onChange={(v) => setDraft((d) => ({ ...d, y: v }))}
+          />
+          <FormField
+            label="Z"
+            type="number"
+            value={draft.z}
+            onChange={(v) => setDraft((d) => ({ ...d, z: v }))}
+          />
         </div>
         <FixityToggle value={draftFixity} onChange={setDraftFixity} />
       </div>
@@ -63,7 +82,7 @@ export function NodeRow({ node, onDelete }: NodeRowProps) {
   return (
     <div
       className={`group flex items-center gap-2 rounded px-2 py-1 text-xs cursor-pointer transition-colors ${
-        isSelected ? 'bg-blue-900/40 text-blue-300' : 'text-gray-400 hover:bg-gray-800/50'
+        isSelected ? 'bg-yellow-900/40 text-yellow-300' : 'text-gray-400 hover:bg-gray-800/50'
       }`}
       onClick={() => selectNode(node.id)}
     >
@@ -72,9 +91,14 @@ export function NodeRow({ node, onDelete }: NodeRowProps) {
         ({node.x}, {node.y}, {node.z})
       </span>
       {node.restraint.some(Boolean) && (
-        <span className="text-[10px] text-red-400/70" title="Has restraints">R</span>
+        <span className="text-[10px] text-red-400/70" title="Has restraints">
+          R
+        </span>
       )}
-      <div className="hidden gap-0.5 group-hover:flex" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex gap-0.5 opacity-60 hover:opacity-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         <IconButton onClick={startEdit} title="Edit">
           <Pencil1Icon className="h-3 w-3" />
         </IconButton>

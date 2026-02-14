@@ -285,12 +285,12 @@ class StructuralModelSchema(BaseModel):
         default_factory=lambda: {"name": "Untitled", "units": "kN-m", "ndm": 2, "ndf": 3},
         description="Model metadata: name, units, ndm, ndf",
     )
-    nodes: list[NodeSchema] = Field(default_factory=list, description="Structural nodes")
-    materials: list[MaterialSchema] = Field(default_factory=list, description="Material definitions")
-    sections: list[SectionSchema] = Field(default_factory=list, description="Section definitions")
-    elements: list[ElementSchema] = Field(default_factory=list, description="Structural elements")
-    bearings: list[TFPBearingSchema] = Field(default_factory=list, description="TFP bearing elements")
-    loads: list[LoadSchema] = Field(default_factory=list, description="Applied loads")
+    nodes: list[NodeSchema] = Field(default_factory=list, max_length=10000, description="Structural nodes")
+    materials: list[MaterialSchema] = Field(default_factory=list, max_length=1000, description="Material definitions")
+    sections: list[SectionSchema] = Field(default_factory=list, max_length=1000, description="Section definitions")
+    elements: list[ElementSchema] = Field(default_factory=list, max_length=10000, description="Structural elements")
+    bearings: list[TFPBearingSchema] = Field(default_factory=list, max_length=1000, description="TFP bearing elements")
+    loads: list[LoadSchema] = Field(default_factory=list, max_length=10000, description="Applied loads")
 
     @model_validator(mode="after")
     def validate_model_integrity(self) -> "StructuralModelSchema":

@@ -13,7 +13,47 @@ import type {
 } from '@/types/storeModel';
 
 // Re-export types for backward compat
-export type { Node, Element, Section, Material, TFPBearing, FrictionSurface, FrictionModelType, PointLoad, GroundMotionRecord, StructuralModel };
+export type {
+  Node,
+  Element,
+  Section,
+  Material,
+  TFPBearing,
+  FrictionSurface,
+  FrictionModelType,
+  PointLoad,
+  GroundMotionRecord,
+  StructuralModel,
+};
+
+// ── Constants ────────────────────────────────────────────────────────
+
+/** Column x-positions in inches (24ft = 288in spacing) */
+const COLUMN_X_POSITIONS = [0, 288, 576] as const;
+
+/** Story heights in inches (12ft = 144in per story) */
+const STORY_HEIGHTS = [0, 144, 288, 432] as const;
+
+/** Ground node IDs (fixed supports below bearings) */
+const GROUND_NODE_IDS = [101, 102, 103] as const;
+
+/** Base structure node IDs (bearing top nodes, one per column line) */
+const BASE_NODE_IDS = [1, 2, 3] as const;
+
+/** Ground motion record IDs */
+const GM_IDS = { EL_CENTRO: 1, NEAR_FAULT: 2, HARMONIC: 3, SUBDUCTION: 4 } as const;
+
+/** Gravity load per floor node in kips (negative = downward) */
+const FLOOR_GRAVITY_LOAD_KIP = -50;
+
+/** Bearing radii in inches [inner, outer, inner] */
+const DEFAULT_BEARING_RADII: [number, number, number] = [16, 84, 16];
+
+/** Bearing displacement capacities in inches */
+const DEFAULT_DISP_CAPACITIES: [number, number, number] = [2, 16, 2];
+
+/** Bearing weight in kips */
+const DEFAULT_BEARING_WEIGHT = 150;
 
 // ── Ground motion generators ─────────────────────────────────────────
 
@@ -40,7 +80,7 @@ function generateElCentro(): GroundMotionRecord {
   const peak = Math.max(...acc.map(Math.abs));
   const scale = 0.35 / peak;
   return {
-    id: 1,
+    id: GM_IDS.EL_CENTRO,
     name: 'El Centro 1940 (Approx)',
     dt,
     acceleration: acc.map((a) => a * scale),
@@ -60,13 +100,13 @@ function generateNearFaultPulse(): GroundMotionRecord {
     // Gabor wavelet: Gaussian-enveloped cosine
     const tau = (t - t0) / (tp / 2);
     const envelope = Math.exp(-tau * tau);
-    acc.push(envelope * Math.cos(2 * Math.PI * t / tp));
+    acc.push(envelope * Math.cos((2 * Math.PI * t) / tp));
   }
   // Normalize to ~0.5g peak
   const peak = Math.max(...acc.map(Math.abs));
   const scale = 0.5 / peak;
   return {
-    id: 2,
+    id: GM_IDS.NEAR_FAULT,
     name: 'Near-Fault Pulse',
     dt,
     acceleration: acc.map((a) => a * scale),
@@ -80,12 +120,12 @@ function generateHarmonicSweep(): GroundMotionRecord {
   const n = 1200; // 12 seconds
   const acc: number[] = [];
   const f0 = 0.5; // start freq Hz
-  const f1 = 10;  // end freq Hz
+  const f1 = 10; // end freq Hz
   const dur = n * dt;
   for (let i = 0; i < n; i++) {
     const t = i * dt;
     // Linear chirp: instantaneous freq = f0 + (f1-f0)*t/dur
-    const phase = 2 * Math.PI * (f0 * t + 0.5 * (f1 - f0) * t * t / dur);
+    const phase = 2 * Math.PI * (f0 * t + (0.5 * (f1 - f0) * t * t) / dur);
     // Trapezoidal envelope
     let env: number;
     if (t < 1) env = t;
@@ -97,7 +137,7 @@ function generateHarmonicSweep(): GroundMotionRecord {
   const peak = Math.max(...acc.map(Math.abs));
   const scale = 0.25 / peak;
   return {
-    id: 3,
+    id: GM_IDS.HARMONIC,
     name: 'Harmonic Sweep',
     dt,
     acceleration: acc.map((a) => a * scale),
@@ -129,7 +169,7 @@ function generateLongDurationSubduction(): GroundMotionRecord {
   const peak = Math.max(...acc.map(Math.abs));
   const scale = 0.15 / peak;
   return {
-    id: 4,
+    id: GM_IDS.SUBDUCTION,
     name: 'Long-Duration Subduction',
     dt,
     acceleration: acc.map((a) => a * scale),
@@ -398,22 +438,31 @@ export const useModelStore = create<ModelState>((set) => ({
 
   // ── Sample model loader ──────────────────────────
   loadSampleModel: () => {
-    const fixedRestraint: [boolean, boolean, boolean, boolean, boolean, boolean] =
-      [true, true, true, true, true, true];
-    const freeRestraint: [boolean, boolean, boolean, boolean, boolean, boolean] =
-      [false, false, false, false, false, false];
+    const fixedRestraint: [boolean, boolean, boolean, boolean, boolean, boolean] = [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+    ];
+    const freeRestraint: [boolean, boolean, boolean, boolean, boolean, boolean] = [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ];
 
     const nodes = new Map<number, Node>();
 
-    const columnXPositions = [0, 288, 576]; // inches
-    const storyHeights = [0, 144, 288, 432]; // inches
-
-    // Ground nodes (fixed) — IDs 101, 102, 103
-    for (let i = 0; i < 3; i++) {
-      const gndId = 101 + i;
+    // Ground nodes (fixed)
+    for (let i = 0; i < GROUND_NODE_IDS.length; i++) {
+      const gndId = GROUND_NODE_IDS[i]!;
       nodes.set(gndId, {
         id: gndId,
-        x: columnXPositions[i]!,
+        x: COLUMN_X_POSITIONS[i]!,
         y: -1,
         z: 0,
         restraint: fixedRestraint,
@@ -423,8 +472,8 @@ export const useModelStore = create<ModelState>((set) => ({
 
     // Structure nodes — base nodes (y=0) are now free (bearing tops)
     let nodeId = 1;
-    for (const y of storyHeights) {
-      for (const x of columnXPositions) {
+    for (const y of STORY_HEIGHTS) {
+      for (const x of COLUMN_X_POSITIONS) {
         nodes.set(nodeId, {
           id: nodeId,
           x,
@@ -458,7 +507,7 @@ export const useModelStore = create<ModelState>((set) => ({
       d: 14.04,
       bf: 10.035,
       tw: 0.415,
-      tf: 0.720,
+      tf: 0.72,
     });
     sections.set(2, {
       id: 2,
@@ -512,37 +561,43 @@ export const useModelStore = create<ModelState>((set) => ({
 
     // 3 TFP bearings connecting ground nodes to base nodes
     const defaultInnerSurface: FrictionSurface = {
-      type: 'VelDependent', muSlow: 0.012, muFast: 0.018, transRate: 0.4,
+      type: 'VelDependent',
+      muSlow: 0.012,
+      muFast: 0.018,
+      transRate: 0.4,
     };
     const defaultOuterSurface: FrictionSurface = {
-      type: 'VelDependent', muSlow: 0.018, muFast: 0.030, transRate: 0.4,
+      type: 'VelDependent',
+      muSlow: 0.018,
+      muFast: 0.03,
+      transRate: 0.4,
     };
 
     const bearings = new Map<number, TFPBearing>();
-    for (let i = 0; i < 3; i++) {
-      const bId = i + 1;
+    for (let i = 0; i < BASE_NODE_IDS.length; i++) {
+      const bId = BASE_NODE_IDS[i]!;
       bearings.set(bId, {
         id: bId,
-        nodeI: 101 + i,       // ground node
-        nodeJ: i + 1,         // base node
+        nodeI: GROUND_NODE_IDS[i]!,
+        nodeJ: BASE_NODE_IDS[i]!,
         surfaces: [
           { ...defaultInnerSurface },
           { ...defaultInnerSurface },
           { ...defaultOuterSurface },
           { ...defaultOuterSurface },
         ],
-        radii: [16, 84, 16],                 // inches
-        dispCapacities: [2, 16, 2],           // inches
-        weight: 150,                          // kips
-        yieldDisp: 0.04,                      // inches
-        vertStiffness: 10000,                 // kip/in
+        radii: [...DEFAULT_BEARING_RADII],
+        dispCapacities: [...DEFAULT_DISP_CAPACITIES],
+        weight: DEFAULT_BEARING_WEIGHT,
+        yieldDisp: 0.04, // inches
+        vertStiffness: 10000, // kip/in
         minVertForce: 0.1,
         tolerance: 1e-8,
         label: `TFP${bId}`,
       });
     }
 
-    // Gravity loads on floor nodes (-50 kip vertical on each free structural node above base)
+    // Gravity loads on floor nodes
     const loads = new Map<number, PointLoad>();
     let loadId = 1;
     for (const [id, node] of nodes) {
@@ -550,8 +605,12 @@ export const useModelStore = create<ModelState>((set) => ({
         loads.set(loadId, {
           id: loadId,
           nodeId: id,
-          fx: 0, fy: -50, fz: 0,
-          mx: 0, my: 0, mz: 0,
+          fx: 0,
+          fy: FLOOR_GRAVITY_LOAD_KIP,
+          fz: 0,
+          mx: 0,
+          my: 0,
+          mz: 0,
         });
         loadId++;
       }
@@ -571,10 +630,10 @@ export const useModelStore = create<ModelState>((set) => ({
       bearings,
       loads,
       groundMotions: new Map<number, GroundMotionRecord>([
-        [1, generateElCentro()],
-        [2, generateNearFaultPulse()],
-        [3, generateHarmonicSweep()],
-        [4, generateLongDurationSubduction()],
+        [GM_IDS.EL_CENTRO, generateElCentro()],
+        [GM_IDS.NEAR_FAULT, generateNearFaultPulse()],
+        [GM_IDS.HARMONIC, generateHarmonicSweep()],
+        [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
       ]),
     });
   },

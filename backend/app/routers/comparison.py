@@ -172,5 +172,5 @@ async def run_comparison(request: RunComparisonRequest) -> dict[str, Any]:
         logger.exception("Comparison %s failed", comparison_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Comparison analysis failed: {exc}",
+            detail="Comparison analysis failed due to an internal error",
         )

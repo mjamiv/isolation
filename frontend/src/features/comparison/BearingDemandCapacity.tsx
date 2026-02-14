@@ -8,8 +8,8 @@ interface BearingDemandCapacityProps {
 }
 
 function dcColor(ratio: number): string {
-  if (ratio < 0.7) return '#22c55e'; // green
-  if (ratio < 0.9) return '#f59e0b'; // yellow/amber
+  if (ratio < 0.7) return '#D4AF37'; // gold
+  if (ratio < 0.9) return '#FACC15'; // yellow
   return '#ef4444'; // red
 }
 
@@ -26,7 +26,13 @@ export function BearingDemandCapacity({ data }: BearingDemandCapacityProps) {
   return (
     <div className="space-y-2">
       <div className="h-40 rounded bg-gray-800/50">
-        <Suspense fallback={<div className="flex h-full items-center justify-center text-xs text-gray-500">Loading chart...</div>}>
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center text-xs text-gray-500">
+              Loading chart...
+            </div>
+          }
+        >
           <Plot
             data={[
               {
@@ -49,7 +55,10 @@ export function BearingDemandCapacity({ data }: BearingDemandCapacityProps) {
               paper_bgcolor: 'transparent',
               plot_bgcolor: 'transparent',
               font: { color: '#9ca3af', size: 9 },
-              yaxis: { title: { text: 'Displacement (in)', font: { size: 9 } }, gridcolor: '#374151' },
+              yaxis: {
+                title: { text: 'Displacement (in)', font: { size: 9 } },
+                gridcolor: '#374151',
+              },
               barmode: 'overlay' as const,
               legend: { x: 0.6, y: 1, font: { size: 8 } },
               showlegend: true,
@@ -77,7 +86,9 @@ export function BearingDemandCapacity({ data }: BearingDemandCapacityProps) {
                 <td className="px-2 py-0.5 font-mono">{d.bearingId}</td>
                 <td className="px-2 py-0.5 text-right font-mono">{d.demand.toFixed(3)}</td>
                 <td className="px-2 py-0.5 text-right font-mono">{d.capacity.toFixed(3)}</td>
-                <td className={`px-2 py-0.5 text-right font-mono ${d.dcRatio > 0.9 ? 'text-red-400' : d.dcRatio > 0.7 ? 'text-amber-400' : 'text-green-400'}`}>
+                <td
+                  className={`px-2 py-0.5 text-right font-mono ${d.dcRatio > 0.9 ? 'text-red-400' : d.dcRatio > 0.7 ? 'text-yellow-400' : 'text-yellow-500'}`}
+                >
                   {d.dcRatio.toFixed(2)}
                 </td>
               </tr>

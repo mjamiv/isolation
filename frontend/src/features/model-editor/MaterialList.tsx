@@ -7,7 +7,13 @@ import { AccordionSection } from './AccordionSection';
 import { Pencil1Icon, TrashIcon, CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
 import type { Material } from '@/types/storeModel';
 
-function MaterialRow({ material, onDelete }: { material: Material; onDelete: (id: number) => void }) {
+function MaterialRow({
+  material,
+  onDelete,
+}: {
+  material: Material;
+  onDelete: (id: number) => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     name: material.name,
@@ -44,18 +50,46 @@ function MaterialRow({ material, onDelete }: { material: Material; onDelete: (id
     return (
       <div className="space-y-1 rounded bg-gray-800/50 p-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-blue-400">Material {material.id}</span>
+          <span className="text-xs font-medium text-yellow-400">Material {material.id}</span>
           <div className="flex gap-0.5">
-            <IconButton onClick={save} title="Save"><CheckIcon className="h-3 w-3" /></IconButton>
-            <IconButton onClick={() => setEditing(false)} title="Cancel"><Cross2Icon className="h-3 w-3" /></IconButton>
+            <IconButton onClick={save} title="Save">
+              <CheckIcon className="h-3 w-3" />
+            </IconButton>
+            <IconButton onClick={() => setEditing(false)} title="Cancel">
+              <Cross2Icon className="h-3 w-3" />
+            </IconButton>
           </div>
         </div>
-        <FormField label="Name" value={draft.name} onChange={(v) => setDraft((d) => ({ ...d, name: v }))} />
+        <FormField
+          label="Name"
+          value={draft.name}
+          onChange={(v) => setDraft((d) => ({ ...d, name: v }))}
+        />
         <div className="grid grid-cols-2 gap-1">
-          <FormField label="E" type="number" value={draft.E} onChange={(v) => setDraft((d) => ({ ...d, E: v }))} />
-          <FormField label="Fy" type="number" value={draft.Fy} onChange={(v) => setDraft((d) => ({ ...d, Fy: v }))} />
-          <FormField label="dens" type="number" value={draft.density} onChange={(v) => setDraft((d) => ({ ...d, density: v }))} />
-          <FormField label="nu" type="number" value={draft.nu} onChange={(v) => setDraft((d) => ({ ...d, nu: v }))} />
+          <FormField
+            label="E"
+            type="number"
+            value={draft.E}
+            onChange={(v) => setDraft((d) => ({ ...d, E: v }))}
+          />
+          <FormField
+            label="Fy"
+            type="number"
+            value={draft.Fy}
+            onChange={(v) => setDraft((d) => ({ ...d, Fy: v }))}
+          />
+          <FormField
+            label="dens"
+            type="number"
+            value={draft.density}
+            onChange={(v) => setDraft((d) => ({ ...d, density: v }))}
+          />
+          <FormField
+            label="nu"
+            type="number"
+            value={draft.nu}
+            onChange={(v) => setDraft((d) => ({ ...d, nu: v }))}
+          />
         </div>
       </div>
     );
@@ -66,9 +100,13 @@ function MaterialRow({ material, onDelete }: { material: Material; onDelete: (id
       <span className="w-8 shrink-0 font-mono text-gray-500">{material.id}</span>
       <span className="flex-1 truncate">{material.name}</span>
       <span className="text-[10px] text-gray-500">E={material.E}</span>
-      <div className="hidden gap-0.5 group-hover:flex">
-        <IconButton onClick={startEdit} title="Edit"><Pencil1Icon className="h-3 w-3" /></IconButton>
-        <IconButton onClick={() => onDelete(material.id)} title="Delete" variant="danger"><TrashIcon className="h-3 w-3" /></IconButton>
+      <div className="flex gap-0.5 opacity-60 hover:opacity-100">
+        <IconButton onClick={startEdit} title="Edit">
+          <Pencil1Icon className="h-3 w-3" />
+        </IconButton>
+        <IconButton onClick={() => onDelete(material.id)} title="Delete" variant="danger">
+          <TrashIcon className="h-3 w-3" />
+        </IconButton>
       </div>
     </div>
   );
@@ -96,7 +134,12 @@ export function MaterialList() {
 
   return (
     <>
-      <AccordionSection value="materials" title="Materials" count={materialArray.length} onAdd={handleAdd}>
+      <AccordionSection
+        value="materials"
+        title="Materials"
+        count={materialArray.length}
+        onAdd={handleAdd}
+      >
         {materialArray.length === 0 ? (
           <p className="px-2 py-1 text-[10px] text-gray-600">No materials defined</p>
         ) : (
@@ -113,7 +156,12 @@ export function MaterialList() {
         onOpenChange={(open) => !open && setDeleteId(null)}
         title="Delete Material"
         description={`Are you sure you want to delete Material ${deleteId}? Elements using this material may become invalid.`}
-        onConfirm={() => { if (deleteId !== null) { removeMaterial(deleteId); setDeleteId(null); } }}
+        onConfirm={() => {
+          if (deleteId !== null) {
+            removeMaterial(deleteId);
+            setDeleteId(null);
+          }
+        }}
       />
     </>
   );

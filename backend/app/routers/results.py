@@ -7,12 +7,15 @@ Endpoints:
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
 from app.routers.analysis import get_analysis_store
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/results", tags=["results"])
 
@@ -49,15 +52,16 @@ async def get_results(analysis_id: str) -> dict[str, Any]:
 
     entry = store[analysis_id]
     if entry["status"] == "failed":
+        logger.error("Results requested for failed analysis %s: %s", analysis_id, entry.get("error"))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Analysis failed: {entry.get('error', 'unknown error')}",
+            detail="Analysis failed due to an internal error",
         )
 
     if entry["status"] != "completed":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Analysis is still '{entry['status']}'",
+            detail="Analysis has not completed yet",
         )
 
     return entry
@@ -102,7 +106,7 @@ async def get_results_summary(analysis_id: str) -> dict[str, Any]:
     if entry["status"] != "completed":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Analysis is still '{entry['status']}'",
+            detail="Analysis has not completed yet",
         )
 
     results = entry.get("results", {})

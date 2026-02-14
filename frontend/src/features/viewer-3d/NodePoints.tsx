@@ -6,9 +6,9 @@ import { useDisplayStore } from '../../stores/displayStore';
 const NODE_RADIUS = 3; // model units (inches)
 const NODE_SEGMENTS = 12;
 
-const COLOR_DEFAULT = new THREE.Color(0xcccccc);    // light gray
-const COLOR_SELECTED = new THREE.Color(0x3b82f6);   // blue-500
-const COLOR_HOVERED = new THREE.Color(0xfbbf24);    // amber-400
+const COLOR_DEFAULT = new THREE.Color(0xcccccc); // light gray
+const COLOR_SELECTED = new THREE.Color(0xd4af37); // gold
+const COLOR_HOVERED = new THREE.Color(0xfacc15); // yellow-400
 
 const _tempObject = new THREE.Object3D();
 const _tempColor = new THREE.Color();
@@ -26,10 +26,7 @@ export function NodePoints() {
   const nodeCount = nodeArray.length;
 
   // Build a lookup from instance index to node id
-  const indexToNodeId = useMemo(
-    () => nodeArray.map((n) => n.id),
-    [nodeArray],
-  );
+  const indexToNodeId = useMemo(() => nodeArray.map((n) => n.id), [nodeArray]);
 
   // Geometry shared across instances
   const geometry = useMemo(

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { AppLayout } from './features/layout/AppLayout';
+import { ToastContainer } from './components/ui/Toast';
 import { useModelStore } from './stores/modelStore';
 
 function App() {
@@ -7,7 +8,12 @@ function App() {
     useModelStore.getState().loadSampleModel();
   }, []);
 
-  return <AppLayout />;
+  return (
+    <>
+      <AppLayout />
+      <ToastContainer />
+    </>
+  );
 }
 
 export default App;

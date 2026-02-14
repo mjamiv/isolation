@@ -16,6 +16,9 @@ import type {
 } from '@/types/comparison';
 import type { Node, TFPBearing } from '@/types/storeModel';
 
+/** Estimated bearing displacement as fraction of max roof displacement */
+const BEARING_DEMAND_ROOF_RATIO = 0.8;
+
 /**
  * Compute inter-story drift profiles for both variants.
  *
@@ -54,7 +57,9 @@ export function computeDriftProfile(
     // Average horizontal displacement at each level
     const avgDisp = (result: VariantResult, nodeIds: number[]): number => {
       // nodeDisplacements lives alongside pushoverResults on the variant
-      const nodeDisplacements = (result as unknown as { pushoverResults: { nodeDisplacements?: Record<string, number[]> } }).pushoverResults.nodeDisplacements;
+      const nodeDisplacements = (
+        result as unknown as { pushoverResults: { nodeDisplacements?: Record<string, number[]> } }
+      ).pushoverResults.nodeDisplacements;
       if (!nodeDisplacements) return 0;
 
       let sum = 0;
@@ -121,7 +126,7 @@ export function computeBearingDemands(
     // Estimate demand from roof displacement (simplified)
     // In reality this would come from bearing response, but for pushover
     // we use the max roof displacement as an upper bound estimate
-    const demand = isolated.maxRoofDisplacement * 0.8; // approximate bearing/roof ratio
+    const demand = isolated.maxRoofDisplacement * BEARING_DEMAND_ROOF_RATIO;
 
     demands.push({
       bearingId: id,
@@ -145,12 +150,8 @@ export function countHingesByLevel(
 
   return levels.map((level) => ({
     level,
-    isolatedCount: isolatedHinges.filter(
-      (h) => h.performanceLevel === level,
-    ).length,
-    fixedBaseCount: fixedBaseHinges.filter(
-      (h) => h.performanceLevel === level,
-    ).length,
+    isolatedCount: isolatedHinges.filter((h) => h.performanceLevel === level).length,
+    fixedBaseCount: fixedBaseHinges.filter((h) => h.performanceLevel === level).length,
   }));
 }
 

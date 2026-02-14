@@ -51,7 +51,9 @@ export function TimeHistoryPlaybackControls({ totalSteps, dt }: TimeHistoryPlayb
         className="rounded bg-gray-700 px-1 py-0.5 text-[10px] text-gray-300 outline-none"
       >
         {SPEED_OPTIONS.map((s) => (
-          <option key={s} value={s}>{s}x</option>
+          <option key={s} value={s}>
+            {s}x
+          </option>
         ))}
       </select>
 
@@ -62,7 +64,7 @@ export function TimeHistoryPlaybackControls({ totalSteps, dt }: TimeHistoryPlayb
         max={maxStep}
         value={currentTimeStep}
         onChange={(e) => setTimeStep(Number(e.target.value))}
-        className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-gray-600 accent-blue-500"
+        className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-gray-600 accent-yellow-500"
       />
 
       {/* Time display */}

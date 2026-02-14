@@ -19,8 +19,12 @@ interface BearingDraft {
   outerMuSlow: string;
   outerMuFast: string;
   outerTransRate: string;
-  r1: string; r2: string; r3: string;
-  d1: string; d2: string; d3: string;
+  r1: string;
+  r2: string;
+  r3: string;
+  d1: string;
+  d2: string;
+  d3: string;
   weight: string;
   yieldDisp: string;
   vertStiffness: string;
@@ -89,16 +93,8 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
         { ...outerSurface },
         { ...outerSurface },
       ],
-      radii: [
-        Number(draft.r1) || 0,
-        Number(draft.r2) || 0,
-        Number(draft.r3) || 0,
-      ],
-      dispCapacities: [
-        Number(draft.d1) || 0,
-        Number(draft.d2) || 0,
-        Number(draft.d3) || 0,
-      ],
+      radii: [Number(draft.r1) || 0, Number(draft.r2) || 0, Number(draft.r3) || 0],
+      dispCapacities: [Number(draft.d1) || 0, Number(draft.d2) || 0, Number(draft.d3) || 0],
       weight: Number(draft.weight) || 0,
       yieldDisp: Number(draft.yieldDisp) || 0,
       vertStiffness: Number(draft.vertStiffness) || 0,
@@ -110,8 +106,7 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
 
   const cancel = () => setEditing(false);
 
-  const set_ = (key: keyof BearingDraft) => (v: string) =>
-    setDraft((d) => ({ ...d, [key]: v }));
+  const set_ = (key: keyof BearingDraft) => (v: string) => setDraft((d) => ({ ...d, [key]: v }));
 
   if (editing) {
     return (
@@ -119,8 +114,12 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-purple-400">TFP {bearing.id}</span>
           <div className="flex gap-0.5">
-            <IconButton onClick={save} title="Save"><CheckIcon className="h-3 w-3" /></IconButton>
-            <IconButton onClick={cancel} title="Cancel"><Cross2Icon className="h-3 w-3" /></IconButton>
+            <IconButton onClick={save} title="Save">
+              <CheckIcon className="h-3 w-3" />
+            </IconButton>
+            <IconButton onClick={cancel} title="Cancel">
+              <Cross2Icon className="h-3 w-3" />
+            </IconButton>
           </div>
         </div>
 
@@ -134,7 +133,9 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
               className="w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-purple-500"
             >
               {nodeIds.map((id) => (
-                <option key={id} value={id}>Node {id}</option>
+                <option key={id} value={id}>
+                  Node {id}
+                </option>
               ))}
             </select>
           </div>
@@ -146,7 +147,9 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
               className="w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-purple-500"
             >
               {nodeIds.map((id) => (
-                <option key={id} value={id}>Node {id}</option>
+                <option key={id} value={id}>
+                  Node {id}
+                </option>
               ))}
             </select>
           </div>
@@ -154,21 +157,55 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
 
         {/* Inner friction (surfaces 1,2) */}
         <div>
-          <span className="text-[10px] uppercase tracking-wider text-gray-500">Inner Friction (Surfaces 1-2)</span>
+          <span className="text-[10px] uppercase tracking-wider text-gray-500">
+            Inner Friction (Surfaces 1-2)
+          </span>
           <div className="mt-0.5 grid grid-cols-3 gap-1">
-            <FormField label="μ slow" type="number" value={draft.innerMuSlow} onChange={set_('innerMuSlow')} />
-            <FormField label="μ fast" type="number" value={draft.innerMuFast} onChange={set_('innerMuFast')} />
-            <FormField label="Rate" type="number" value={draft.innerTransRate} onChange={set_('innerTransRate')} />
+            <FormField
+              label="μ slow"
+              type="number"
+              value={draft.innerMuSlow}
+              onChange={set_('innerMuSlow')}
+            />
+            <FormField
+              label="μ fast"
+              type="number"
+              value={draft.innerMuFast}
+              onChange={set_('innerMuFast')}
+            />
+            <FormField
+              label="Rate"
+              type="number"
+              value={draft.innerTransRate}
+              onChange={set_('innerTransRate')}
+            />
           </div>
         </div>
 
         {/* Outer friction (surfaces 3,4) */}
         <div>
-          <span className="text-[10px] uppercase tracking-wider text-gray-500">Outer Friction (Surfaces 3-4)</span>
+          <span className="text-[10px] uppercase tracking-wider text-gray-500">
+            Outer Friction (Surfaces 3-4)
+          </span>
           <div className="mt-0.5 grid grid-cols-3 gap-1">
-            <FormField label="μ slow" type="number" value={draft.outerMuSlow} onChange={set_('outerMuSlow')} />
-            <FormField label="μ fast" type="number" value={draft.outerMuFast} onChange={set_('outerMuFast')} />
-            <FormField label="Rate" type="number" value={draft.outerTransRate} onChange={set_('outerTransRate')} />
+            <FormField
+              label="μ slow"
+              type="number"
+              value={draft.outerMuSlow}
+              onChange={set_('outerMuSlow')}
+            />
+            <FormField
+              label="μ fast"
+              type="number"
+              value={draft.outerMuFast}
+              onChange={set_('outerMuFast')}
+            />
+            <FormField
+              label="Rate"
+              type="number"
+              value={draft.outerTransRate}
+              onChange={set_('outerTransRate')}
+            />
           </div>
         </div>
 
@@ -184,7 +221,9 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
 
         {/* Displacement capacities */}
         <div>
-          <span className="text-[10px] uppercase tracking-wider text-gray-500">Disp. Capacities</span>
+          <span className="text-[10px] uppercase tracking-wider text-gray-500">
+            Disp. Capacities
+          </span>
           <div className="mt-0.5 grid grid-cols-3 gap-1">
             <FormField label="d1" type="number" value={draft.d1} onChange={set_('d1')} />
             <FormField label="d2" type="number" value={draft.d2} onChange={set_('d2')} />
@@ -204,13 +243,38 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
         {showAdvanced && (
           <div className="space-y-1">
             <div className="grid grid-cols-2 gap-1">
-              <FormField label="Weight" type="number" value={draft.weight} onChange={set_('weight')} />
-              <FormField label="uy" type="number" value={draft.yieldDisp} onChange={set_('yieldDisp')} />
+              <FormField
+                label="Weight"
+                type="number"
+                value={draft.weight}
+                onChange={set_('weight')}
+              />
+              <FormField
+                label="uy"
+                type="number"
+                value={draft.yieldDisp}
+                onChange={set_('yieldDisp')}
+              />
             </div>
             <div className="grid grid-cols-3 gap-1">
-              <FormField label="kvt" type="number" value={draft.vertStiffness} onChange={set_('vertStiffness')} />
-              <FormField label="minFv" type="number" value={draft.minVertForce} onChange={set_('minVertForce')} />
-              <FormField label="tol" type="number" value={draft.tolerance} onChange={set_('tolerance')} />
+              <FormField
+                label="kvt"
+                type="number"
+                value={draft.vertStiffness}
+                onChange={set_('vertStiffness')}
+              />
+              <FormField
+                label="minFv"
+                type="number"
+                value={draft.minVertForce}
+                onChange={set_('minVertForce')}
+              />
+              <FormField
+                label="tol"
+                type="number"
+                value={draft.tolerance}
+                onChange={set_('tolerance')}
+              />
             </div>
           </div>
         )}
@@ -221,11 +285,16 @@ export function BearingRow({ bearing, onDelete }: BearingRowProps) {
   return (
     <div className="group flex items-center gap-2 rounded px-2 py-1 text-xs text-gray-400 hover:bg-gray-800/50">
       <span className="w-8 shrink-0 font-mono text-gray-500">{bearing.id}</span>
-      <span className="rounded bg-purple-900/50 px-1 py-0.5 text-[10px] font-semibold text-purple-300">TFP</span>
+      <span className="rounded bg-purple-900/50 px-1 py-0.5 text-[10px] font-semibold text-purple-300">
+        TFP
+      </span>
       <span className="flex-1 truncate">
         {bearing.nodeI}→{bearing.nodeJ} R: {bearing.radii[0]}/{bearing.radii[1]}/{bearing.radii[2]}
       </span>
-      <div className="hidden gap-0.5 group-hover:flex" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex gap-0.5 opacity-60 hover:opacity-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         <IconButton onClick={startEdit} title="Edit">
           <Pencil1Icon className="h-3 w-3" />
         </IconButton>

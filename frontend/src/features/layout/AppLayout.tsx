@@ -1,9 +1,5 @@
 import { useState } from 'react';
-import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
-} from 'react-resizable-panels';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Viewer3D } from '../viewer-3d/Viewer3D';
 import { ViewerControls } from '../controls/ViewerControls';
 import { ModelEditor } from '../model-editor/ModelEditor';
@@ -15,7 +11,7 @@ import { StatusBar } from './StatusBar';
 
 function ResizeHandle() {
   return (
-    <PanelResizeHandle className="flex w-1.5 items-center justify-center bg-gray-800 transition-colors hover:bg-blue-600">
+    <PanelResizeHandle className="flex w-1.5 items-center justify-center bg-gray-800 transition-colors hover:bg-yellow-600">
       <div className="h-8 w-0.5 rounded-full bg-gray-600" />
     </PanelResizeHandle>
   );
@@ -50,8 +46,8 @@ function RightPanel() {
           onClick={() => setActiveTab('properties')}
           className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${
             activeTab === 'properties'
-              ? 'border-b-2 border-blue-500 text-gray-200'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'border-b-2 border-yellow-500 text-gray-200'
+              : 'text-gray-400 hover:text-gray-200'
           }`}
         >
           Properties
@@ -61,8 +57,8 @@ function RightPanel() {
           onClick={() => setActiveTab('results')}
           className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${
             activeTab === 'results'
-              ? 'border-b-2 border-emerald-500 text-gray-200'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'border-b-2 border-yellow-500 text-gray-200'
+              : 'text-gray-400 hover:text-gray-200'
           }`}
         >
           Results
@@ -72,8 +68,8 @@ function RightPanel() {
           onClick={() => setActiveTab('comparison')}
           className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${
             activeTab === 'comparison'
-              ? 'border-b-2 border-amber-500 text-gray-200'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'border-b-2 border-yellow-500 text-gray-200'
+              : 'text-gray-400 hover:text-gray-200'
           }`}
         >
           Compare

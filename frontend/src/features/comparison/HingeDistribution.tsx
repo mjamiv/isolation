@@ -20,7 +20,13 @@ export function HingeDistribution({ data }: HingeDistributionProps) {
 
   return (
     <div className="h-40 rounded bg-gray-800/50">
-      <Suspense fallback={<div className="flex h-full items-center justify-center text-xs text-gray-500">Loading chart...</div>}>
+      <Suspense
+        fallback={
+          <div className="flex h-full items-center justify-center text-xs text-gray-500">
+            Loading chart...
+          </div>
+        }
+      >
         <Plot
           data={[
             {
@@ -28,14 +34,14 @@ export function HingeDistribution({ data }: HingeDistributionProps) {
               y: isolatedCounts,
               type: 'bar' as const,
               name: 'Isolated',
-              marker: { color: '#10b981' },
+              marker: { color: '#D4AF37' },
             },
             {
               x: levels,
               y: fixedBaseCounts,
               type: 'bar' as const,
               name: 'Fixed-Base',
-              marker: { color: '#f59e0b' },
+              marker: { color: '#FACC15' },
             },
           ]}
           layout={{

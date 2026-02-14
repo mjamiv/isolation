@@ -44,18 +44,46 @@ function SectionRow({ section, onDelete }: { section: Section; onDelete: (id: nu
     return (
       <div className="space-y-1 rounded bg-gray-800/50 p-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-blue-400">Section {section.id}</span>
+          <span className="text-xs font-medium text-yellow-400">Section {section.id}</span>
           <div className="flex gap-0.5">
-            <IconButton onClick={save} title="Save"><CheckIcon className="h-3 w-3" /></IconButton>
-            <IconButton onClick={() => setEditing(false)} title="Cancel"><Cross2Icon className="h-3 w-3" /></IconButton>
+            <IconButton onClick={save} title="Save">
+              <CheckIcon className="h-3 w-3" />
+            </IconButton>
+            <IconButton onClick={() => setEditing(false)} title="Cancel">
+              <Cross2Icon className="h-3 w-3" />
+            </IconButton>
           </div>
         </div>
-        <FormField label="Name" value={draft.name} onChange={(v) => setDraft((d) => ({ ...d, name: v }))} />
+        <FormField
+          label="Name"
+          value={draft.name}
+          onChange={(v) => setDraft((d) => ({ ...d, name: v }))}
+        />
         <div className="grid grid-cols-2 gap-1">
-          <FormField label="A" type="number" value={draft.area} onChange={(v) => setDraft((d) => ({ ...d, area: v }))} />
-          <FormField label="d" type="number" value={draft.d} onChange={(v) => setDraft((d) => ({ ...d, d: v }))} />
-          <FormField label="Ix" type="number" value={draft.Ix} onChange={(v) => setDraft((d) => ({ ...d, Ix: v }))} />
-          <FormField label="Iy" type="number" value={draft.Iy} onChange={(v) => setDraft((d) => ({ ...d, Iy: v }))} />
+          <FormField
+            label="A"
+            type="number"
+            value={draft.area}
+            onChange={(v) => setDraft((d) => ({ ...d, area: v }))}
+          />
+          <FormField
+            label="d"
+            type="number"
+            value={draft.d}
+            onChange={(v) => setDraft((d) => ({ ...d, d: v }))}
+          />
+          <FormField
+            label="Ix"
+            type="number"
+            value={draft.Ix}
+            onChange={(v) => setDraft((d) => ({ ...d, Ix: v }))}
+          />
+          <FormField
+            label="Iy"
+            type="number"
+            value={draft.Iy}
+            onChange={(v) => setDraft((d) => ({ ...d, Iy: v }))}
+          />
         </div>
       </div>
     );
@@ -66,9 +94,13 @@ function SectionRow({ section, onDelete }: { section: Section; onDelete: (id: nu
       <span className="w-8 shrink-0 font-mono text-gray-500">{section.id}</span>
       <span className="flex-1 truncate">{section.name}</span>
       <span className="text-[10px] text-gray-500">A={section.area}</span>
-      <div className="hidden gap-0.5 group-hover:flex">
-        <IconButton onClick={startEdit} title="Edit"><Pencil1Icon className="h-3 w-3" /></IconButton>
-        <IconButton onClick={() => onDelete(section.id)} title="Delete" variant="danger"><TrashIcon className="h-3 w-3" /></IconButton>
+      <div className="flex gap-0.5 opacity-60 hover:opacity-100">
+        <IconButton onClick={startEdit} title="Edit">
+          <Pencil1Icon className="h-3 w-3" />
+        </IconButton>
+        <IconButton onClick={() => onDelete(section.id)} title="Delete" variant="danger">
+          <TrashIcon className="h-3 w-3" />
+        </IconButton>
       </div>
     </div>
   );
@@ -100,7 +132,12 @@ export function SectionList() {
 
   return (
     <>
-      <AccordionSection value="sections" title="Sections" count={sectionArray.length} onAdd={handleAdd}>
+      <AccordionSection
+        value="sections"
+        title="Sections"
+        count={sectionArray.length}
+        onAdd={handleAdd}
+      >
         {sectionArray.length === 0 ? (
           <p className="px-2 py-1 text-[10px] text-gray-600">No sections defined</p>
         ) : (
@@ -117,7 +154,12 @@ export function SectionList() {
         onOpenChange={(open) => !open && setDeleteId(null)}
         title="Delete Section"
         description={`Are you sure you want to delete Section ${deleteId}? Elements using this section may become invalid.`}
-        onConfirm={() => { if (deleteId !== null) { removeSection(deleteId); setDeleteId(null); } }}
+        onConfirm={() => {
+          if (deleteId !== null) {
+            removeSection(deleteId);
+            setDeleteId(null);
+          }
+        }}
       />
     </>
   );

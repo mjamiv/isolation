@@ -14,8 +14,12 @@ export function LoadRow({ load, onDelete }: LoadRowProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     nodeId: String(load.nodeId),
-    fx: String(load.fx), fy: String(load.fy), fz: String(load.fz),
-    mx: String(load.mx), my: String(load.my), mz: String(load.mz),
+    fx: String(load.fx),
+    fy: String(load.fy),
+    fz: String(load.fz),
+    mx: String(load.mx),
+    my: String(load.my),
+    mz: String(load.mz),
   });
 
   const updateLoad = useModelStore((s) => s.updateLoad);
@@ -25,8 +29,12 @@ export function LoadRow({ load, onDelete }: LoadRowProps) {
   const startEdit = () => {
     setDraft({
       nodeId: String(load.nodeId),
-      fx: String(load.fx), fy: String(load.fy), fz: String(load.fz),
-      mx: String(load.mx), my: String(load.my), mz: String(load.mz),
+      fx: String(load.fx),
+      fy: String(load.fy),
+      fz: String(load.fz),
+      mx: String(load.mx),
+      my: String(load.my),
+      mz: String(load.mz),
     });
     setEditing(true);
   };
@@ -50,10 +58,14 @@ export function LoadRow({ load, onDelete }: LoadRowProps) {
     return (
       <div className="space-y-1 rounded bg-gray-800/50 p-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-blue-400">Load {load.id}</span>
+          <span className="text-xs font-medium text-yellow-400">Load {load.id}</span>
           <div className="flex gap-0.5">
-            <IconButton onClick={save} title="Save"><CheckIcon className="h-3 w-3" /></IconButton>
-            <IconButton onClick={cancel} title="Cancel"><Cross2Icon className="h-3 w-3" /></IconButton>
+            <IconButton onClick={save} title="Save">
+              <CheckIcon className="h-3 w-3" />
+            </IconButton>
+            <IconButton onClick={cancel} title="Cancel">
+              <Cross2Icon className="h-3 w-3" />
+            </IconButton>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -61,22 +73,54 @@ export function LoadRow({ load, onDelete }: LoadRowProps) {
           <select
             value={draft.nodeId}
             onChange={(e) => setDraft((d) => ({ ...d, nodeId: e.target.value }))}
-            className="w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-blue-500"
+            className="w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
           >
             {nodeIds.map((id) => (
-              <option key={id} value={id}>Node {id}</option>
+              <option key={id} value={id}>
+                Node {id}
+              </option>
             ))}
           </select>
         </div>
         <div className="grid grid-cols-3 gap-1">
-          <FormField label="Fx" type="number" value={draft.fx} onChange={(v) => setDraft((d) => ({ ...d, fx: v }))} />
-          <FormField label="Fy" type="number" value={draft.fy} onChange={(v) => setDraft((d) => ({ ...d, fy: v }))} />
-          <FormField label="Fz" type="number" value={draft.fz} onChange={(v) => setDraft((d) => ({ ...d, fz: v }))} />
+          <FormField
+            label="Fx"
+            type="number"
+            value={draft.fx}
+            onChange={(v) => setDraft((d) => ({ ...d, fx: v }))}
+          />
+          <FormField
+            label="Fy"
+            type="number"
+            value={draft.fy}
+            onChange={(v) => setDraft((d) => ({ ...d, fy: v }))}
+          />
+          <FormField
+            label="Fz"
+            type="number"
+            value={draft.fz}
+            onChange={(v) => setDraft((d) => ({ ...d, fz: v }))}
+          />
         </div>
         <div className="grid grid-cols-3 gap-1">
-          <FormField label="Mx" type="number" value={draft.mx} onChange={(v) => setDraft((d) => ({ ...d, mx: v }))} />
-          <FormField label="My" type="number" value={draft.my} onChange={(v) => setDraft((d) => ({ ...d, my: v }))} />
-          <FormField label="Mz" type="number" value={draft.mz} onChange={(v) => setDraft((d) => ({ ...d, mz: v }))} />
+          <FormField
+            label="Mx"
+            type="number"
+            value={draft.mx}
+            onChange={(v) => setDraft((d) => ({ ...d, mx: v }))}
+          />
+          <FormField
+            label="My"
+            type="number"
+            value={draft.my}
+            onChange={(v) => setDraft((d) => ({ ...d, my: v }))}
+          />
+          <FormField
+            label="Mz"
+            type="number"
+            value={draft.mz}
+            onChange={(v) => setDraft((d) => ({ ...d, mz: v }))}
+          />
         </div>
       </div>
     );
@@ -88,7 +132,10 @@ export function LoadRow({ load, onDelete }: LoadRowProps) {
       <span className="flex-1 truncate">
         N{load.nodeId}: ({load.fx}, {load.fy}, {load.fz})
       </span>
-      <div className="hidden gap-0.5 group-hover:flex" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex gap-0.5 opacity-60 hover:opacity-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         <IconButton onClick={startEdit} title="Edit">
           <Pencil1Icon className="h-3 w-3" />
         </IconButton>

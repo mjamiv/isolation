@@ -37,7 +37,9 @@ export function ModalResults({ data }: ModalResultsProps) {
           className="rounded bg-gray-800 px-2 py-0.5 text-[10px] text-gray-300 outline-none ring-1 ring-gray-700"
         >
           {Array.from({ length: numModes }, (_, i) => (
-            <option key={i + 1} value={i + 1}>Mode {i + 1}</option>
+            <option key={i + 1} value={i + 1}>
+              Mode {i + 1}
+            </option>
           ))}
         </select>
         <button
@@ -45,7 +47,7 @@ export function ModalResults({ data }: ModalResultsProps) {
           onClick={handleToggleVisualize}
           className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors ${
             isVisualizing
-              ? 'bg-blue-600 text-white'
+              ? 'bg-yellow-600 text-white'
               : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
           }`}
         >
@@ -101,8 +103,12 @@ export function ModalResults({ data }: ModalResultsProps) {
 
       {/* Summary */}
       <div className="rounded bg-gray-800/50 p-2 text-[10px] text-gray-500">
-        <p>Fundamental period: {data.periods[0]?.toFixed(4)}s ({data.frequencies[0]?.toFixed(2)} Hz)</p>
-        <p>{numModes} mode{numModes > 1 ? 's' : ''} extracted</p>
+        <p>
+          Fundamental period: {data.periods[0]?.toFixed(4)}s ({data.frequencies[0]?.toFixed(2)} Hz)
+        </p>
+        <p>
+          {numModes} mode{numModes > 1 ? 's' : ''} extracted
+        </p>
       </div>
     </div>
   );

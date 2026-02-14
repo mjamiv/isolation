@@ -163,7 +163,7 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Analysis failed: {exc}",
+            detail="Analysis failed due to an internal error",
         )
 
     return _analysis_store[analysis_id]
@@ -314,7 +314,7 @@ async def ws_analysis_stream(websocket: WebSocket, analysis_id: str) -> None:
     except Exception as exc:
         logger.exception("WebSocket error for analysis %s", analysis_id)
         try:
-            await websocket.send_json({"type": "error", "detail": str(exc)})
+            await websocket.send_json({"type": "error", "detail": "An internal error occurred"})
         except Exception:
             pass
     finally:

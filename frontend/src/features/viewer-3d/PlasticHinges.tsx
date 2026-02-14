@@ -9,8 +9,8 @@ const HINGE_SEGMENTS = 12;
 
 const HINGE_COLORS: Record<PerformanceLevel, string> = {
   elastic: '#9ca3af',
-  yield: '#93c5fd',
-  IO: '#22c55e',
+  yield: '#FACC15',
+  IO: '#D4AF37',
   LS: '#f97316',
   CP: '#ef4444',
   beyondCP: '#991b1b',

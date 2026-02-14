@@ -60,7 +60,8 @@ export function ElementLabels() {
   return (
     <group>
       {labelData.map((item) => {
-        const visible = showLabels || hoveredElementId === item.id || selectedElementIds.has(item.id);
+        const visible =
+          showLabels || hoveredElementId === item.id || selectedElementIds.has(item.id);
         if (!visible) return null;
         return (
           <Html
@@ -69,7 +70,7 @@ export function ElementLabels() {
             center
             style={{ pointerEvents: 'none' }}
           >
-            <div className="whitespace-nowrap rounded bg-gray-900/90 px-1.5 py-0.5 text-[10px] font-mono text-emerald-300 ring-1 ring-gray-700">
+            <div className="whitespace-nowrap rounded bg-gray-900/90 px-1.5 py-0.5 text-[10px] font-mono text-yellow-300 ring-1 ring-gray-700">
               {item.label}
             </div>
           </Html>
