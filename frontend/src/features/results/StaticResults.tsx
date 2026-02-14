@@ -1,12 +1,19 @@
+import { lazy, Suspense, useMemo, useState } from 'react';
 import type { StaticResults as StaticResultsType } from '@/types/analysis';
 
 interface StaticResultsProps {
   data: StaticResultsType;
 }
 
+const Plot = lazy(() => import('react-plotly.js'));
+
 export function StaticResults({ data }: StaticResultsProps) {
   const displacements = Object.entries(data.nodeDisplacements);
   const reactions = Object.entries(data.reactions);
+  const elementEntries = Object.entries(data.elementForces);
+  const [selectedElement, setSelectedElement] = useState<number>(
+    elementEntries.length > 0 ? Number(elementEntries[0]![0]) : 0,
+  );
 
   // Find max displacement magnitude
   let maxDispNodeId = '';
@@ -18,6 +25,11 @@ export function StaticResults({ data }: StaticResultsProps) {
       maxDispNodeId = nodeId;
     }
   }
+
+  const selectedForceVector = useMemo(() => {
+    const raw = data.elementForces[selectedElement] ?? [];
+    return [raw[0] ?? 0, raw[1] ?? 0, raw[2] ?? 0, raw[3] ?? 0, raw[4] ?? 0, raw[5] ?? 0];
+  }, [data.elementForces, selectedElement]);
 
   return (
     <div className="space-y-3">
@@ -81,6 +93,62 @@ export function StaticResults({ data }: StaticResultsProps) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Element force / moment diagram */}
+      {elementEntries.length > 0 && (
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-gray-300">Element Forces & Moments</h3>
+            <select
+              value={selectedElement}
+              onChange={(e) => setSelectedElement(Number(e.target.value))}
+              className="rounded bg-gray-800 px-2 py-0.5 text-[10px] text-gray-300 outline-none ring-1 ring-gray-700"
+            >
+              {elementEntries.map(([eid]) => (
+                <option key={eid} value={eid}>
+                  Element {eid}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="h-44 rounded bg-gray-800/50">
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center text-xs text-gray-500">
+                  Loading chart...
+                </div>
+              }
+            >
+              <Plot
+                data={[
+                  {
+                    x: ['N(i)', 'V(i)', 'M(i)', 'N(j)', 'V(j)', 'M(j)'],
+                    y: selectedForceVector,
+                    type: 'bar' as const,
+                    marker: {
+                      color: selectedForceVector.map((v) => (v >= 0 ? '#22c55e' : '#ef4444')),
+                    },
+                  },
+                ]}
+                layout={{
+                  margin: { t: 10, r: 10, b: 25, l: 40 },
+                  paper_bgcolor: 'transparent',
+                  plot_bgcolor: 'transparent',
+                  font: { color: '#9ca3af', size: 9 },
+                  xaxis: { gridcolor: '#374151' },
+                  yaxis: {
+                    title: { text: 'Force / Moment', font: { size: 9 } },
+                    gridcolor: '#374151',
+                  },
+                  showlegend: false,
+                }}
+                config={{ displayModeBar: false, responsive: true }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </Suspense>
           </div>
         </div>
       )}

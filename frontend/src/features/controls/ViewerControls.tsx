@@ -100,7 +100,9 @@ export function ViewerControls() {
   const showLabels = useDisplayStore((state) => state.showLabels);
   const showGrid = useDisplayStore((state) => state.showGrid);
   const showAxes = useDisplayStore((state) => state.showAxes);
+  const showForces = useDisplayStore((state) => state.showForces);
   const forceType = useDisplayStore((state) => state.forceType);
+  const forceScale = useDisplayStore((state) => state.forceScale);
   const colorMap = useDisplayStore((state) => state.colorMap);
 
   const setDisplayMode = useDisplayStore((state) => state.setDisplayMode);
@@ -109,7 +111,9 @@ export function ViewerControls() {
   const setShowLabels = useDisplayStore((state) => state.setShowLabels);
   const setShowGrid = useDisplayStore((state) => state.setShowGrid);
   const setShowAxes = useDisplayStore((state) => state.setShowAxes);
+  const setShowForces = useDisplayStore((state) => state.setShowForces);
   const setForceType = useDisplayStore((state) => state.setForceType);
+  const setForceScale = useDisplayStore((state) => state.setForceScale);
   const setColorMap = useDisplayStore((state) => state.setColorMap);
 
   return (
@@ -145,12 +149,28 @@ export function ViewerControls() {
       </ControlSection>
 
       <ControlSection title="Results">
+        <Toggle label="Show Force Diagrams" checked={showForces} onChange={setShowForces} />
         <SelectControl
           label="Forces"
           value={forceType}
           options={FORCE_TYPE_OPTIONS}
           onChange={setForceType}
         />
+        <label className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">Force Scale</span>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={0.1}
+              max={4}
+              step={0.1}
+              value={forceScale}
+              onChange={(e) => setForceScale(Number(e.target.value))}
+              className="h-1 w-20 cursor-pointer accent-yellow-500"
+            />
+            <span className="w-8 text-right text-xs text-gray-500">{forceScale.toFixed(1)}x</span>
+          </div>
+        </label>
         <SelectControl
           label="Color Map"
           value={colorMap}

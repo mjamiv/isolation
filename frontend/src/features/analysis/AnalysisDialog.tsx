@@ -95,7 +95,17 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     }
 
     if (analysisType === 'time_history') {
-      params.groundMotionIds = [Number(selectedGmId)];
+      const selectedGm = gmArray.find((gm) => gm.id === Number(selectedGmId));
+      if (selectedGm) {
+        params.groundMotions = [
+          {
+            dt: selectedGm.dt,
+            acceleration: selectedGm.acceleration,
+            direction: selectedGm.direction,
+            scaleFactor: selectedGm.scaleFactor,
+          },
+        ];
+      }
       params.dt = Number(dt) || 0.01;
       params.numSteps = Number(numSteps) || 1000;
     }

@@ -24,7 +24,14 @@ export function useRunAnalysis() {
 
         // Poll for status until complete/failed
         const poll = async (): Promise<AnalysisResults> => {
-          const { status, progress } = await getAnalysisStatus(analysisId);
+          const statusResp = await getAnalysisStatus(analysisId);
+          const status = statusResp.status;
+          const progress =
+            typeof statusResp.progress === 'number'
+              ? statusResp.progress
+              : status === 'completed' || status === 'complete'
+                ? 1
+                : 0;
 
           if (status === 'running' || status === 'pending') {
             setProgress(progress * 100, Math.round(progress * 100), 100);

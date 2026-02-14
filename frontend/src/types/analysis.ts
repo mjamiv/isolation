@@ -18,6 +18,13 @@ export type Integrator = 'Newmark' | 'HHT' | 'GeneralizedAlpha';
 export type PushDirection = 'X' | 'Y';
 export type LoadPattern = 'linear' | 'first_mode';
 
+export interface GroundMotionInput {
+  dt: number;
+  acceleration: number[];
+  direction: 1 | 2 | 3;
+  scaleFactor: number;
+}
+
 export interface AnalysisParams {
   type: AnalysisType;
   /** Time step for transient analysis (seconds). */
@@ -28,6 +35,8 @@ export interface AnalysisParams {
   numModes?: number;
   /** IDs of GroundMotion records to apply (time-history). */
   groundMotionIds?: number[];
+  /** Full ground motion records expected by backend solver. */
+  groundMotions?: GroundMotionInput[];
   /** Nonlinear solution algorithm. */
   algorithm?: Algorithm;
   /** Time integration scheme. */
@@ -123,6 +132,9 @@ export interface PushoverResults {
   maxBaseShear: number;
   maxRoofDisplacement: number;
   ductilityRatio: number;
+  nodeDisplacements?: Record<number, [number, number, number, number, number, number]>;
+  elementForces?: Record<number, number[]>;
+  reactions?: Record<number, [number, number, number, number, number, number]>;
 }
 
 // ---------------------------------------------------------------------------

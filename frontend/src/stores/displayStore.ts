@@ -18,6 +18,7 @@ interface DisplayState {
   // Force diagrams
   showForces: boolean;
   forceType: ForceType;
+  forceScale: number;
 
   // Color mapping
   colorMap: ColorMapType;
@@ -42,6 +43,7 @@ interface DisplayState {
   setShowAxes: (show: boolean) => void;
   setShowForces: (show: boolean) => void;
   setForceType: (type: ForceType) => void;
+  setForceScale: (scale: number) => void;
   setColorMap: (map: ColorMapType) => void;
   setShowComparisonOverlay: (show: boolean) => void;
 
@@ -67,6 +69,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   showAxes: true,
   showForces: false,
   forceType: 'none',
+  forceScale: 1,
   colorMap: 'none',
 
   // Default comparison state
@@ -89,6 +92,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   setShowAxes: (show) => set({ showAxes: show }),
   setShowForces: (show) => set({ showForces: show }),
   setForceType: (type) => set({ forceType: type }),
+  setForceScale: (scale) => set({ forceScale: scale }),
   setColorMap: (map) => set({ colorMap: map }),
   setShowComparisonOverlay: (show) => set({ showComparisonOverlay: show }),
 

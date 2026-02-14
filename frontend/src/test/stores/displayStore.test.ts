@@ -21,6 +21,7 @@ beforeEach(() => {
   s.setShowAxes(true);
   s.setShowForces(false);
   s.setForceType('none');
+  s.setForceScale(1);
   s.setColorMap('none');
   s.clearSelection();
 });
@@ -56,6 +57,10 @@ describe('displayStore — initial defaults', () => {
 
   it('initializes with forceType none', () => {
     expect(getState().forceType).toBe('none');
+  });
+
+  it('initializes with forceScale 1', () => {
+    expect(getState().forceScale).toBe(1);
   });
 
   it('initializes with empty selection sets', () => {
@@ -143,6 +148,13 @@ describe('displayStore — setForceType', () => {
   it('changes force type to moment', () => {
     getState().setForceType('moment');
     expect(getState().forceType).toBe('moment');
+  });
+});
+
+describe('displayStore — setForceScale', () => {
+  it('changes force scale', () => {
+    getState().setForceScale(2.5);
+    expect(getState().forceScale).toBe(2.5);
   });
 });
 

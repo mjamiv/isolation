@@ -102,6 +102,7 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
         "analysis_id": analysis_id,
         "model_id": request.model_id,
         "status": "running",
+        "progress": 0.0,
         "type": analysis_type,
         "results": None,
         "error": None,
@@ -134,6 +135,7 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
                 ground_motion=accel,
                 dt=params.dt or gm.dt,
                 num_steps=params.num_steps or len(accel),
+                direction=gm.direction,
             )
 
         elif analysis_type == "pushover":
@@ -153,13 +155,13 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
 
         # Store completed results
         _analysis_store[analysis_id].update(
-            {"status": "completed", "results": results}
+            {"status": "completed", "progress": 1.0, "results": results}
         )
 
     except Exception as exc:
         logger.exception("Analysis %s failed", analysis_id)
         _analysis_store[analysis_id].update(
-            {"status": "failed", "error": str(exc)}
+            {"status": "failed", "progress": 0.0, "error": str(exc)}
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -197,10 +199,20 @@ async def get_analysis_status(analysis_id: str) -> dict[str, Any]:
             detail=f"Analysis '{analysis_id}' not found",
         )
     entry = _analysis_store[analysis_id]
+    status_value = entry["status"]
+    progress = entry.get("progress")
+    if progress is None:
+        if status_value == "completed":
+            progress = 1.0
+        elif status_value == "failed":
+            progress = 0.0
+        else:
+            progress = 0.0
     return {
         "analysis_id": entry["analysis_id"],
-        "status": entry["status"],
+        "status": status_value,
         "type": entry["type"],
+        "progress": progress,
         "error": entry.get("error"),
     }
 

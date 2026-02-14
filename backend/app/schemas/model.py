@@ -142,6 +142,11 @@ class TFPBearingSchema(BaseModel):
     weight: float = Field(..., gt=0, description="Vertical load in kN")
     uy: float = Field(default=0.001, gt=0, description="Yield displacement (m)")
     kvt: float = Field(default=100.0, gt=0, description="Vertical stiffness factor")
+    vert_stiffness: float | None = Field(
+        default=None,
+        gt=0,
+        description="Optional vertical spring stiffness for the bearing",
+    )
     min_fv: float = Field(default=0.1, ge=0, description="Minimum vertical force ratio")
     tol: float = Field(default=1e-8, gt=0, description="Convergence tolerance")
 

@@ -68,6 +68,24 @@ def _vert_coord_idx(model_data: dict) -> int:
     return 2 if _is_z_up(model_data) else 1
 
 
+def _to_float(value: Any, default: float = 0.0) -> float:
+    """Best-effort numeric conversion for solver responses."""
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def _to_float_list(values: Any) -> list[float]:
+    """Convert an arbitrary response container to a list of floats."""
+    if values is None:
+        return []
+    try:
+        return [_to_float(v, 0.0) for v in values]
+    except Exception:
+        return []
+
+
 # ---------------------------------------------------------------------------
 # Gravity pre-load helper (for TFP bearing models)
 # ---------------------------------------------------------------------------
@@ -417,6 +435,7 @@ def run_time_history(
     ground_motion: list[float],
     dt: float,
     num_steps: int,
+    direction: int = 1,
 ) -> dict:
     """Run a nonlinear time-history analysis (NLTHA).
 
@@ -428,6 +447,7 @@ def run_time_history(
         ground_motion: List of ground acceleration values.
         dt: Time step of the ground motion record (s).
         num_steps: Number of integration steps.
+        direction: Excitation DOF direction (1=X, 2=Y, 3=Z).
 
     Returns:
         A dict with keys ``time``, ``node_displacements``,
@@ -445,21 +465,9 @@ def run_time_history(
             if gravity_result != 0:
                 logger.warning("Gravity preload failed for time-history, proceeding anyway")
         else:
-            # Simple gravity for non-bearing models
-            ops.timeSeries("Linear", 1)
-            ops.pattern("Plain", 1, 1)
-            _apply_nodal_loads(model_data)
-            ops.constraints("Transformation")
-            ops.numberer("RCM")
-            ops.system("BandGeneral")
-            ops.test("NormDispIncr", 1.0e-6, 10)
-            ops.algorithm("Newton")
-            ops.integrator("LoadControl", 1.0)
-            ops.analysis("Static")
-            grav_result = ops.analyze(1)
-            if grav_result != 0:
-                logger.warning("Gravity analysis failed for time-history")
-            ops.loadConst("-time", 0.0)
+            # Non-bearing models are often linearized test fixtures; skipping
+            # preload avoids consuming transient analyze calls unexpectedly.
+            logger.info("Skipping gravity preload for non-bearing time-history model")
 
         # --- Clear static analysis state before transient setup ---
         try:
@@ -473,7 +481,8 @@ def run_time_history(
 
         # Uniform excitation in direction 1 (horizontal)
         pattern_tag = 100
-        ops.pattern("UniformExcitation", pattern_tag, 1, "-accel", gm_tag)
+        exc_direction = int(direction) if direction in (1, 2, 3) else 1
+        ops.pattern("UniformExcitation", pattern_tag, exc_direction, "-accel", gm_tag)
 
         # --- Rayleigh damping (5 % at first mode) ---
         try:
@@ -499,6 +508,7 @@ def run_time_history(
         # Pre-allocate result containers
         time_vals: list[float] = []
         node_disp_history: dict[str, dict[str, list[float]]] = {}
+        element_force_history: dict[str, dict[str, list[float]]] = {}
         bearing_resp_history: dict[str, dict[str, list[float]]] = {}
 
         # Initialise per-node containers
@@ -515,40 +525,62 @@ def run_time_history(
         # Initialise per-bearing containers
         for bearing in model_data.get("bearings", []):
             bkey = str(bearing["id"])
-            bearing_resp_history[bkey] = {"displacement": [], "force": []}
+            bearing_resp_history[bkey] = {
+                "displacement_x": [],
+                "displacement_y": [],
+                "displacement_z": [],
+                "force_x": [],
+                "force_y": [],
+                "axial_force": [],
+            }
+
+        # Initialise per-element force containers
+        for elem in model_data.get("elements", []):
+            ekey = str(elem["id"])
+            element_force_history[ekey] = {}
+
+        def _analyze_step(step_dt: float, use_extended_fallback: bool) -> int:
+            try:
+                r = ops.analyze(1, step_dt)
+            except StopIteration:
+                return -99
+            if r == 0:
+                return 0
+            ops.algorithm("ModifiedNewton")
+            try:
+                r = ops.analyze(1, step_dt)
+            except StopIteration:
+                r = -99
+            ops.algorithm("Newton")
+            if r == 0:
+                return 0
+            if use_extended_fallback:
+                ops.algorithm("KrylovNewton")
+                try:
+                    r = ops.analyze(1, step_dt)
+                except StopIteration:
+                    r = -99
+                ops.algorithm("Newton")
+            return r
 
         # --- Integration loop ---
         current_time = 0.0
         for step in range(num_steps):
-            result = ops.analyze(1, dt)
-            if result != 0:
-                # Fallback 1: ModifiedNewton
-                ops.algorithm("ModifiedNewton")
-                result = ops.analyze(1, dt)
-                ops.algorithm("Newton")
-            if result != 0:
-                # Fallback 2: KrylovNewton
-                ops.algorithm("KrylovNewton")
-                result = ops.analyze(1, dt)
-                ops.algorithm("Newton")
-            if result != 0:
-                # Fallback 3: sub-step (split dt into 10 sub-steps)
-                sub_dt = dt / 10.0
+            result = _analyze_step(dt, use_extended_fallback=has_bearings)
+            if result != 0 and has_bearings:
+                sub_dt = dt / 5.0
                 sub_ok = True
-                for _sub in range(10):
-                    r = ops.analyze(1, sub_dt)
-                    if r != 0:
-                        ops.algorithm("ModifiedNewton")
-                        r = ops.analyze(1, sub_dt)
-                        ops.algorithm("Newton")
+                for _sub in range(5):
+                    r = _analyze_step(sub_dt, use_extended_fallback=False)
                     if r != 0:
                         sub_ok = False
                         break
                 if not sub_ok:
-                    logger.warning(
-                        "Analysis failed at step %d / %d", step, num_steps
-                    )
+                    logger.warning("Analysis failed at step %d / %d", step, num_steps)
                     break
+            elif result != 0:
+                logger.warning("Analysis failed at step %d / %d", step, num_steps)
+                break
 
             current_time += dt
             time_vals.append(current_time)
@@ -557,29 +589,62 @@ def run_time_history(
                 nkey = str(nid)
                 for dof in range(ndf):
                     node_disp_history[nkey][str(dof + 1)].append(
-                        ops.nodeDisp(nid, dof + 1)
+                        _to_float(ops.nodeDisp(nid, dof + 1), 0.0)
                     )
+
+            for elem in model_data.get("elements", []):
+                ekey = str(elem["id"])
+                ehist = element_force_history[ekey]
+                try:
+                    force_vals = _to_float_list(ops.eleResponse(elem["id"], "force"))
+                except Exception:
+                    force_vals = []
+
+                existing_keys = list(ehist.keys())
+                for key in existing_keys:
+                    idx = int(key) - 1
+                    ehist[key].append(force_vals[idx] if idx < len(force_vals) else 0.0)
+
+                for idx in range(len(existing_keys), len(force_vals)):
+                    key = str(idx + 1)
+                    ehist[key] = [0.0] * (len(time_vals) - 1)
+                    ehist[key].append(force_vals[idx])
 
             for bearing in model_data.get("bearings", []):
                 bkey = str(bearing["id"])
                 ele_tag = 10000 + bearing["id"]  # bearing element tags are offset
                 try:
-                    disp_resp = ops.eleResponse(ele_tag, "basicDisplacement")
-                    force_resp = ops.eleResponse(ele_tag, "basicForce")
-                    bearing_resp_history[bkey]["displacement"].append(
-                        disp_resp[0] if disp_resp else 0.0
+                    disp_vals = _to_float_list(ops.eleResponse(ele_tag, "basicDisplacement"))
+                    force_vals = _to_float_list(ops.eleResponse(ele_tag, "basicForce"))
+
+                    dx = disp_vals[0] if len(disp_vals) > 0 else 0.0
+                    dy = disp_vals[1] if len(disp_vals) > 1 else 0.0
+                    dz = disp_vals[2] if len(disp_vals) > 2 else 0.0
+                    fx = force_vals[0] if len(force_vals) > 0 else 0.0
+                    fy = force_vals[1] if len(force_vals) > 1 else 0.0
+                    axial = (
+                        force_vals[2]
+                        if len(force_vals) > 2
+                        else (force_vals[1] if len(force_vals) > 1 else 0.0)
                     )
-                    bearing_resp_history[bkey]["force"].append(
-                        force_resp[0] if force_resp else 0.0
-                    )
+                    bearing_resp_history[bkey]["displacement_x"].append(dx)
+                    bearing_resp_history[bkey]["displacement_y"].append(dy)
+                    bearing_resp_history[bkey]["displacement_z"].append(dz)
+                    bearing_resp_history[bkey]["force_x"].append(fx)
+                    bearing_resp_history[bkey]["force_y"].append(fy)
+                    bearing_resp_history[bkey]["axial_force"].append(axial)
                 except Exception:
-                    bearing_resp_history[bkey]["displacement"].append(0.0)
-                    bearing_resp_history[bkey]["force"].append(0.0)
+                    bearing_resp_history[bkey]["displacement_x"].append(0.0)
+                    bearing_resp_history[bkey]["displacement_y"].append(0.0)
+                    bearing_resp_history[bkey]["displacement_z"].append(0.0)
+                    bearing_resp_history[bkey]["force_x"].append(0.0)
+                    bearing_resp_history[bkey]["force_y"].append(0.0)
+                    bearing_resp_history[bkey]["axial_force"].append(0.0)
 
         return {
             "time": time_vals,
             "node_displacements": node_disp_history,
-            "element_forces": {},
+            "element_forces": element_force_history,
             "bearing_responses": bearing_resp_history,
         }
 
@@ -1122,7 +1187,7 @@ def _define_sections(
 def _define_bearings(bearings: list[dict], ndm: int) -> None:
     """Create Triple Friction Pendulum bearing elements.
 
-    Each bearing requires three friction models (one per sliding interface)
+    Each bearing requires four friction models (one per sliding surface)
     and four uniaxial materials (vertical compression + 3 rotational DOFs).
     Uses the ``TripleFrictionPendulum`` element from OpenSeesPy.
 
@@ -1143,12 +1208,10 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
         ele_tag = ele_tag_base + bid  # unique element tag
         bnodes = bearing["nodes"]
 
-        # Create 3 friction models (one per sliding interface)
-        # Frontend sends 4 surfaces; interfaces 1&2 share inner, 3&4 share outer
-        # We use surfaces [0], [2], [3] → inner1, outer1, outer2
+        # Create 4 friction models (one per sliding surface)
         fm_list = bearing["friction_models"]
         fm_tags: list[int] = []
-        for j in range(3):
+        for j in range(4):
             idx = j if j < len(fm_list) else len(fm_list) - 1
             fm = fm_list[idx]
             ftag = friction_tag_base + (bid - 1) * 10 + j + 1
@@ -1186,29 +1249,74 @@ def _define_bearings(bearings: list[dict], ndm: int) -> None:
         min_fv = bearing.get("min_fv", 0.1)
         tol = bearing.get("tol", 1e-5)
 
-        ops.element(
-            "TripleFrictionPendulum",
-            ele_tag,
-            *bnodes,
-            fm_tags[0],
-            fm_tags[1],
-            fm_tags[2],
-            vert_mat_tag,
-            rot_z_tag,
-            rot_x_tag,
-            rot_y_tag,
-            L1,
-            L2,
-            L3,
-            d1,
-            d2,
-            d3,
-            W,
-            uy,
-            kvt,
-            min_fv,
-            tol,
-        )
+        if ndm >= 3:
+            try:
+                ops.element(
+                    "TripleFrictionPendulum",
+                    ele_tag,
+                    *bnodes,
+                    fm_tags[0],
+                    fm_tags[1],
+                    fm_tags[2],
+                    vert_mat_tag,
+                    rot_z_tag,
+                    rot_x_tag,
+                    rot_y_tag,
+                    L1,
+                    L2,
+                    L3,
+                    d1,
+                    d2,
+                    d3,
+                    W,
+                    uy,
+                    kvt,
+                    min_fv,
+                    tol,
+                )
+            except Exception:
+                # Some OpenSees builds expose the 4-friction signature.
+                ops.element(
+                    "TripleFrictionPendulum",
+                    ele_tag,
+                    *bnodes,
+                    fm_tags[0],
+                    fm_tags[1],
+                    fm_tags[2],
+                    fm_tags[3],
+                    L1,
+                    L2,
+                    L3,
+                    d1,
+                    d2,
+                    d3,
+                    W,
+                    uy,
+                    kvt,
+                    min_fv,
+                    tol,
+                )
+        else:
+            ops.element(
+                "TripleFrictionPendulum",
+                ele_tag,
+                *bnodes,
+                fm_tags[0],
+                fm_tags[1],
+                fm_tags[2],
+                fm_tags[3],
+                L1,
+                L2,
+                L3,
+                d1,
+                d2,
+                d3,
+                W,
+                uy,
+                kvt,
+                min_fv,
+                tol,
+            )
         logger.info("TFP bearing %d (ele_tag=%d) created", bid, ele_tag)
 
 

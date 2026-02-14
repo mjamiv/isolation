@@ -14,9 +14,10 @@
 
 export interface ModelInfo {
   name: string;
-  units: { force: string; length: string; time: string };
+  units: string | { force: string; length: string; time: string };
   ndm: 2 | 3;
   ndf: 3 | 6;
+  zUp?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,6 +119,8 @@ export interface TFPBearing {
   uy: number;
   /** Vertical stiffness factor. */
   kvt: number;
+  /** Optional explicit vertical spring stiffness. */
+  vertStiffness?: number;
   /** Minimum vertical force ratio. */
   minFv: number;
   /** Newton-Raphson convergence tolerance. */
@@ -129,7 +132,7 @@ export interface TFPBearing {
 // ---------------------------------------------------------------------------
 
 export interface PointLoad {
-  type: 'nodeLoad';
+  type: 'nodeLoad' | 'nodal';
   nodeId: number;
   /** Force/moment values: [Fx, Fy, Fz, Mx, My, Mz]. */
   values: [number, number, number, number, number, number];

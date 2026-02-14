@@ -160,11 +160,9 @@ describe('modelSerializer — loads', () => {
 
     expect(result.loads).toHaveLength(1);
     const load = result.loads[0]!;
-    expect(load.type).toBe('nodeLoad');
+    expect(load.type).toBe('nodal');
     expect(load.values).toEqual([10, -50, 0, 0, 0, 0]);
-    if (load.type === 'nodeLoad') {
-      expect(load.nodeId).toBe(5);
-    }
+    expect('nodeId' in load && load.nodeId).toBe(5);
   });
 });
 
@@ -243,7 +241,8 @@ describe('modelSerializer — bearings', () => {
     expect(b.dispCapacities).toEqual([2, 16, 2]);
     expect(b.weight).toBe(150);
     expect(b.uy).toBe(0.04);
-    expect(b.kvt).toBe(10000);
+    expect(b.kvt).toBe(1.0);
+    expect(b.vertStiffness).toBe(10000);
     expect(b.minFv).toBe(0.1);
     expect(b.tol).toBe(1e-8);
   });
@@ -271,6 +270,7 @@ describe('modelSerializer — modelInfo', () => {
   it('uses model name from store', () => {
     const result = serializeModel(makeStore());
     expect(result.modelInfo.name).toBe('Test');
+    expect(result.modelInfo.units).toBe('kip-in');
     expect(result.modelInfo.ndm).toBe(3);
     expect(result.modelInfo.ndf).toBe(6);
   });
@@ -278,6 +278,31 @@ describe('modelSerializer — modelInfo', () => {
   it('uses "Untitled" when model is null', () => {
     const result = serializeModel(makeStore({ model: null }));
     expect(result.modelInfo.name).toBe('Untitled');
+  });
+});
+
+describe('modelSerializer — Z-up conversion', () => {
+  it('swaps Y/Z coordinates and load components when bearings are present', () => {
+    const bearings = new Map<number, TFPBearing>();
+    bearings.set(1, makeTestBearing(1));
+
+    const nodes = new Map<number, Node>();
+    nodes.set(1, {
+      id: 1,
+      x: 10,
+      y: 20,
+      z: 30,
+      restraint: [false, false, false, false, false, false],
+    });
+
+    const loads = new Map<number, PointLoad>();
+    loads.set(1, { id: 1, nodeId: 1, fx: 1, fy: 2, fz: 3, mx: 4, my: 5, mz: 6 });
+
+    const result = serializeModel(makeStore({ bearings, nodes, loads }));
+
+    expect(result.modelInfo.zUp).toBe(true);
+    expect(result.nodes[0]!.coords).toEqual([10, 30, 20]);
+    expect(result.loads[0]!.values).toEqual([1, 3, 2, 4, 6, 5]);
   });
 });
 

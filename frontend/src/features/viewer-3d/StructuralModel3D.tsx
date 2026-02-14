@@ -10,10 +10,13 @@ import { DeformedShape } from './DeformedShape';
 import { ModeShapeAnimation } from './ModeShapeAnimation';
 import { PlasticHinges } from './PlasticHinges';
 import { PlaybackDriver } from './PlaybackDriver';
+import { ForceDiagrams } from './ForceDiagrams';
 
 export function StructuralModel3D() {
   const model = useModelStore((state) => state.model);
   const showDeformed = useDisplayStore((state) => state.showDeformed);
+  const showForces = useDisplayStore((state) => state.showForces);
+  const forceType = useDisplayStore((state) => state.forceType);
   const results = useAnalysisStore((state) => state.results);
   const selectedModeNumber = useAnalysisStore((state) => state.selectedModeNumber);
 
@@ -24,6 +27,8 @@ export function StructuralModel3D() {
   const hasModalResults = results?.type === 'modal' && selectedModeNumber !== null;
   const hasHingeStates = (results?.hingeStates?.length ?? 0) > 0;
   const hasTimeHistory = results?.type === 'time_history';
+  const hasForceResults =
+    results?.type === 'static' || results?.type === 'time_history' || results?.type === 'pushover';
 
   return (
     <group>
@@ -34,6 +39,7 @@ export function StructuralModel3D() {
       <NodeLabels />
       <ElementLabels />
       {showDeformed && <DeformedShape />}
+      {showForces && forceType !== 'none' && hasForceResults && <ForceDiagrams />}
       {hasModalResults && <ModeShapeAnimation />}
       {hasHingeStates && <PlasticHinges />}
       {hasTimeHistory && <PlaybackDriver />}

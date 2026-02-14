@@ -18,18 +18,18 @@ import type {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function serializeNode(node: Node): StructuralModel['nodes'][number] {
+function serializeNode(node: Node, zUp: boolean): StructuralModel['nodes'][number] {
+  const coords: [number, number, number] = zUp
+    ? [node.x, node.z, node.y] // Y-up -> Z-up swap
+    : [node.x, node.y, node.z];
+
+  const [tx, ty, tz, rx, ry, rz] = node.restraint;
+  const fixity = zUp ? [tx, tz, ty, rx, rz, ry] : [tx, ty, tz, rx, ry, rz];
+
   return {
     id: node.id,
-    coords: [node.x, node.y, node.z],
-    fixity: node.restraint.map((r) => (r ? 1 : 0)) as [
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-    ],
+    coords,
+    fixity: fixity.map((r) => (r ? 1 : 0)) as [number, number, number, number, number, number],
   };
 }
 
@@ -85,21 +85,31 @@ function serializeMaterial(material: Material): StructuralModel['materials'][num
   };
 }
 
-function serializeLoad(load: PointLoad): StructuralModel['loads'][number] {
+function serializeLoad(load: PointLoad, zUp: boolean): StructuralModel['loads'][number] {
+  const values: [number, number, number, number, number, number] = zUp
+    ? [load.fx, load.fz, load.fy, load.mx, load.mz, load.my]
+    : [load.fx, load.fy, load.fz, load.mx, load.my, load.mz];
+
   return {
-    type: 'nodeLoad',
+    type: 'nodal',
     nodeId: load.nodeId,
-    values: [load.fx, load.fy, load.fz, load.mx, load.my, load.mz],
+    values,
   };
 }
 
-function serializeGroundMotion(gm: GroundMotionRecord): StructuralModel['groundMotions'][number] {
+function serializeGroundMotion(
+  gm: GroundMotionRecord,
+  zUp: boolean,
+): StructuralModel['groundMotions'][number] {
+  const direction = zUp
+    ? ((gm.direction === 2 ? 3 : gm.direction === 3 ? 2 : gm.direction) as 1 | 2 | 3)
+    : gm.direction;
   return {
     id: gm.id,
     name: gm.name,
     dt: gm.dt,
     acceleration: gm.acceleration,
-    direction: gm.direction,
+    direction,
     scaleFactor: gm.scaleFactor,
   };
 }
@@ -118,7 +128,8 @@ function serializeBearing(bearing: TFPBearing): StructuralModel['bearings'][numb
     dispCapacities: [...bearing.dispCapacities],
     weight: bearing.weight,
     uy: bearing.yieldDisp,
-    kvt: bearing.vertStiffness,
+    kvt: 1.0,
+    vertStiffness: bearing.vertStiffness,
     minFv: bearing.minVertForce,
     tol: bearing.tolerance,
   };
@@ -140,22 +151,26 @@ interface StoreSnapshot {
 }
 
 export function serializeModel(store: StoreSnapshot): StructuralModel {
+  const zUp = store.bearings.size > 0;
   const firstMaterialId =
     store.materials.size > 0 ? Array.from(store.materials.values())[0]!.id : 1;
 
   return {
     modelInfo: {
       name: store.model?.name ?? 'Untitled',
-      units: { force: 'kip', length: 'in', time: 'sec' },
+      units: store.model?.units ?? 'kip-in',
       ndm: 3,
       ndf: 6,
+      ...(zUp ? { zUp: true } : {}),
     },
-    nodes: Array.from(store.nodes.values()).map(serializeNode),
+    nodes: Array.from(store.nodes.values()).map((node) => serializeNode(node, zUp)),
     materials: Array.from(store.materials.values()).map(serializeMaterial),
     sections: Array.from(store.sections.values()).map((s) => serializeSection(s, firstMaterialId)),
     elements: Array.from(store.elements.values()).map(serializeElement),
     bearings: Array.from(store.bearings.values()).map(serializeBearing),
-    loads: Array.from(store.loads.values()).map(serializeLoad),
-    groundMotions: Array.from(store.groundMotions.values()).map(serializeGroundMotion),
+    loads: Array.from(store.loads.values()).map((load) => serializeLoad(load, zUp)),
+    groundMotions: Array.from(store.groundMotions.values()).map((gm) =>
+      serializeGroundMotion(gm, zUp),
+    ),
   };
 }
