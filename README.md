@@ -119,6 +119,7 @@ Phases 1 through 5 are complete. The app provides:
 
 ```
 isolation/
+  reports/                   # Final deliverables (HTML + PDF)
   engineering_report.html    # Self-contained seismic isolation analysis report
   analysis_calculations.md   # Step-by-step structural engineering calculations
   aashto_compliance.md       # AASHTO code compliance review (12 checks)
