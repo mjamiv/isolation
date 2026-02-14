@@ -69,6 +69,14 @@ Phases 1 through 5 are complete. The app provides:
   - Long-Duration Subduction — low-frequency dominated, ~0.15g sustained, 30s
 - **Auto-select ground motion** — switching to Time-History analysis auto-selects the first available record, eliminating the manual selection step
 
+### Engineering Analysis Report
+- **Full seismic analysis report** — self-contained HTML report (`engineering_report.html`) comparing ductile (fixed-base) vs base-isolated performance for a 3-story hospital essential facility
+- **Structure**: St. Claire Memorial Hospital Critical Care Wing — 2-bay, 3-story SMRF with TFP bearings (W14x132 columns, W24x76 beams, W=450 kips)
+- **7 inline SVG diagrams** — structural elevation, TFP bearing cross-section, mode shape comparison, pushover capacity curves, drift profiles, base shear bars, plastic hinge map
+- **AASHTO compliance** — 12 code checks per AASHTO Guide Specs for Seismic Isolation Design (4th Ed.) and ASCE 7-22 Ch.17, all PASS
+- **Key results**: 64% base shear reduction, 93% drift reduction, 0 plastic hinges (vs 15 fixed-base), performance upgraded from Life Safety to Immediate Occupancy
+- **Supporting documents**: `analysis_calculations.md` (984 lines of step-by-step calculations), `aashto_compliance.md` (1,029 lines of detailed code compliance review)
+
 ### Bug Fixes & Polish
 - **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
@@ -111,6 +119,9 @@ Phases 1 through 5 are complete. The app provides:
 
 ```
 isolation/
+  engineering_report.html    # Self-contained seismic isolation analysis report
+  analysis_calculations.md   # Step-by-step structural engineering calculations
+  aashto_compliance.md       # AASHTO code compliance review (12 checks)
   frontend/          # React + Three.js client
     src/
       components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
