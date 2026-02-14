@@ -7,7 +7,16 @@
 
 import { describe, it, expect } from 'vitest';
 import { serializeModel } from '@/services/modelSerializer';
-import type { Node, Element, Section, Material, TFPBearing, FrictionSurface, PointLoad, GroundMotionRecord } from '@/types/storeModel';
+import type {
+  Node,
+  Element,
+  Section,
+  Material,
+  TFPBearing,
+  FrictionSurface,
+  PointLoad,
+  GroundMotionRecord,
+} from '@/types/storeModel';
 
 function makeStore(overrides: Partial<Parameters<typeof serializeModel>[0]> = {}) {
   return {
@@ -30,7 +39,13 @@ function makeStore(overrides: Partial<Parameters<typeof serializeModel>[0]> = {}
 describe('modelSerializer — nodes', () => {
   it('converts Node x/y/z to coords array', () => {
     const nodes = new Map<number, Node>();
-    nodes.set(1, { id: 1, x: 10, y: 20, z: 30, restraint: [false, false, false, false, false, false] });
+    nodes.set(1, {
+      id: 1,
+      x: 10,
+      y: 20,
+      z: 30,
+      restraint: [false, false, false, false, false, false],
+    });
     const result = serializeModel(makeStore({ nodes }));
 
     expect(result.nodes).toHaveLength(1);
@@ -97,8 +112,16 @@ describe('modelSerializer — sections', () => {
 
     const sections = new Map<number, Section>();
     sections.set(1, {
-      id: 1, name: 'W14x68', area: 20.0, Ix: 723, Iy: 121, Zx: 115,
-      d: 14.04, bf: 10.035, tw: 0.415, tf: 0.720,
+      id: 1,
+      name: 'W14x68',
+      area: 20.0,
+      Ix: 723,
+      Iy: 121,
+      Zx: 115,
+      d: 14.04,
+      bf: 10.035,
+      tw: 0.415,
+      tf: 0.72,
     });
 
     const result = serializeModel(makeStore({ sections, materials }));
@@ -153,9 +176,12 @@ describe('modelSerializer — groundMotions', () => {
   it('converts GroundMotionRecord to backend format', () => {
     const groundMotions = new Map<number, GroundMotionRecord>();
     groundMotions.set(1, {
-      id: 1, name: 'Test GM', dt: 0.01,
+      id: 1,
+      name: 'Test GM',
+      dt: 0.01,
       acceleration: [0.1, 0.2, 0.3],
-      direction: 1, scaleFactor: 1.5,
+      direction: 1,
+      scaleFactor: 1.5,
     });
     const result = serializeModel(makeStore({ groundMotions }));
 
@@ -172,8 +198,18 @@ describe('modelSerializer — groundMotions', () => {
 // ---------------------------------------------------------------------------
 
 function makeTestBearing(id: number): TFPBearing {
-  const inner: FrictionSurface = { type: 'VelDependent', muSlow: 0.012, muFast: 0.018, transRate: 0.4 };
-  const outer: FrictionSurface = { type: 'VelDependent', muSlow: 0.018, muFast: 0.030, transRate: 0.4 };
+  const inner: FrictionSurface = {
+    type: 'VelDependent',
+    muSlow: 0.012,
+    muFast: 0.018,
+    transRate: 0.4,
+  };
+  const outer: FrictionSurface = {
+    type: 'VelDependent',
+    muSlow: 0.018,
+    muFast: 0.03,
+    transRate: 0.4,
+  };
   return {
     id,
     nodeI: 101,
@@ -200,16 +236,16 @@ describe('modelSerializer — bearings', () => {
     expect(b.id).toBe(1);
     expect(b.nodes).toEqual([101, 1]);
     expect(b.frictionModels).toHaveLength(4);
-    expect(b.frictionModels[0].params.muSlow).toBe(0.012);
-    expect(b.frictionModels[0].params.muFast).toBe(0.018);
-    expect(b.frictionModels[0].params.transRate).toBe(0.4);
+    expect(b.frictionModels[0].muSlow).toBe(0.012);
+    expect(b.frictionModels[0].muFast).toBe(0.018);
+    expect(b.frictionModels[0].transRate).toBe(0.4);
     expect(b.radii).toEqual([16, 84, 16]);
     expect(b.dispCapacities).toEqual([2, 16, 2]);
     expect(b.weight).toBe(150);
-    expect(b.yieldDisp).toBe(0.04);
-    expect(b.vertStiffness).toBe(10000);
-    expect(b.minVertForce).toBe(0.1);
-    expect(b.tolerance).toBe(1e-8);
+    expect(b.uy).toBe(0.04);
+    expect(b.kvt).toBe(10000);
+    expect(b.minFv).toBe(0.1);
+    expect(b.tol).toBe(1e-8);
   });
 
   it('returns empty bearings when none in store', () => {
@@ -254,13 +290,30 @@ describe('modelSerializer — sample model round-trip', () => {
     const nodes = new Map<number, Node>();
     nodes.set(1, { id: 1, x: 0, y: 0, z: 0, restraint: [true, true, true, true, true, true] });
     nodes.set(2, { id: 2, x: 288, y: 0, z: 0, restraint: [true, true, true, true, true, true] });
-    nodes.set(3, { id: 3, x: 0, y: 144, z: 0, restraint: [false, false, false, false, false, false] });
+    nodes.set(3, {
+      id: 3,
+      x: 0,
+      y: 144,
+      z: 0,
+      restraint: [false, false, false, false, false, false],
+    });
 
     const materials = new Map<number, Material>();
     materials.set(1, { id: 1, name: 'Steel', E: 29000, Fy: 50, density: 490, nu: 0.3 });
 
     const sections = new Map<number, Section>();
-    sections.set(1, { id: 1, name: 'W14x68', area: 20, Ix: 723, Iy: 121, Zx: 115, d: 14.04, bf: 10.035, tw: 0.415, tf: 0.72 });
+    sections.set(1, {
+      id: 1,
+      name: 'W14x68',
+      area: 20,
+      Ix: 723,
+      Iy: 121,
+      Zx: 115,
+      d: 14.04,
+      bf: 10.035,
+      tw: 0.415,
+      tf: 0.72,
+    });
 
     const elements = new Map<number, Element>();
     elements.set(1, { id: 1, type: 'column', nodeI: 1, nodeJ: 3, sectionId: 1, materialId: 1 });

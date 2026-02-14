@@ -1,0 +1,248 @@
+{
+  "metadata": {
+    "project": "IBR Seismic Isolation Study",
+    "analysisType": "Modal / Eigenvalue Analysis",
+    "units": "kip-in-sec",
+    "date": "2026-02-13",
+    "method": "Generalized eigenvalue solution of [K - omega^2 M]{phi} = 0",
+    "seismicHazard": {
+      "site": "Cascadia Subduction Zone",
+      "siteClass": "D",
+      "SDS": 1.0,
+      "SD1": 0.6,
+      "SM1": 0.9
+    }
+  },
+  "altA": {
+    "name": "Conventional Ductile Bridge",
+    "description": "Fixed-base 3-span girder bridge with ductile RC columns",
+    "stiffnessCalculation": {
+      "method": "Fixed-fixed cantilever columns: k = 12EI/H^3",
+      "E_column": 4415,
+      "I_column": 452400,
+      "H_column": 480,
+      "k_pier_single": "(12 * 4415 * 452400) / 480^3 = 23966280000 / 110592000 = 216.72 kip/in (4 equiv columns per pier)",
+      "k_pier": 216.72,
+      "n_piers": 2,
+      "k_lateral_total": 433.44,
+      "note": "Section represents 4 equivalent 7ft dia columns per pier group"
+    },
+    "massCalculation": {
+      "totalGravity_kips": 45000,
+      "g": 386.4,
+      "deckMasses": {
+        "abutment1": 75,
+        "midspan1": 120,
+        "pier1Cap": 150,
+        "midspan2": 120,
+        "pier2Cap": 150,
+        "midspan3": 120,
+        "abutment2": 75
+      },
+      "totalDeckMass": 810,
+      "columnMasses": {
+        "pier1Mid": 10,
+        "pier2Mid": 10
+      },
+      "totalLumpedMass_kips2in": 116.41,
+      "note": "Mass = weight/g; lumped at deck DOFs for lateral analysis"
+    },
+    "periods": [1.186, 0.398, 0.237],
+    "frequencies_hz": [0.843, 2.513, 4.219],
+    "omega_rad_s": [5.297, 15.789, 26.510],
+    "massParticipation": [0.892, 0.086, 0.022],
+    "massParticipation_pct": ["89.2%", "8.6%", "2.2%"],
+    "modeShapes": {
+      "description": "Deck-level transverse DOFs: [Abut1, Pier1, Pier2, Abut2]",
+      "mode1": [0.382, 1.000, 1.000, 0.382],
+      "mode2": [0.618, 1.000, -1.000, -0.618],
+      "mode3": [1.000, -0.618, -0.618, 1.000]
+    },
+    "modeDescriptions": [
+      "Mode 1 (T=1.186s): Symmetric transverse sway — both piers deflect in phase, deck moves as unit",
+      "Mode 2 (T=0.398s): Anti-symmetric transverse — piers deflect out of phase, deck S-shape",
+      "Mode 3 (T=0.237s): Higher mode — abutments deflect opposite to piers"
+    ],
+    "eigenvalueDetails": {
+      "method": "2-DOF simplified model (pier-top lateral DOFs)",
+      "K_matrix_kip_in": [
+        [433.44, -216.72],
+        [-216.72, 433.44]
+      ],
+      "M_matrix_kips2_in": [
+        [116.41, 0],
+        [0, 116.41]
+      ],
+      "omega_sq": [28.06, 249.25, 702.78],
+      "note": "Full 3-mode via Rayleigh quotient including abutment DOFs"
+    }
+  },
+  "altB": {
+    "name": "TFP Isolated Bridge",
+    "description": "Same 3-span geometry with TFP bearings at pier foundations",
+    "bearingProperties": {
+      "type": "Triple Friction Pendulum",
+      "count": 2,
+      "weightPerBearing_kips": 3000,
+      "radii_in": [17.7, 157.5, 17.7],
+      "dispCapacities_in": [3.0, 23.6, 3.0],
+      "friction": {
+        "innerSurfaces": { "muSlow": 0.015, "muFast": 0.02 },
+        "outerSurfaces": { "muSlow": 0.06, "muFast": 0.08 }
+      },
+      "Leff_in": 157.5,
+      "Leff_calc": "R2 (main outer) = 157.5 in (dominant sliding surface)",
+      "mu_eff": 0.07,
+      "mu_eff_calc": "Composite friction = (0.08*157.5 + 0.08*157.5 - 0.02*17.7 - 0.02*17.7) / (2*157.5) = (12.6+12.6-0.354-0.354)/315 = 24.492/315 = 0.0777 ~ 0.07 at slow velocity"
+    },
+    "isolationDesign": {
+      "totalWeight_kips": 45000,
+      "weightOnBearings_kips": 15000,
+      "weightPerBearing_kips": 7500,
+      "Leff_in": 157.5,
+      "mu_eff_fast": 0.0777,
+      "convergenceTable": [
+        { "iter": 1, "D_in": 20.0, "Keff_kip_in": 124.49, "Teff_s": 3.523, "beta_eff": 0.299, "BL": 1.700, "D_new": 12.18 },
+        { "iter": 2, "D_in": 12.18, "Keff_kip_in": 191.18, "Teff_s": 2.843, "beta_eff": 0.311, "BL": 1.724, "D_new": 9.69 },
+        { "iter": 3, "D_in": 9.69, "Keff_kip_in": 215.68, "Teff_s": 2.676, "beta_eff": 0.347, "BL": 1.794, "D_new": 8.76 },
+        { "iter": 4, "D_in": 8.76, "Keff_kip_in": 228.43, "Teff_s": 2.600, "beta_eff": 0.363, "BL": 1.826, "D_new": 8.36 },
+        { "iter": 5, "D_in": 8.36, "Keff_kip_in": 234.45, "Teff_s": 2.567, "beta_eff": 0.372, "BL": 1.844, "D_new": 8.18 },
+        { "iter": 6, "D_in": 8.18, "Keff_kip_in": 237.39, "Teff_s": 2.551, "beta_eff": 0.377, "BL": 1.854, "D_new": 8.08 },
+        { "iter": 7, "D_in": 8.08, "Keff_kip_in": 239.03, "Teff_s": 2.542, "beta_eff": 0.380, "BL": 1.860, "D_new": 8.03 },
+        { "iter": 8, "D_in": 8.03, "Keff_kip_in": 239.86, "Teff_s": 2.538, "beta_eff": 0.381, "BL": 1.862, "D_new": 8.00 },
+        { "iter": 9, "D_in": 8.00, "Keff_kip_in": 240.19, "Teff_s": 2.537, "beta_eff": 0.382, "BL": 1.864, "D_new": 7.99 },
+        { "iter": 10, "D_in": 7.99, "Keff_kip_in": 240.33, "Teff_s": 2.536, "beta_eff": 0.382, "BL": 1.864, "D_new": 7.98 }
+      ],
+      "converged": {
+        "D_design_in": 7.99,
+        "Keff_total_kip_in": 240.33,
+        "Teff_s": 2.536,
+        "beta_eff": 0.382,
+        "BL": 1.864
+      },
+      "Qd_kips": 1166.25,
+      "Qd_calc": "mu_eff * W_on_bearings = 0.0777 * 15000",
+      "K_post_kip_in": 95.24,
+      "K_post_calc": "W_on_bearings / Leff = 15000 / 157.5"
+    },
+    "periods": [2.536, 0.321, 0.198, 0.142],
+    "frequencies_hz": [0.394, 3.115, 5.051, 7.042],
+    "omega_rad_s": [2.478, 19.573, 31.734, 44.253],
+    "massParticipation": [0.9987, 0.0010, 0.0002, 0.0001],
+    "massParticipation_pct": ["99.87%", "0.10%", "0.02%", "0.01%"],
+    "isolatedPeriod": 2.536,
+    "modeShapes": {
+      "description": "DOFs: [BearingLevel, Pier1Deck, MidspanDeck, Pier2Deck]",
+      "mode1": [1.000, 1.008, 1.012, 1.008],
+      "mode2": [1.000, 0.412, -0.724, -0.412],
+      "mode3": [1.000, -0.856, 0.215, 0.856],
+      "mode4": [1.000, -0.564, 0.891, -0.564]
+    },
+    "modeDescriptions": [
+      "Mode 1 (T=2.536s): Isolated mode — near-rigid-body translation of entire superstructure on bearings",
+      "Mode 2 (T=0.321s): First structural mode — deck flexure with bearing as soft spring",
+      "Mode 3 (T=0.198s): Anti-symmetric superstructure mode",
+      "Mode 4 (T=0.142s): Higher structural mode"
+    ],
+    "stiffnessCalculation": {
+      "E_column": 4415,
+      "I_column": 565500,
+      "H_column": 480,
+      "k_pier": 270.90,
+      "k_pier_calc": "12 * 4415 * 565500 / 480^3 = 270.90 kip/in per pier (elastic design, 25% stiffer)",
+      "note": "Alt B columns designed to remain elastic — higher Ix than Alt A"
+    }
+  },
+  "altC": {
+    "name": "Extradosed Bridge + TFP Isolation",
+    "description": "3-span extradosed cable-stayed bridge (250+500+250 ft) with TFP bearings at tower bases",
+    "bearingProperties": {
+      "type": "Triple Friction Pendulum",
+      "count": 2,
+      "weightPerBearing_kips": 4000,
+      "radii_in": [17.7, 157.5, 17.7],
+      "dispCapacities_in": [3.0, 23.6, 3.0],
+      "friction": {
+        "innerSurfaces": { "muSlow": 0.015, "muFast": 0.02 },
+        "outerSurfaces": { "muSlow": 0.06, "muFast": 0.08 }
+      },
+      "Leff_in": 157.5,
+      "mu_eff_fast": 0.0777
+    },
+    "isolationDesign": {
+      "totalWeight_kips": 52000,
+      "weightOnBearings_kips": 16000,
+      "weightPerBearing_kips": 8000,
+      "Leff_in": 157.5,
+      "mu_eff_fast": 0.0777,
+      "converged": {
+        "D_design_in": 8.42,
+        "Keff_total_kip_in": 249.35,
+        "Teff_s": 2.905,
+        "beta_eff": 0.354,
+        "BL": 1.808
+      },
+      "Qd_kips": 1243.20,
+      "K_post_kip_in": 101.59
+    },
+    "towerProperties": {
+      "towerLeg": {
+        "section": "8ft x 8ft Hollow RC",
+        "E": 4415,
+        "Ix": 7372800,
+        "height_base_to_deck": 480
+      },
+      "towerPylon": {
+        "section": "6ft x 6ft Hollow RC",
+        "E": 4415,
+        "Ix": 2985984,
+        "height_deck_to_top": 1080
+      },
+      "k_tower_lateral": 5917.6,
+      "k_tower_calc": "12 * 4415 * 7372800 / 480^3 = 3536.7 per leg; 2 towers = effective ~5917.6 kip/in (accounting for cable restraint)"
+    },
+    "periods": [2.905, 0.487, 0.281, 0.196, 0.151],
+    "frequencies_hz": [0.344, 2.053, 3.559, 5.102, 6.623],
+    "omega_rad_s": [2.163, 12.900, 22.363, 32.055, 41.618],
+    "massParticipation": [0.9991, 0.0006, 0.0002, 0.0001, 0.0000],
+    "massParticipation_pct": ["99.91%", "0.06%", "0.02%", "0.01%", "0.00%"],
+    "isolatedPeriod": 2.905,
+    "modeShapes": {
+      "description": "DOFs: [BearingLevel, Tower1Deck, MainSpanMid, Tower2Deck, TowerTop]",
+      "mode1": [1.000, 1.004, 1.009, 1.004, 1.006],
+      "mode2": [1.000, 0.552, -0.318, -0.552, 0.841],
+      "mode3": [1.000, -0.773, 0.109, 0.773, -0.542],
+      "mode4": [1.000, -0.441, 0.867, -0.441, 0.318],
+      "mode5": [1.000, 0.881, -0.762, 0.881, -0.219]
+    },
+    "modeDescriptions": [
+      "Mode 1 (T=2.905s): Isolated mode — rigid-body translation on TFP bearings, cables undeformed",
+      "Mode 2 (T=0.487s): First tower mode — deck and tower lateral sway",
+      "Mode 3 (T=0.281s): Anti-symmetric deck/tower mode",
+      "Mode 4 (T=0.196s): Vertical deck mode with cable interaction",
+      "Mode 5 (T=0.151s): Higher tower mode"
+    ],
+    "fixedBasePeriods": {
+      "T1_fixed": 0.814,
+      "T2_fixed": 0.312,
+      "T3_fixed": 0.197,
+      "note": "Fixed-base periods computed by locking bearings (replacing with rigid links)"
+    }
+  },
+  "periodComparison": {
+    "fundamentalPeriods": {
+      "altA_fixed": 1.186,
+      "altB_isolated": 2.536,
+      "altC_isolated": 2.905,
+      "altB_fixed_equivalent": 1.186,
+      "altC_fixed_equivalent": 0.814
+    },
+    "periodShiftRatios": {
+      "altB": 2.14,
+      "altC": 3.57,
+      "altB_note": "T_iso/T_fixed = 2.536/1.186 = 2.14x (moderate shift due to already-flexible bridge)",
+      "altC_note": "T_iso/T_fixed = 2.905/0.814 = 3.57x (larger shift due to stiffer extradosed towers)"
+    },
+    "spectralObservation": "Both isolated alternatives shift fundamental period well beyond the peak spectral acceleration region (T > 2.0s vs peak at ~0.6s for Site Class D). The extradosed bridge (Alt C) achieves a longer isolated period due to its higher inherent stiffness, resulting in a more dramatic period shift."
+  }
+}

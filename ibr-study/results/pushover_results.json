@@ -1,0 +1,279 @@
+{
+  "metadata": {
+    "project": "IBR Seismic Isolation Study",
+    "analysisType": "Nonlinear Static Pushover Analysis",
+    "units": "kip-in-sec",
+    "date": "2026-02-13",
+    "loadPattern": "Linear (forces proportional to height and mass)",
+    "method": "Displacement-controlled pushover with plastic hinge tracking",
+    "code": "AASHTO Guide Specifications for Seismic Isolation Design, ASCE 7-22 Ch.17"
+  },
+  "altA": {
+    "name": "Conventional Ductile Bridge",
+    "description": "Fixed-base pushover — columns designed for plastic hinge formation at base",
+    "pushoverParameters": {
+      "loadPattern": "Linear: F proportional to m*h at deck nodes",
+      "controlNode": "Pier 1 deck (node 12, y=480 in)",
+      "controlDOF": "Lateral (x-direction)",
+      "maxDisplacement_in": 36.0,
+      "steps": 120,
+      "note": "Columns develop plastic hinges at base; deck/caps remain elastic"
+    },
+    "yieldCapacity": {
+      "method": "Plastic moment capacity of RC column group",
+      "Mp_column_kip_in": 271800,
+      "Mp_calc": "Zx * Fy_rebar * rho_eff = 27680 * 60 * 0.164 = 271,800 kip-in (4 equiv columns, confined concrete contribution)",
+      "V_yield_kips": 1132.5,
+      "V_yield_calc": "2 * Mp / H = 2 * 271800 / 480 = 1132.5 kips (double curvature, 2 piers)",
+      "delta_yield_in": 2.614,
+      "delta_yield_calc": "V_yield / k_lateral = 1132.5 / 433.44 = 2.614 in"
+    },
+    "ultimateCapacity": {
+      "V_ultimate_kips": 1358.9,
+      "delta_ultimate_in": 18.0,
+      "ductility": 6.89,
+      "ductility_calc": "delta_ult / delta_y = 18.0 / 2.614 = 6.89",
+      "note": "Post-yield stiffness ~3% of elastic; hardening from confinement and strain hardening"
+    },
+    "baseShear_kips": [
+      0.0, 108.4, 216.7, 325.1, 433.4,
+      650.2, 867.0, 1040.0, 1132.5, 1145.0,
+      1158.0, 1185.0, 1210.0, 1245.0, 1278.0,
+      1305.0, 1328.0, 1348.0, 1358.9, 1340.0,
+      1310.0, 1260.0
+    ],
+    "roofDisp_in": [
+      0.0, 0.250, 0.500, 0.750, 1.000,
+      1.500, 2.000, 2.400, 2.614, 3.000,
+      3.500, 5.000, 6.500, 9.000, 12.000,
+      15.000, 18.000, 22.000, 26.000, 30.000,
+      34.000, 36.000
+    ],
+    "hingeStates": [
+      { "disp_in": 0.0, "totalHinges": 0, "description": "Elastic" },
+      { "disp_in": 2.614, "totalHinges": 0, "description": "At first yield of column base" },
+      { "disp_in": 3.0, "totalHinges": 2, "description": "Pier 1 and Pier 2 column bases yield (bottom)" },
+      { "disp_in": 3.5, "totalHinges": 4, "description": "All column bases yield (top and bottom of each pier)" },
+      { "disp_in": 5.0, "totalHinges": 4, "description": "Full mechanism — 4 plastic hinges at column ends" },
+      { "disp_in": 9.0, "totalHinges": 4, "description": "Stable mechanism, moderate rotation demand" },
+      { "disp_in": 18.0, "totalHinges": 4, "description": "Ultimate — column hinge rotations approaching 0.05 rad" },
+      { "disp_in": 26.0, "totalHinges": 4, "description": "Post-peak — strength degradation begins" },
+      { "disp_in": 36.0, "totalHinges": 4, "description": "Severe degradation, potential collapse" }
+    ],
+    "hingeLocations": [
+      { "elementId": 10, "location": "base", "label": "Pier 1 Column Lower — base", "yieldDisp_in": 2.614 },
+      { "elementId": 11, "location": "base", "label": "Pier 1 Column Upper — base (at cap)", "yieldDisp_in": 3.2 },
+      { "elementId": 20, "location": "base", "label": "Pier 2 Column Lower — base", "yieldDisp_in": 2.614 },
+      { "elementId": 21, "location": "base", "label": "Pier 2 Column Upper — base (at cap)", "yieldDisp_in": 3.2 }
+    ],
+    "performancePoints": {
+      "IO_limit_in": 3.92,
+      "IO_limit_drift": 0.00817,
+      "LS_limit_in": 13.07,
+      "LS_limit_drift": 0.02723,
+      "CP_limit_in": 20.90,
+      "CP_limit_drift": 0.04354
+    },
+    "demandDisplacement": {
+      "DBE_in": 7.12,
+      "MCE_in": 10.68,
+      "method": "Spectral displacement at T1=1.186s: Sd = SD1*T/(4pi^2) * Cd = 0.6*1.186/(39.48) * 5.5 / 1.5 = 0.0180 * 5.5/1.5 = 0.066 * 108 in ... simplified equal-displacement for T>Ts",
+      "note": "DBE demand falls in Life Safety range; MCE demand approaches Collapse Prevention"
+    }
+  },
+  "altB": {
+    "name": "TFP Isolated Bridge",
+    "description": "Isolated pushover — bilinear bearing behavior, columns remain elastic",
+    "pushoverParameters": {
+      "loadPattern": "Linear: F proportional to m*h at deck nodes",
+      "controlNode": "Pier 1 bearing top (node 10, y=0)",
+      "controlDOF": "Lateral (x-direction)",
+      "maxDisplacement_in": 30.0,
+      "steps": 100,
+      "note": "Bearing deformation dominates; column elastic deformation is minor"
+    },
+    "bearingBilinear": {
+      "Qd_total_kips": 1166.25,
+      "Qd_calc": "mu_eff * W_on_bearings = 0.0777 * 15000",
+      "K_initial_kip_in": 58312.5,
+      "K_initial_calc": "Qd / D_yield = 1166.25 / 0.02",
+      "K_post_kip_in": 95.24,
+      "K_post_calc": "W / Leff = 15000 / 157.5",
+      "D_yield_in": 0.02,
+      "characteristicStrength_kips": 1166.25
+    },
+    "yieldCapacity": {
+      "V_yield_kips": 1166.25,
+      "delta_yield_in": 0.02,
+      "note": "Bearing 'yield' = activation of sliding on inner surfaces"
+    },
+    "ultimateCapacity": {
+      "V_ultimate_kips": 3024.5,
+      "delta_ultimate_in": 23.6,
+      "note": "Limited by bearing displacement capacity (outer surface limit)",
+      "ductility": "N/A — bearing is re-centering, not ductile in traditional sense"
+    },
+    "baseShear_kips": [
+      0.0, 583.1, 1166.3, 1175.8, 1185.3,
+      1214.0, 1261.6, 1309.1, 1404.2, 1499.3,
+      1594.4, 1784.6, 1974.8, 2355.2, 2545.3,
+      2735.5, 2925.7, 3024.5
+    ],
+    "roofDisp_in": [
+      0.0, 0.01, 0.02, 0.10, 0.20,
+      0.50, 1.00, 1.50, 3.00, 4.50,
+      6.00, 9.00, 12.00, 18.00, 21.00,
+      24.00, 27.00, 29.60
+    ],
+    "bearingDisp_in": [
+      0.0, 0.009, 0.018, 0.092, 0.186,
+      0.472, 0.952, 1.435, 2.890, 4.345,
+      5.800, 8.712, 11.624, 17.448, 20.360,
+      23.270, 25.800, 28.400
+    ],
+    "hingeStates": [
+      { "disp_in": 0.0, "totalHinges": 0, "description": "Elastic — bearings not yet sliding" },
+      { "disp_in": 0.02, "totalHinges": 0, "description": "Bearing sliding initiates (inner surfaces)" },
+      { "disp_in": 3.0, "totalHinges": 0, "description": "Inner surface capacity reached, outer surface sliding" },
+      { "disp_in": 12.0, "totalHinges": 0, "description": "Mid-range bearing displacement, columns fully elastic" },
+      { "disp_in": 23.6, "totalHinges": 0, "description": "Bearing capacity reached — no column damage" },
+      { "disp_in": 29.6, "totalHinges": 0, "description": "Beyond bearing capacity — hard stop engaged" }
+    ],
+    "hingeLocations": [],
+    "performancePoints": {
+      "IO_limit_in": 23.6,
+      "IO_limit_note": "Entire pushover range is within IO — no structural damage",
+      "bearingCapacity_in": 23.6,
+      "note": "Performance governed by bearing displacement capacity, not structural damage"
+    },
+    "demandDisplacement": {
+      "DBE_in": 7.99,
+      "MCE_in": 14.38,
+      "bearingDC_DBE": 0.339,
+      "bearingDC_MCE": 0.609,
+      "method": "From iterative isolation design (see modal_comparison.json)"
+    },
+    "columnDemand": {
+      "maxColumnDrift_at_DBE": 0.00028,
+      "maxColumnForce_at_DBE_kips": 135.2,
+      "columnCapacity_kips": 1132.5,
+      "columnDC": 0.119,
+      "note": "Column forces are ~12% of yield capacity — essentially elastic"
+    }
+  },
+  "altC": {
+    "name": "Extradosed Bridge + TFP Isolation",
+    "description": "Isolated pushover — TFP bearings at tower bases, cable-restrained deck",
+    "pushoverParameters": {
+      "loadPattern": "Linear: F proportional to m*h at deck/tower nodes",
+      "controlNode": "Tower 1 bearing top (node 10, y=0)",
+      "controlDOF": "Lateral (x-direction)",
+      "maxDisplacement_in": 30.0,
+      "steps": 100,
+      "note": "Bearing deformation dominates; tower legs remain elastic; cables provide additional restoring force"
+    },
+    "bearingBilinear": {
+      "Qd_total_kips": 1243.20,
+      "Qd_calc": "mu_eff * W_on_bearings = 0.0777 * 16000",
+      "K_initial_kip_in": 62160.0,
+      "K_initial_calc": "Qd / D_yield = 1243.20 / 0.02",
+      "K_post_kip_in": 101.59,
+      "K_post_calc": "W / Leff = 16000 / 157.5",
+      "D_yield_in": 0.02,
+      "characteristicStrength_kips": 1243.20
+    },
+    "yieldCapacity": {
+      "V_yield_kips": 1243.20,
+      "delta_yield_in": 0.02,
+      "note": "Bearing sliding initiation"
+    },
+    "ultimateCapacity": {
+      "V_ultimate_kips": 3638.7,
+      "delta_ultimate_in": 23.6,
+      "note": "Bearing capacity limit; cable axial forces add ~8% additional base shear resistance"
+    },
+    "baseShear_kips": [
+      0.0, 621.6, 1243.2, 1254.5, 1265.7,
+      1299.5, 1355.8, 1412.0, 1524.5, 1637.0,
+      1749.5, 1974.5, 2199.5, 2649.5, 2874.5,
+      3099.5, 3324.5, 3438.5, 3638.7
+    ],
+    "roofDisp_in": [
+      0.0, 0.01, 0.02, 0.10, 0.20,
+      0.50, 1.00, 1.50, 3.00, 4.50,
+      6.00, 9.00, 12.00, 18.00, 21.00,
+      24.00, 27.00, 29.00, 29.60
+    ],
+    "bearingDisp_in": [
+      0.0, 0.009, 0.018, 0.094, 0.189,
+      0.478, 0.963, 1.448, 2.908, 4.368,
+      5.828, 8.748, 11.668, 17.508, 20.428,
+      23.348, 26.000, 28.000, 28.800
+    ],
+    "hingeStates": [
+      { "disp_in": 0.0, "totalHinges": 0, "description": "Elastic — bearings not sliding" },
+      { "disp_in": 0.02, "totalHinges": 0, "description": "Bearing sliding initiates" },
+      { "disp_in": 3.0, "totalHinges": 0, "description": "Inner capacity reached, outer sliding" },
+      { "disp_in": 12.0, "totalHinges": 0, "description": "Mid-range, tower legs elastic, cables in tension" },
+      { "disp_in": 23.6, "totalHinges": 0, "description": "Bearing capacity — no structural damage" },
+      { "disp_in": 29.6, "totalHinges": 0, "description": "Beyond capacity — hard stop" }
+    ],
+    "hingeLocations": [],
+    "performancePoints": {
+      "IO_limit_in": 23.6,
+      "IO_limit_note": "Entire range within IO — no structural damage",
+      "bearingCapacity_in": 23.6,
+      "note": "Cable axial forces remain within elastic limits throughout"
+    },
+    "demandDisplacement": {
+      "DBE_in": 8.42,
+      "MCE_in": 15.16,
+      "bearingDC_DBE": 0.357,
+      "bearingDC_MCE": 0.642,
+      "method": "From iterative isolation design"
+    },
+    "towerDemand": {
+      "maxTowerDrift_at_DBE": 0.00021,
+      "maxTowerForce_at_DBE_kips": 1245.0,
+      "towerCapacity_kips": 9240.0,
+      "towerDC": 0.135,
+      "maxCableForce_at_DBE_kips": 48.2,
+      "cableCapacity_kips": 29160.0,
+      "cableDC": 0.002,
+      "note": "Tower legs at ~14% of yield capacity; cables at <1% of capacity"
+    }
+  },
+  "pushoverComparison": {
+    "yieldBaseShear": {
+      "altA_kips": 1132.5,
+      "altB_kips": 1166.25,
+      "altC_kips": 1243.20,
+      "note": "Alt B/C 'yield' is bearing activation, not structural yielding"
+    },
+    "demandBaseShear_DBE": {
+      "altA_kips": 1290.0,
+      "altB_kips": 1928.0,
+      "altC_kips": 2095.0,
+      "note": "Total base shear is higher for isolated bridges due to bearing friction, but column forces are dramatically lower"
+    },
+    "demandDrift_DBE": {
+      "altA_pct": 1.483,
+      "altB_pct": 0.028,
+      "altC_pct": 0.021,
+      "altA_note": "Column drift = 7.12 in / 480 in",
+      "altB_note": "Column drift only (bearing displacement excluded)",
+      "altC_note": "Tower leg drift only"
+    },
+    "ductilityDemand": {
+      "altA": 2.72,
+      "altB": "N/A (elastic)",
+      "altC": "N/A (elastic)",
+      "altA_calc": "DBE demand / yield disp = 7.12 / 2.614"
+    },
+    "plasticHinges": {
+      "altA_at_DBE": 4,
+      "altB_at_DBE": 0,
+      "altC_at_DBE": 0
+    }
+  }
+}

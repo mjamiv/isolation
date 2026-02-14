@@ -1,0 +1,153 @@
+{
+  "modelInfo": {
+    "name": "Alt B: TFP Isolated Bridge",
+    "description": "IBR 3-span girder bridge with Triple Friction Pendulum (TFP) seismic isolation. Same 3×275 ft span geometry as Alt A, with TFP bearings inserted between pier foundations and column bases. Columns designed to remain essentially elastic. Upper/lower bound lambda factors per ASCE 7-22 Ch.17.",
+    "units": "kip-in"
+  },
+  "nodes": [
+    { "id": 1, "x": 0, "y": 0, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Abutment 1 Base" },
+    { "id": 2, "x": 0, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 75, "label": "Abutment 1 Deck" },
+
+    { "id": 100, "x": 3300, "y": 0, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Pier 1 Foundation" },
+    { "id": 101, "x": 3300, "y": -1, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Pier 1 Bearing Base" },
+    { "id": 10, "x": 3300, "y": 0, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 5, "label": "Pier 1 Bearing Top" },
+    { "id": 11, "x": 3300, "y": 240, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 10, "label": "Pier 1 Column Mid" },
+    { "id": 12, "x": 3300, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 150, "label": "Pier 1 Cap / Deck" },
+
+    { "id": 200, "x": 6600, "y": 0, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Pier 2 Foundation" },
+    { "id": 201, "x": 6600, "y": -1, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Pier 2 Bearing Base" },
+    { "id": 20, "x": 6600, "y": 0, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 5, "label": "Pier 2 Bearing Top" },
+    { "id": 21, "x": 6600, "y": 240, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 10, "label": "Pier 2 Column Mid" },
+    { "id": 22, "x": 6600, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 150, "label": "Pier 2 Cap / Deck" },
+
+    { "id": 30, "x": 9900, "y": 0, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Abutment 2 Base" },
+    { "id": 31, "x": 9900, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 75, "label": "Abutment 2 Deck" },
+
+    { "id": 5, "x": 1650, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 120, "label": "Span 1 Midspan Deck" },
+    { "id": 15, "x": 4950, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 120, "label": "Span 2 Midspan Deck" },
+    { "id": 25, "x": 8250, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 120, "label": "Span 3 Midspan Deck" }
+  ],
+  "materials": [
+    { "id": 1, "name": "Concrete 6 ksi (Columns)", "E": 4415, "Fy": 6, "density": 0.0868, "nu": 0.2 },
+    { "id": 2, "name": "Concrete 8 ksi (Deck/Caps)", "E": 5098, "Fy": 8, "density": 0.0868, "nu": 0.2 },
+    { "id": 3, "name": "A706 Gr60 Rebar", "E": 29000, "Fy": 60, "density": 0.284, "nu": 0.3 }
+  ],
+  "sections": [
+    {
+      "id": 1,
+      "name": "RC Column 7ft Dia (×4 equiv) — Elastic Design",
+      "area": 22167,
+      "Ix": 565500,
+      "Iy": 565500,
+      "Zx": 34600,
+      "d": 84,
+      "bf": 84,
+      "tw": 42,
+      "tf": 42
+    },
+    {
+      "id": 2,
+      "name": "Box Girder Deck 150ft × 9ft",
+      "area": 38880,
+      "Ix": 26244000,
+      "Iy": 874800000,
+      "Zx": 5832000,
+      "d": 108,
+      "bf": 1800,
+      "tw": 12,
+      "tf": 12
+    },
+    {
+      "id": 3,
+      "name": "Cap Beam PT 8ft × 6ft",
+      "area": 6912,
+      "Ix": 3317760,
+      "Iy": 2488320,
+      "Zx": 69120,
+      "d": 96,
+      "bf": 72,
+      "tw": 36,
+      "tf": 18
+    },
+    {
+      "id": 4,
+      "name": "Abutment Wall 10ft × 3ft",
+      "area": 4320,
+      "Ix": 518400,
+      "Iy": 12960000,
+      "Zx": 86400,
+      "d": 36,
+      "bf": 120,
+      "tw": 18,
+      "tf": 18
+    }
+  ],
+  "elements": [
+    { "id": 1, "type": "column", "nodeI": 1, "nodeJ": 2, "sectionId": 4, "materialId": 2, "label": "Abutment 1 Wall" },
+
+    { "id": 10, "type": "column", "nodeI": 10, "nodeJ": 11, "sectionId": 1, "materialId": 1, "label": "Pier 1 Column Lower" },
+    { "id": 11, "type": "column", "nodeI": 11, "nodeJ": 12, "sectionId": 1, "materialId": 1, "label": "Pier 1 Column Upper" },
+
+    { "id": 20, "type": "column", "nodeI": 20, "nodeJ": 21, "sectionId": 1, "materialId": 1, "label": "Pier 2 Column Lower" },
+    { "id": 21, "type": "column", "nodeI": 21, "nodeJ": 22, "sectionId": 1, "materialId": 1, "label": "Pier 2 Column Upper" },
+
+    { "id": 30, "type": "column", "nodeI": 30, "nodeJ": 31, "sectionId": 4, "materialId": 2, "label": "Abutment 2 Wall" },
+
+    { "id": 101, "type": "beam", "nodeI": 2, "nodeJ": 5, "sectionId": 2, "materialId": 2, "label": "Span 1 Deck Left" },
+    { "id": 102, "type": "beam", "nodeI": 5, "nodeJ": 12, "sectionId": 2, "materialId": 2, "label": "Span 1 Deck Right" },
+    { "id": 103, "type": "beam", "nodeI": 12, "nodeJ": 15, "sectionId": 2, "materialId": 2, "label": "Span 2 Deck Left" },
+    { "id": 104, "type": "beam", "nodeI": 15, "nodeJ": 22, "sectionId": 2, "materialId": 2, "label": "Span 2 Deck Right" },
+    { "id": 105, "type": "beam", "nodeI": 22, "nodeJ": 25, "sectionId": 2, "materialId": 2, "label": "Span 3 Deck Left" },
+    { "id": 106, "type": "beam", "nodeI": 25, "nodeJ": 31, "sectionId": 2, "materialId": 2, "label": "Span 3 Deck Right" }
+  ],
+  "bearings": [
+    {
+      "id": 1,
+      "nodeI": 101,
+      "nodeJ": 10,
+      "surfaces": [
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 }
+      ],
+      "radii": [17.7, 157.5, 17.7],
+      "dispCapacities": [3.0, 23.6, 3.0],
+      "weight": 3000,
+      "yieldDisp": 0.01,
+      "vertStiffness": 50000,
+      "minVertForce": 0.1,
+      "tolerance": 1e-10,
+      "label": "TFP Bearing Pier 1"
+    },
+    {
+      "id": 2,
+      "nodeI": 201,
+      "nodeJ": 20,
+      "surfaces": [
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 }
+      ],
+      "radii": [17.7, 157.5, 17.7],
+      "dispCapacities": [3.0, 23.6, 3.0],
+      "weight": 3000,
+      "yieldDisp": 0.01,
+      "vertStiffness": 50000,
+      "minVertForce": 0.1,
+      "tolerance": 1e-10,
+      "label": "TFP Bearing Pier 2"
+    }
+  ],
+  "loads": [
+    { "id": 1, "nodeId": 2, "fx": 0, "fy": -3750, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 2, "nodeId": 5, "fx": 0, "fy": -7500, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 3, "nodeId": 12, "fx": 0, "fy": -7500, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 4, "nodeId": 15, "fx": 0, "fy": -7500, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 5, "nodeId": 22, "fx": 0, "fy": -7500, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 6, "nodeId": 25, "fx": 0, "fy": -7500, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 7, "nodeId": 31, "fx": 0, "fy": -3750, "fz": 0, "mx": 0, "my": 0, "mz": 0 }
+  ],
+  "groundMotions": []
+}

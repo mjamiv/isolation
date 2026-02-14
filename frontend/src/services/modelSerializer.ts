@@ -3,7 +3,7 @@
  * StructuralModelSchema format for API submission.
  */
 
-import type { StructuralModel } from '@/types/model';
+import type { StructuralModel, FrictionModel as FrictionModelOut } from '@/types/model';
 import type {
   Node,
   Element,
@@ -22,7 +22,14 @@ function serializeNode(node: Node): StructuralModel['nodes'][number] {
   return {
     id: node.id,
     coords: [node.x, node.y, node.z],
-    fixity: node.restraint.map((r) => (r ? 1 : 0)) as [number, number, number, number, number, number],
+    fixity: node.restraint.map((r) => (r ? 1 : 0)) as [
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+    ],
   };
 }
 
@@ -103,19 +110,17 @@ function serializeBearing(bearing: TFPBearing): StructuralModel['bearings'][numb
     nodes: [bearing.nodeI, bearing.nodeJ],
     frictionModels: bearing.surfaces.map((s) => ({
       type: s.type,
-      params: {
-        muSlow: s.muSlow,
-        muFast: s.muFast,
-        transRate: s.transRate,
-      },
-    })) as [any, any, any, any],
+      muSlow: s.muSlow,
+      muFast: s.muFast,
+      transRate: s.transRate,
+    })) as [FrictionModelOut, FrictionModelOut, FrictionModelOut, FrictionModelOut],
     radii: [...bearing.radii],
     dispCapacities: [...bearing.dispCapacities],
     weight: bearing.weight,
-    yieldDisp: bearing.yieldDisp,
-    vertStiffness: bearing.vertStiffness,
-    minVertForce: bearing.minVertForce,
-    tolerance: bearing.tolerance,
+    uy: bearing.yieldDisp,
+    kvt: bearing.vertStiffness,
+    minFv: bearing.minVertForce,
+    tol: bearing.tolerance,
   };
 }
 
@@ -135,9 +140,8 @@ interface StoreSnapshot {
 }
 
 export function serializeModel(store: StoreSnapshot): StructuralModel {
-  const firstMaterialId = store.materials.size > 0
-    ? Array.from(store.materials.values())[0]!.id
-    : 1;
+  const firstMaterialId =
+    store.materials.size > 0 ? Array.from(store.materials.values())[0]!.id : 1;
 
   return {
     modelInfo: {
@@ -148,9 +152,7 @@ export function serializeModel(store: StoreSnapshot): StructuralModel {
     },
     nodes: Array.from(store.nodes.values()).map(serializeNode),
     materials: Array.from(store.materials.values()).map(serializeMaterial),
-    sections: Array.from(store.sections.values()).map((s) =>
-      serializeSection(s, firstMaterialId),
-    ),
+    sections: Array.from(store.sections.values()).map((s) => serializeSection(s, firstMaterialId)),
     elements: Array.from(store.elements.values()).map(serializeElement),
     bearings: Array.from(store.bearings.values()).map(serializeBearing),
     loads: Array.from(store.loads.values()).map(serializeLoad),

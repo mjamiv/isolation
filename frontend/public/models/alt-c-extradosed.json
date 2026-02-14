@@ -1,0 +1,189 @@
+{
+  "modelInfo": {
+    "name": "Alt C: Extradosed Bridge + TFP Isolation",
+    "description": "IBR 3-span extradosed cable-stayed bridge with TFP seismic isolation. 250 ft + 500 ft + 250 ft spans (1000 ft total). 90 ft towers above deck, stay cables as equivalent truss elements, TFP bearings at tower bases. Fewer in-water piers for reduced environmental impact.",
+    "units": "kip-in"
+  },
+  "nodes": [
+    { "id": 1, "x": 0, "y": 0, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Abutment 1 Base" },
+    { "id": 2, "x": 0, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 60, "label": "Abutment 1 Deck" },
+
+    { "id": 100, "x": 3000, "y": 0, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Tower 1 Foundation" },
+    { "id": 101, "x": 3000, "y": -1, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Tower 1 Bearing Base" },
+    { "id": 10, "x": 3000, "y": 0, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 5, "label": "Tower 1 Bearing Top" },
+    { "id": 11, "x": 3000, "y": 240, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 15, "label": "Tower 1 Column Mid" },
+    { "id": 12, "x": 3000, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 200, "label": "Tower 1 Deck Level" },
+    { "id": 13, "x": 3000, "y": 1020, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 25, "label": "Tower 1 Mid-Height" },
+    { "id": 14, "x": 3000, "y": 1560, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 20, "label": "Tower 1 Top" },
+
+    { "id": 200, "x": 9000, "y": 0, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Tower 2 Foundation" },
+    { "id": 201, "x": 9000, "y": -1, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Tower 2 Bearing Base" },
+    { "id": 20, "x": 9000, "y": 0, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 5, "label": "Tower 2 Bearing Top" },
+    { "id": 21, "x": 9000, "y": 240, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 15, "label": "Tower 2 Column Mid" },
+    { "id": 22, "x": 9000, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 200, "label": "Tower 2 Deck Level" },
+    { "id": 23, "x": 9000, "y": 1020, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 25, "label": "Tower 2 Mid-Height" },
+    { "id": 24, "x": 9000, "y": 1560, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 20, "label": "Tower 2 Top" },
+
+    { "id": 30, "x": 12000, "y": 0, "z": 0, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Abutment 2 Base" },
+    { "id": 31, "x": 12000, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 60, "label": "Abutment 2 Deck" },
+
+    { "id": 5, "x": 1500, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 100, "label": "Side Span 1 Midspan" },
+    { "id": 15, "x": 4500, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 100, "label": "Main Span Quarter 1" },
+    { "id": 16, "x": 6000, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 120, "label": "Main Span Midspan" },
+    { "id": 17, "x": 7500, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 100, "label": "Main Span Quarter 2" },
+    { "id": 25, "x": 10500, "y": 480, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 100, "label": "Side Span 2 Midspan" }
+  ],
+  "materials": [
+    { "id": 1, "name": "Concrete 6 ksi (Towers)", "E": 4415, "Fy": 6, "density": 0.0868, "nu": 0.2 },
+    { "id": 2, "name": "Concrete 8 ksi (Deck/Caps)", "E": 5098, "Fy": 8, "density": 0.0868, "nu": 0.2 },
+    { "id": 3, "name": "270 ksi PT Strand (Cables)", "E": 28500, "Fy": 243, "density": 0.284, "nu": 0.3 }
+  ],
+  "sections": [
+    {
+      "id": 1,
+      "name": "Tower Leg 8ft × 8ft Hollow",
+      "area": 11520,
+      "Ix": 7372800,
+      "Iy": 7372800,
+      "Zx": 153600,
+      "d": 96,
+      "bf": 96,
+      "tw": 24,
+      "tf": 24
+    },
+    {
+      "id": 2,
+      "name": "Extradosed Box Girder 150ft × 10ft",
+      "area": 43200,
+      "Ix": 36000000,
+      "Iy": 972000000,
+      "Zx": 7200000,
+      "d": 120,
+      "bf": 1800,
+      "tw": 12,
+      "tf": 14
+    },
+    {
+      "id": 3,
+      "name": "Stay Cable Bundle (equiv)",
+      "area": 120,
+      "Ix": 1146,
+      "Iy": 1146,
+      "Zx": 764,
+      "d": 12,
+      "bf": 12,
+      "tw": 6,
+      "tf": 6
+    },
+    {
+      "id": 4,
+      "name": "Abutment Wall 10ft × 3ft",
+      "area": 4320,
+      "Ix": 518400,
+      "Iy": 12960000,
+      "Zx": 86400,
+      "d": 36,
+      "bf": 120,
+      "tw": 18,
+      "tf": 18
+    },
+    {
+      "id": 5,
+      "name": "Tower Upper (Pylon) 6ft × 6ft Hollow",
+      "area": 6912,
+      "Ix": 2985984,
+      "Iy": 2985984,
+      "Zx": 82944,
+      "d": 72,
+      "bf": 72,
+      "tw": 18,
+      "tf": 18
+    }
+  ],
+  "elements": [
+    { "id": 1, "type": "column", "nodeI": 1, "nodeJ": 2, "sectionId": 4, "materialId": 2, "label": "Abutment 1 Wall" },
+
+    { "id": 10, "type": "column", "nodeI": 10, "nodeJ": 11, "sectionId": 1, "materialId": 1, "label": "Tower 1 Leg Lower" },
+    { "id": 11, "type": "column", "nodeI": 11, "nodeJ": 12, "sectionId": 1, "materialId": 1, "label": "Tower 1 Leg Upper" },
+    { "id": 12, "type": "column", "nodeI": 12, "nodeJ": 13, "sectionId": 5, "materialId": 1, "label": "Tower 1 Pylon Lower" },
+    { "id": 13, "type": "column", "nodeI": 13, "nodeJ": 14, "sectionId": 5, "materialId": 1, "label": "Tower 1 Pylon Upper" },
+
+    { "id": 20, "type": "column", "nodeI": 20, "nodeJ": 21, "sectionId": 1, "materialId": 1, "label": "Tower 2 Leg Lower" },
+    { "id": 21, "type": "column", "nodeI": 21, "nodeJ": 22, "sectionId": 1, "materialId": 1, "label": "Tower 2 Leg Upper" },
+    { "id": 22, "type": "column", "nodeI": 22, "nodeJ": 23, "sectionId": 5, "materialId": 1, "label": "Tower 2 Pylon Lower" },
+    { "id": 23, "type": "column", "nodeI": 23, "nodeJ": 24, "sectionId": 5, "materialId": 1, "label": "Tower 2 Pylon Upper" },
+
+    { "id": 30, "type": "column", "nodeI": 30, "nodeJ": 31, "sectionId": 4, "materialId": 2, "label": "Abutment 2 Wall" },
+
+    { "id": 101, "type": "beam", "nodeI": 2, "nodeJ": 5, "sectionId": 2, "materialId": 2, "label": "Side Span 1 Deck Left" },
+    { "id": 102, "type": "beam", "nodeI": 5, "nodeJ": 12, "sectionId": 2, "materialId": 2, "label": "Side Span 1 Deck Right" },
+    { "id": 103, "type": "beam", "nodeI": 12, "nodeJ": 15, "sectionId": 2, "materialId": 2, "label": "Main Span Deck Seg 1" },
+    { "id": 104, "type": "beam", "nodeI": 15, "nodeJ": 16, "sectionId": 2, "materialId": 2, "label": "Main Span Deck Seg 2" },
+    { "id": 105, "type": "beam", "nodeI": 16, "nodeJ": 17, "sectionId": 2, "materialId": 2, "label": "Main Span Deck Seg 3" },
+    { "id": 106, "type": "beam", "nodeI": 17, "nodeJ": 22, "sectionId": 2, "materialId": 2, "label": "Main Span Deck Seg 4" },
+    { "id": 107, "type": "beam", "nodeI": 22, "nodeJ": 25, "sectionId": 2, "materialId": 2, "label": "Side Span 2 Deck Left" },
+    { "id": 108, "type": "beam", "nodeI": 25, "nodeJ": 31, "sectionId": 2, "materialId": 2, "label": "Side Span 2 Deck Right" },
+
+    { "id": 301, "type": "beam", "nodeI": 13, "nodeJ": 5, "sectionId": 3, "materialId": 3, "label": "Cable T1 Backstay" },
+    { "id": 302, "type": "beam", "nodeI": 14, "nodeJ": 5, "sectionId": 3, "materialId": 3, "label": "Cable T1 Backstay Upper" },
+    { "id": 303, "type": "beam", "nodeI": 13, "nodeJ": 15, "sectionId": 3, "materialId": 3, "label": "Cable T1 Forestay Lower" },
+    { "id": 304, "type": "beam", "nodeI": 14, "nodeJ": 16, "sectionId": 3, "materialId": 3, "label": "Cable T1 Forestay Upper" },
+
+    { "id": 305, "type": "beam", "nodeI": 23, "nodeJ": 25, "sectionId": 3, "materialId": 3, "label": "Cable T2 Backstay" },
+    { "id": 306, "type": "beam", "nodeI": 24, "nodeJ": 25, "sectionId": 3, "materialId": 3, "label": "Cable T2 Backstay Upper" },
+    { "id": 307, "type": "beam", "nodeI": 23, "nodeJ": 17, "sectionId": 3, "materialId": 3, "label": "Cable T2 Forestay Lower" },
+    { "id": 308, "type": "beam", "nodeI": 24, "nodeJ": 16, "sectionId": 3, "materialId": 3, "label": "Cable T2 Forestay Upper" }
+  ],
+  "bearings": [
+    {
+      "id": 1,
+      "nodeI": 101,
+      "nodeJ": 10,
+      "surfaces": [
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 }
+      ],
+      "radii": [17.7, 157.5, 17.7],
+      "dispCapacities": [3.0, 23.6, 3.0],
+      "weight": 4000,
+      "yieldDisp": 0.01,
+      "vertStiffness": 60000,
+      "minVertForce": 0.1,
+      "tolerance": 1e-10,
+      "label": "TFP Bearing Tower 1"
+    },
+    {
+      "id": 2,
+      "nodeI": 201,
+      "nodeJ": 20,
+      "surfaces": [
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 }
+      ],
+      "radii": [17.7, 157.5, 17.7],
+      "dispCapacities": [3.0, 23.6, 3.0],
+      "weight": 4000,
+      "yieldDisp": 0.01,
+      "vertStiffness": 60000,
+      "minVertForce": 0.1,
+      "tolerance": 1e-10,
+      "label": "TFP Bearing Tower 2"
+    }
+  ],
+  "loads": [
+    { "id": 1, "nodeId": 2, "fx": 0, "fy": -3000, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 2, "nodeId": 5, "fx": 0, "fy": -6000, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 3, "nodeId": 12, "fx": 0, "fy": -8000, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 4, "nodeId": 15, "fx": 0, "fy": -6000, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 5, "nodeId": 16, "fx": 0, "fy": -6000, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 6, "nodeId": 17, "fx": 0, "fy": -6000, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 7, "nodeId": 22, "fx": 0, "fy": -8000, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 8, "nodeId": 25, "fx": 0, "fy": -6000, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 9, "nodeId": 31, "fx": 0, "fy": -3000, "fz": 0, "mx": 0, "my": 0, "mz": 0 }
+  ],
+  "groundMotions": []
+}

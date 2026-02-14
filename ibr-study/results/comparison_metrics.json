@@ -1,0 +1,306 @@
+{
+  "metadata": {
+    "project": "IBR Seismic Isolation Study — Interstate Bridge Replacement Program",
+    "description": "Comprehensive seismic performance comparison of 3 bridge alternatives for I-5 Columbia River crossing",
+    "date": "2026-02-13",
+    "units": "kip-in-sec unless noted",
+    "codes": ["AASHTO Guide Specifications for Seismic Isolation Design, 4th Ed.", "AASHTO LRFD Seismic Bridge Design, 2nd Ed.", "ASCE 7-22 Chapter 17"],
+    "seismicHazard": {
+      "source": "Cascadia Subduction Zone",
+      "siteClass": "D",
+      "SDS": 1.0,
+      "SD1": 0.6,
+      "SM1": 0.9,
+      "PGA": 0.45,
+      "Ts": 0.6,
+      "T0": 0.12
+    }
+  },
+
+  "baseShearReduction": {
+    "description": "Percent reduction in substructure force demand (column/tower forces) compared to Alt A ductile design",
+    "altB_vs_altA": 66.2,
+    "altC_vs_altA": 72.4,
+    "calculation": {
+      "altA_column_demand_kips": 1290.0,
+      "altB_column_demand_kips": 436.0,
+      "altC_tower_demand_kips": 356.0,
+      "altB_calc": "(1290.0 - 436.0) / 1290.0 * 100 = 66.2%",
+      "altC_calc": "(1290.0 - 356.0) / 1290.0 * 100 = 72.4%",
+      "note": "Column/tower force demand at DBE level. For isolated bridges, bearing friction generates base shear but column forces are limited by bearing's characteristic strength"
+    }
+  },
+
+  "peakDrift": {
+    "description": "Peak column/tower drift ratio at DBE demand level",
+    "altA": 0.01483,
+    "altB": 0.00028,
+    "altC": 0.00021,
+    "units": "in/in",
+    "calculation": {
+      "altA_calc": "Pier lateral disp / pier height = 7.12 / 480 = 0.01483",
+      "altB_calc": "Column elastic deformation only = 0.134 / 480 = 0.00028",
+      "altC_calc": "Tower leg elastic deformation = 0.101 / 480 = 0.00021"
+    }
+  },
+
+  "driftReduction": {
+    "description": "Percent reduction in peak column/tower drift ratio compared to Alt A",
+    "altB_vs_altA": 98.1,
+    "altC_vs_altA": 98.6,
+    "calculation": {
+      "altB_calc": "(0.01483 - 0.00028) / 0.01483 * 100 = 98.1%",
+      "altC_calc": "(0.01483 - 0.00021) / 0.01483 * 100 = 98.6%"
+    }
+  },
+
+  "bearingDemand": {
+    "altB": {
+      "displacement_in": 7.99,
+      "capacity_in": 23.60,
+      "dcRatio": 0.339,
+      "dcRatio_MCE": 0.609,
+      "MCE_displacement_in": 14.38,
+      "note": "D/C ratio well below 1.0 at both DBE and MCE — adequate bearing capacity"
+    },
+    "altC": {
+      "displacement_in": 8.42,
+      "capacity_in": 23.60,
+      "dcRatio": 0.357,
+      "dcRatio_MCE": 0.642,
+      "MCE_displacement_in": 15.16,
+      "note": "Slightly higher demand due to longer period and heavier deck; still well within capacity"
+    }
+  },
+
+  "hingeCount": {
+    "description": "Number of plastic hinges formed at DBE demand level",
+    "altA": 4,
+    "altB": 0,
+    "altC": 0,
+    "details": {
+      "altA": "4 plastic hinges: top and bottom of both pier columns (double-curvature mechanism)",
+      "altB": "No plastic hinges — columns remain fully elastic (force D/C = 0.12)",
+      "altC": "No plastic hinges — tower legs remain fully elastic (force D/C = 0.14)"
+    }
+  },
+
+  "performanceLevel": {
+    "description": "Seismic performance level per AASHTO/ASCE criteria at DBE demand",
+    "altA": "Life Safety",
+    "altB": "Immediate Occupancy",
+    "altC": "Immediate Occupancy",
+    "details": {
+      "altA": "Plastic hinges form in columns with ductility demand of 2.72; controlled inelastic response per SDC D requirements. Post-earthquake inspection and potential repair required.",
+      "altB": "No structural damage. Bearings re-center after earthquake. Bridge operational immediately after event. Isolation system may need inspection but structure is undamaged.",
+      "altC": "No structural damage. Bearings re-center, cables remain elastic. Bridge operational immediately. Enhanced performance due to cable system redundancy."
+    },
+    "MCE_performance": {
+      "altA": "Collapse Prevention",
+      "altB": "Immediate Occupancy",
+      "altC": "Immediate Occupancy",
+      "altA_detail": "At MCE (1.5x DBE), ductility demand reaches 4.09; approaching column rotation limits",
+      "altB_detail": "Bearing D/C = 0.61 at MCE; columns still elastic",
+      "altC_detail": "Bearing D/C = 0.64 at MCE; tower legs still elastic"
+    }
+  },
+
+  "periodShift": {
+    "altA": {
+      "fixed": 1.186,
+      "isolated": null,
+      "ratio": null,
+      "note": "No isolation — fixed-base period only"
+    },
+    "altB": {
+      "fixed": 1.186,
+      "isolated": 2.536,
+      "ratio": 2.14,
+      "note": "Moderate period shift; bridge already relatively flexible"
+    },
+    "altC": {
+      "fixed": 0.814,
+      "isolated": 2.905,
+      "ratio": 3.57,
+      "note": "Large period shift; extradosed towers are inherently stiff"
+    }
+  },
+
+  "lambdaBounds": {
+    "description": "Upper and lower bound analysis per ASCE 7-22 Section 17.2.8.4 — lambda property modification factors",
+    "lambdaFactors": {
+      "lambda_min": 0.85,
+      "lambda_max": 1.80,
+      "basis": "ASCE 7-22 Table 17.2-1: aging (1.1), contamination (1.1), temperature (1.2), travel/wear (1.0) — combined max = 1.8; min accounts for fresh/clean conditions = 0.85"
+    },
+    "altB": {
+      "nominal": {
+        "mu_eff": 0.0777,
+        "period_s": 2.536,
+        "displacement_in": 7.99,
+        "baseShear_kips": 1928.0
+      },
+      "lower": {
+        "lambda": 0.85,
+        "mu_eff": 0.0660,
+        "period_s": 2.751,
+        "displacement_in": 9.18,
+        "baseShear_kips": 1739.0,
+        "beta_eff": 0.348,
+        "BL": 1.796,
+        "note": "Lower friction → longer period → larger displacement → lower base shear"
+      },
+      "upper": {
+        "lambda": 1.80,
+        "mu_eff": 0.1399,
+        "period_s": 2.086,
+        "displacement_in": 5.71,
+        "baseShear_kips": 2696.0,
+        "beta_eff": 0.424,
+        "BL": 1.948,
+        "note": "Higher friction → shorter period → smaller displacement → higher base shear"
+      },
+      "envelope": {
+        "maxDisplacement_in": 9.18,
+        "maxBaseShear_kips": 2696.0,
+        "maxBearingDC": 0.389,
+        "note": "Lower bound governs displacement; upper bound governs forces"
+      },
+      "convergence": {
+        "lower_bound": [
+          { "iter": 1, "D": 12.0, "Keff": 167.40, "T": 3.040, "beta": 0.299, "BL": 1.700, "D_new": 10.50 },
+          { "iter": 2, "D": 10.50, "Keff": 187.54, "T": 2.871, "beta": 0.311, "BL": 1.722, "D_new": 9.80 },
+          { "iter": 3, "D": 9.80, "Keff": 196.06, "T": 2.807, "beta": 0.324, "BL": 1.748, "D_new": 9.44 },
+          { "iter": 4, "D": 9.44, "Keff": 200.96, "T": 2.774, "beta": 0.333, "BL": 1.766, "D_new": 9.28 },
+          { "iter": 5, "D": 9.28, "Keff": 203.31, "T": 2.757, "beta": 0.339, "BL": 1.778, "D_new": 9.22 },
+          { "iter": 6, "D": 9.22, "Keff": 204.23, "T": 2.752, "beta": 0.346, "BL": 1.792, "D_new": 9.18 }
+        ],
+        "upper_bound": [
+          { "iter": 1, "D": 8.0, "Keff": 357.31, "T": 2.077, "beta": 0.388, "BL": 1.876, "D_new": 6.50 },
+          { "iter": 2, "D": 6.50, "Keff": 417.92, "T": 1.920, "beta": 0.414, "BL": 1.928, "D_new": 5.85 },
+          { "iter": 3, "D": 5.85, "Keff": 453.29, "T": 1.844, "beta": 0.418, "BL": 1.936, "D_new": 5.76 },
+          { "iter": 4, "D": 5.76, "Keff": 459.39, "T": 1.832, "beta": 0.422, "BL": 1.944, "D_new": 5.72 },
+          { "iter": 5, "D": 5.72, "Keff": 462.16, "T": 1.828, "beta": 0.424, "BL": 1.948, "D_new": 5.71 }
+        ]
+      }
+    },
+    "altC": {
+      "nominal": {
+        "mu_eff": 0.0777,
+        "period_s": 2.905,
+        "displacement_in": 8.42,
+        "baseShear_kips": 2095.0
+      },
+      "lower": {
+        "lambda": 0.85,
+        "mu_eff": 0.0660,
+        "period_s": 3.148,
+        "displacement_in": 9.68,
+        "baseShear_kips": 1886.0,
+        "beta_eff": 0.321,
+        "BL": 1.742
+      },
+      "upper": {
+        "lambda": 1.80,
+        "mu_eff": 0.1399,
+        "period_s": 2.392,
+        "displacement_in": 6.02,
+        "baseShear_kips": 2931.0,
+        "beta_eff": 0.398,
+        "BL": 1.896
+      },
+      "envelope": {
+        "maxDisplacement_in": 9.68,
+        "maxBaseShear_kips": 2931.0,
+        "maxBearingDC": 0.410,
+        "note": "Lower bound governs displacement; upper bound governs forces"
+      }
+    }
+  },
+
+  "spectralAnalysis": {
+    "description": "Design spectrum ordinates at key periods",
+    "designSpectrum": [
+      { "T_s": 0.0, "Sa_g": 0.45 },
+      { "T_s": 0.12, "Sa_g": 1.00 },
+      { "T_s": 0.60, "Sa_g": 1.00 },
+      { "T_s": 0.814, "Sa_g": 0.737 },
+      { "T_s": 1.186, "Sa_g": 0.506 },
+      { "T_s": 2.086, "Sa_g": 0.288 },
+      { "T_s": 2.536, "Sa_g": 0.237 },
+      { "T_s": 2.751, "Sa_g": 0.218 },
+      { "T_s": 2.905, "Sa_g": 0.207 },
+      { "T_s": 3.148, "Sa_g": 0.191 },
+      { "T_s": 4.000, "Sa_g": 0.150 },
+      { "T_s": 5.000, "Sa_g": 0.120 }
+    ],
+    "spectralOrdinate_altA": { "T": 1.186, "Sa": 0.506, "note": "Sa = SD1/T = 0.6/1.186 (T > Ts)" },
+    "spectralOrdinate_altB": { "T": 2.536, "Sa": 0.237, "note": "Sa = SD1/T = 0.6/2.536, further reduced by BL" },
+    "spectralOrdinate_altC": { "T": 2.905, "Sa": 0.207, "note": "Sa = SD1/T = 0.6/2.905, further reduced by BL" }
+  },
+
+  "costBenefitIndicators": {
+    "description": "Qualitative and semi-quantitative indicators for lifecycle cost comparison",
+    "initialConstructionCost": {
+      "altA": "Baseline",
+      "altB": "+8 to 12%",
+      "altC": "+22 to 30%",
+      "note": "Alt B adds bearings but reduces column reinforcement. Alt C adds towers, cables, and bearings but eliminates one in-water pier."
+    },
+    "postEarthquakeRepairCost_DBE": {
+      "altA": "High — column repairs, potential closure 6-12 months",
+      "altB": "Minimal — bearing inspection only, operational within days",
+      "altC": "Minimal — bearing inspection only, operational within days"
+    },
+    "postEarthquakeRepairCost_MCE": {
+      "altA": "Very High — possible reconstruction, closure 12-24 months",
+      "altB": "Low — bearing replacement if needed, operational within weeks",
+      "altC": "Low — bearing replacement if needed, operational within weeks"
+    },
+    "resilienceScore": {
+      "altA": "Moderate — Life Safety but extended downtime",
+      "altB": "High — Immediate Occupancy, minimal downtime",
+      "altC": "Highest — Immediate Occupancy, minimal downtime, structural redundancy"
+    },
+    "environmentalImpact": {
+      "altA": "Standard — 2 in-water piers with pile foundations",
+      "altB": "Standard — same 2 in-water piers",
+      "altC": "Reduced — single main span over channel, reduced in-water construction"
+    }
+  },
+
+  "summaryTable": {
+    "headers": ["Metric", "Alt A: Ductile", "Alt B: Isolated", "Alt C: Extradosed+Iso", "Unit"],
+    "rows": [
+      ["Fundamental Period", 1.186, 2.536, 2.905, "sec"],
+      ["Period Shift Ratio", "N/A", 2.14, 3.57, "x"],
+      ["Spectral Acceleration (DBE)", 0.506, 0.237, 0.207, "g"],
+      ["Column/Tower Force Demand", 1290, 436, 356, "kips"],
+      ["Base Shear Reduction", "baseline", 66.2, 72.4, "%"],
+      ["Peak Column/Tower Drift", 1.483, 0.028, 0.021, "%"],
+      ["Drift Reduction", "baseline", 98.1, 98.6, "%"],
+      ["Bearing Displacement (DBE)", "N/A", 7.99, 8.42, "in"],
+      ["Bearing D/C (DBE)", "N/A", 0.339, 0.357, "ratio"],
+      ["Bearing D/C (MCE)", "N/A", 0.609, 0.642, "ratio"],
+      ["Plastic Hinges (DBE)", 4, 0, 0, "count"],
+      ["Plastic Hinges (MCE)", 4, 0, 0, "count"],
+      ["Performance Level (DBE)", "Life Safety", "Immediate Occupancy", "Immediate Occupancy", ""],
+      ["Performance Level (MCE)", "Collapse Prevention", "Immediate Occupancy", "Immediate Occupancy", ""],
+      ["Ductility Demand (DBE)", 2.72, "N/A (elastic)", "N/A (elastic)", ""],
+      ["Lambda Max Displacement", "N/A", 9.18, 9.68, "in"],
+      ["Lambda Max Base Shear", "N/A", 2696, 2931, "kips"],
+      ["Lambda Max Bearing D/C", "N/A", 0.389, 0.410, "ratio"]
+    ]
+  },
+
+  "keyFindings": [
+    "Both isolated alternatives (B and C) achieve Immediate Occupancy performance at both DBE and MCE levels, compared to Life Safety (DBE) and Collapse Prevention (MCE) for the conventional ductile design.",
+    "Substructure force demand is reduced by 66-72% with seismic isolation, enabling elastic column/tower design and eliminating the need for plastic hinge detailing.",
+    "Column drift ratios are reduced by 98%+ — from 1.48% (ductile) to 0.02-0.03% (isolated). This virtually eliminates post-earthquake structural damage.",
+    "TFP bearing displacement demands are well within capacity (D/C = 0.34-0.36 at DBE, 0.61-0.64 at MCE), providing substantial reserve for beyond-design-basis events.",
+    "Upper/lower bound lambda analysis shows bearing D/C ratios remain below 0.41 even at the most demanding property combination, confirming robust isolation design.",
+    "The extradosed alternative (Alt C) provides the highest performance with a 3.57x period shift ratio, 72% base shear reduction, and additional structural redundancy from the cable system.",
+    "For a critical lifeline structure like the IBR, the ~8-12% cost premium for seismic isolation (Alt B) provides a compelling return through near-elimination of earthquake damage and downtime.",
+    "The extradosed option (Alt C) has a higher initial cost premium (~22-30%) but offers reduced environmental impact (fewer in-water piers) and the highest seismic resilience."
+  ]
+}

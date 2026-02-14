@@ -14,7 +14,8 @@ Phases 1 through 5 are complete. The app provides:
 - **Property Inspector** (right panel) showing read-only details for selected nodes and elements
 - **3D labels** on nodes and elements, visible on hover, selection, or global toggle
 - **Viewer controls** for display mode, grid, axes, labels, deformation scale, force diagrams, and color maps
-- **Sample model** — 3-story 2-bay steel moment frame loadable from the toolbar
+- **Model import** — "Load Model" dropdown with 4 presets (hospital frame + 3 IBR bridge alternatives) and JSON file import
+- **Sample model** — 3-story 2-bay steel moment frame auto-loaded on startup
 
 ### Phase 2 — Load Editing, Analysis Runner & Results
 - **Load Editor** — CRUD for point loads with node selector and force fields; gravity loads auto-created with sample model
@@ -77,6 +78,13 @@ Phases 1 through 5 are complete. The app provides:
 - **Key results**: 64% base shear reduction, 93% drift reduction, 0 plastic hinges (vs 15 fixed-base), performance upgraded from Life Safety to Immediate Occupancy
 - **Supporting documents**: `analysis_calculations.md` (984 lines of step-by-step calculations), `aashto_compliance.md` (1,029 lines of detailed code compliance review)
 
+### Model Import & IBR Bridge Models
+- **Load Model dropdown** — toolbar dropdown replaces the old "Load Sample Model" button, with 4 presets and a "Import JSON File..." option
+- **Preset models**: 3-Story Hospital Frame (built-in), IBR Alt A: Ductile Bridge, IBR Alt B: TFP Isolated, IBR Alt C: Extradosed + TFP
+- **JSON file import** — load any arbitrary model JSON via file picker with validation and toast notifications
+- **IBR bridge models** — 3 structural models for the Interstate Bridge Replacement seismic isolation study (3-span bridge, Cascadia Subduction Zone)
+- **Analysis/comparison reset** — switching models automatically clears stale analysis and comparison results
+
 ### Bug Fixes & Polish
 - **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
@@ -119,11 +127,14 @@ Phases 1 through 5 are complete. The app provides:
 
 ```
 isolation/
+  ibr-study/                 # IBR seismic isolation study outputs
+    models/                  # 3 bridge model JSONs (alt-a, alt-b, alt-c)
   reports/                   # Final deliverables (HTML + PDF)
   engineering_report.html    # Self-contained seismic isolation analysis report
   analysis_calculations.md   # Step-by-step structural engineering calculations
   aashto_compliance.md       # AASHTO code compliance review (12 checks)
   frontend/          # React + Three.js client
+    public/models/   # Preset model JSONs served by Vite (IBR bridge alternatives)
     src/
       components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
       features/
@@ -137,7 +148,7 @@ isolation/
         comparison/  # ComparisonPanel, DriftProfileChart, BaseShearComparison, BearingDemandCapacity, HingeDistribution
       services/      # API client, WebSocket client, model serializer, comparison metrics
       stores/        # Zustand stores (modelStore, displayStore, analysisStore, comparisonStore, toastStore)
-      types/         # Shared TypeScript interfaces (storeModel.ts, analysis.ts, model.ts)
+      types/         # Shared TypeScript interfaces (storeModel.ts, analysis.ts, model.ts, modelJSON.ts)
   backend/           # FastAPI server
     app/
       core/          # Configuration, settings
@@ -186,7 +197,7 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (201 tests across 19 suites)
+# Frontend tests (204 tests across 19 suites)
 cd frontend && npm test
 
 # Frontend lint

@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IBR Seismic Isolation Study — 3D Bridge Model Viewer</title>
+<style>
+/* ============================================================
+   RESET & ROOT VARIABLES
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1a1a;
+  --bg-panel: #242424;
+  --bg-panel-hover: #2e2e2e;
+  --border: #3a3a3a;
+  --text: #e0e0e0;
+  --text-dim: #888888;
+  --text-bright: #ffffff;
+  --gold: #d4af37;
+  --gold-light: #ffd700;
+  --gold-dim: #9a7b1a;
+  --red: #e74c3c;
+  --blue: #4a9eff;
+  --green: #2ecc71;
+  --orange: #f39c12;
+  --purple: #9b59b6;
+  --cyan: #1abc9c;
+  --panel-width: 340px;
+  --header-height: 56px;
+  --radius: 6px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ============================================================
+   HEADER BAR
+   ============================================================ */
+#header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--header-height);
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 100;
+  gap: 16px;
+}
+
+#header .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+#header .logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--gold);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+#header .logo-text {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-bright);
+  white-space: nowrap;
+}
+
+#header .logo-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   CONTROLS — BUTTONS, SELECTS, TOGGLES
+   ============================================================ */
+select, button {
+  font-family: inherit;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+select:hover, button:hover {
+  border-color: var(--gold);
+  background: var(--bg-panel-hover);
+}
+
+select:focus, button:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(212,175,55,0.25);
+}
+
+button.active {
+  background: var(--gold);
+  color: #1a1a1a;
+  border-color: var(--gold);
+  font-weight: 600;
+}
+
+button.active:hover {
+  background: var(--gold-light);
+}
+
+.btn-group {
+  display: flex;
+  gap: 0;
+}
+
+.btn-group button {
+  border-radius: 0;
+  margin-left: -1px;
+}
+
+.btn-group button:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+  margin-left: 0;
+}
+
+.btn-group button:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+#model-select {
+  min-width: 220px;
+  font-weight: 500;
+  padding: 7px 14px;
+  font-size: 14px;
+}
+
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+#app {
+  position: fixed;
+  top: var(--header-height);
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+}
+
+#viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#viewport canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ============================================================
+   INFO PANEL (right sidebar)
+   ============================================================ */
+#info-panel {
+  width: var(--panel-width);
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  transition: width 0.2s;
+}
+
+#info-panel.collapsed {
+  width: 0;
+  border-left: none;
+}
+
+.panel-section {
+  border-bottom: 1px solid var(--border);
+  padding: 16px;
+}
+
+.panel-section:last-child {
+  border-bottom: none;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 12px;
+}
+
+.panel-header h3 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--gold);
+}
+
+.panel-header .chevron {
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+}
+
+.panel-header.collapsed .chevron {
+  transform: rotate(-90deg);
+}
+
+.panel-content {
+  display: block;
+}
+
+.panel-content.hidden {
+  display: none;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.info-row .label {
+  color: var(--text-dim);
+}
+
+.info-row .value {
+  color: var(--text-bright);
+  font-weight: 500;
+  text-align: right;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+/* Bearing table */
+.bearing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.bearing-table th {
+  text-align: left;
+  color: var(--gold);
+  font-weight: 600;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bearing-table td {
+  padding: 3px 6px;
+  color: var(--text);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.bearing-table tr:hover td {
+  background: rgba(212,175,55,0.05);
+}
+
+/* Color legend */
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 13px;
+}
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   OVERLAY: STATUS / LOADING
+   ============================================================ */
+#loading-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(26,26,26,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  gap: 16px;
+}
+
+#loading-overlay.hidden { display: none; }
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#loading-text {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* Status bar (bottom) */
+#status-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: rgba(36,36,36,0.9);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 11px;
+  color: var(--text-dim);
+  gap: 20px;
+  z-index: 10;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+/* Tooltip */
+#tooltip {
+  position: absolute;
+  background: rgba(36,36,36,0.95);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-bright);
+  pointer-events: none;
+  z-index: 200;
+  display: none;
+  max-width: 250px;
+  box-shadow: var(--shadow);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  #info-panel { width: 280px; }
+  :root { --panel-width: 280px; }
+}
+
+@media (max-width: 700px) {
+  #info-panel { display: none; }
+  #header .logo-sub { display: none; }
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+#info-panel::-webkit-scrollbar { width: 6px; }
+#info-panel::-webkit-scrollbar-track { background: transparent; }
+#info-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+#info-panel::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon">IBR</div>
+    <div>
+      <div class="logo-text">Bridge Model Viewer</div>
+      <div class="logo-sub">IBR Seismic Isolation Study</div>
+    </div>
+  </div>
+
+  <div class="header-controls">
+    <select id="model-select" aria-label="Select bridge alternative">
+      <option value="alt-a">Alt A: Conventional Ductile</option>
+      <option value="alt-b">Alt B: TFP Isolated</option>
+      <option value="alt-c">Alt C: Extradosed + Isolated</option>
+    </select>
+
+    <div class="btn-group" role="group" aria-label="Display mode">
+      <button id="btn-wireframe" class="active" title="Wireframe mode">Wireframe</button>
+      <button id="btn-solid" title="Solid mode">Solid</button>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <button id="btn-labels" class="btn-icon" title="Toggle labels" aria-label="Toggle labels">T</button>
+    <button id="btn-axes" class="btn-icon" title="Toggle axes" aria-label="Toggle axes">+</button>
+    <button id="btn-reset" class="btn-icon" title="Reset camera" aria-label="Reset camera view">R</button>
+    <button id="btn-panel" class="btn-icon" title="Toggle info panel" aria-label="Toggle info panel">i</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN APP
+     ============================================================ -->
+<div id="app">
+  <div id="viewport">
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div id="loading-text">Loading model...</div>
+    </div>
+    <div id="tooltip"></div>
+    <div id="status-bar">
+      <div class="status-item">
+        <span class="status-dot"></span>
+        <span id="status-model">No model</span>
+      </div>
+      <div class="status-item">
+        <span id="status-nodes">0 nodes</span>
+      </div>
+      <div class="status-item">
+        <span id="status-elements">0 elements</span>
+      </div>
+      <div class="status-item">
+        <span id="status-bearings">0 bearings</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       INFO PANEL
+       ============================================================ -->
+  <div id="info-panel">
+    <!-- Model Info -->
+    <div class="panel-section">
+      <div class="panel-header" data-section="model-info">
+        <h3>Model Information</h3>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="panel-content" id="section-model-info">
+        <div class="info-row"><span class="label">Name</span><span class="value" id="info-name">--</span></div>
+        <div class="info-row"><span class="label">Units</span><span class="value" id="info-units">--</span></div>
+        <div class="info-divider"></div>
+        <div id="info-description" style="font-size:12px;color:var(--text-dim);line-height:1.5;margin-top:4px;">--</div>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="panel-section">
+      <div class="panel-header" data-section="stats">
+        <h3>Statistics</h3>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="panel-content" id="section-stats">
+        <div class="info-row"><span class="label">Nodes</span><span class="value" id="info-node-count">0</span></div>
+        <div class="info-row"><span class="label">Elements</span><span class="value" id="info-elem-count">0</span></div>
+        <div class="info-row"><span class="label">Bearings</span><span class="value" id="info-bearing-count">0</span></div>
+        <div class="info-row"><span class="label">Materials</span><span class="value" id="info-mat-count">0</span></div>
+        <div class="info-row"><span class="label">Sections</span><span class="value" id="info-sec-count">0</span></div>
+        <div class="info-row"><span class="label">Loads</span><span class="value" id="info-load-count">0</span></div>
+        <div class="info-divider"></div>
+        <div class="info-row"><span class="label">Bounding Box (ft)</span><span class="value" id="info-bbox">--</span></div>
+      </div>
+    </div>
+
+    <!-- Span Layout -->
+    <div class="panel-section">
+      <div class="panel-header" data-section="spans">
+        <h3>Span Layout</h3>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="panel-content" id="section-spans">
+        <div id="span-info" style="font-size:12px;color:var(--text-dim);">--</div>
+      </div>
+    </div>
+
+    <!-- Bearings -->
+    <div class="panel-section" id="bearing-section" style="display:none;">
+      <div class="panel-header" data-section="bearings">
+        <h3>TFP Bearings</h3>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="panel-content" id="section-bearings">
+        <div id="bearing-info"></div>
+      </div>
+    </div>
+
+    <!-- Materials -->
+    <div class="panel-section">
+      <div class="panel-header collapsed" data-section="materials">
+        <h3>Materials</h3>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="panel-content hidden" id="section-materials">
+        <div id="material-info" style="font-size:12px;color:var(--text-dim);">--</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="panel-section">
+      <div class="panel-header" data-section="legend">
+        <h3>Color Legend</h3>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="panel-content" id="section-legend">
+        <div style="margin-bottom:8px;font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;">Nodes</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#e74c3c;"></span>Fixed support</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#888888;"></span>Free node</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#d4af37;"></span>Bearing node</div>
+        <div style="margin:10px 0 8px;font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;">Elements</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#888888;"></span>Column</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#4a9eff;"></span>Beam / Girder</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#2ecc71;"></span>Brace / Cable</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#d4af37;"></span>Bearing element</div>
+      </div>
+    </div>
+
+    <!-- Controls help -->
+    <div class="panel-section">
+      <div class="panel-header collapsed" data-section="help">
+        <h3>Controls</h3>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="panel-content hidden" id="section-help">
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.8;">
+          <strong style="color:var(--text);">Orbit:</strong> Left-click + drag<br>
+          <strong style="color:var(--text);">Pan:</strong> Right-click + drag<br>
+          <strong style="color:var(--text);">Zoom:</strong> Scroll wheel<br>
+          <strong style="color:var(--text);">Reset:</strong> Press R or click R button<br>
+          <strong style="color:var(--text);">Labels:</strong> Press L or click T button
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     THREE.JS (ES Module via importmap)
+     ============================================================ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// ============================================================
+//  CONSTANTS
+// ============================================================
+const INCHES_PER_FOOT = 12;
+const NODE_RADIUS = 4;       // scene units (inches)
+const ELEMENT_LINE_WIDTH = 2; // for wireframe
+
+const NODE_COLORS = {
+  fixed: 0xe74c3c,    // red
+  free: 0x888888,     // gray
+  bearing: 0xd4af37,  // gold
+};
+
+const ELEMENT_COLORS = {
+  column: 0x888888,   // gray
+  beam: 0x4a9eff,     // blue
+  brace: 0x2ecc71,    // green
+  bearing: 0xd4af37,  // gold
+  cable: 0x2ecc71,    // green (alias)
+};
+
+const SOLID_ELEMENT_COLORS = {
+  column: 0x777777,
+  beam: 0x3a8aee,
+  brace: 0x27ae60,
+  bearing: 0xc9a227,
+  cable: 0x27ae60,
+};
+
+// ============================================================
+//  STATE
+// ============================================================
+let currentModel = null;
+let displayMode = 'wireframe';
+let showLabels = true;
+let showAxes = true;
+
+// Three.js objects
+let scene, camera, renderer, labelRenderer, controls;
+let modelGroup = null;
+let labelGroup = null;
+let axesHelper = null;
+let gridHelper = null;
+let raycaster, mouse;
+
+// ============================================================
+//  DEMO / FALLBACK MODEL DATA
+// ============================================================
+function createDemoModel(altKey) {
+  // A simplified demonstration model for each alternative.
+  // Used as fallback if JSON files haven't been created yet.
+  if (altKey === 'alt-a') return createAltADemo();
+  if (altKey === 'alt-b') return createAltBDemo();
+  if (altKey === 'alt-c') return createAltCDemo();
+  return createAltADemo();
+}
+
+function createAltADemo() {
+  // 3-span conventional ductile girder bridge
+  // Spans: 275 ft (3300 in) each, columns: 50 ft (600 in)
+  const spanLen = 3300;
+  const colH = 600;
+  const deckW = 1800; // 150 ft
+  const halfW = deckW / 2;
+
+  const nodes = [];
+  const elements = [];
+  let nid = 1, eid = 1;
+
+  // 4 pier lines at x = 0, 3300, 6600, 9900
+  // Each pier has 2 columns (at z = -halfW/2 and +halfW/2)
+  // plus cap beam and deck girders
+  const pierX = [0, spanLen, spanLen * 2, spanLen * 3];
+  const colZ = [-halfW * 0.35, halfW * 0.35];
+
+  // Ground nodes (fixed)
+  for (let i = 0; i < pierX.length; i++) {
+    for (let j = 0; j < colZ.length; j++) {
+      nodes.push({ id: nid, x: pierX[i], y: 0, z: colZ[j],
+        restraint: [true,true,true,true,true,true], label: `Ground P${i+1}-C${j+1}` });
+      nid++;
+    }
+  }
+
+  // Column top nodes (free)
+  const colTopStart = nid;
+  for (let i = 0; i < pierX.length; i++) {
+    for (let j = 0; j < colZ.length; j++) {
+      nodes.push({ id: nid, x: pierX[i], y: colH, z: colZ[j],
+        restraint: [false,false,false,false,false,false], label: `Top P${i+1}-C${j+1}` });
+      nid++;
+    }
+  }
+
+  // Cap beam nodes at edges
+  for (let i = 0; i < pierX.length; i++) {
+    nodes.push({ id: nid, x: pierX[i], y: colH, z: -halfW,
+      restraint: [false,false,false,false,false,false], label: `Cap L P${i+1}` });
+    nid++;
+    nodes.push({ id: nid, x: pierX[i], y: colH, z: halfW,
+      restraint: [false,false,false,false,false,false], label: `Cap R P${i+1}` });
+    nid++;
+  }
+
+  // Deck nodes at midspan
+  const midX = [(pierX[0]+pierX[1])/2, (pierX[1]+pierX[2])/2, (pierX[2]+pierX[3])/2];
+  for (let i = 0; i < midX.length; i++) {
+    nodes.push({ id: nid, x: midX[i], y: colH, z: -halfW,
+      restraint: [false,false,false,false,false,false], label: `Mid S${i+1} L` });
+    nid++;
+    nodes.push({ id: nid, x: midX[i], y: colH, z: halfW,
+      restraint: [false,false,false,false,false,false], label: `Mid S${i+1} R` });
+    nid++;
+  }
+
+  // --- Elements ---
+  // Columns (ground to top)
+  for (let i = 0; i < pierX.length; i++) {
+    for (let j = 0; j < colZ.length; j++) {
+      const groundId = 1 + i * colZ.length + j;
+      const topId = colTopStart + i * colZ.length + j;
+      elements.push({ id: eid++, type: 'column', nodeI: groundId, nodeJ: topId, sectionId: 1, materialId: 1, label: `Col P${i+1}-C${j+1}` });
+    }
+  }
+
+  // Cap beams (across columns + to edges)
+  const capEdgeStart = colTopStart + pierX.length * colZ.length;
+  for (let i = 0; i < pierX.length; i++) {
+    const lt = colTopStart + i * colZ.length;
+    const rt = lt + 1;
+    const capL = capEdgeStart + i * 2;
+    const capR = capL + 1;
+    elements.push({ id: eid++, type: 'beam', nodeI: capL, nodeJ: lt, sectionId: 2, materialId: 1, label: `Cap L P${i+1}` });
+    elements.push({ id: eid++, type: 'beam', nodeI: lt, nodeJ: rt, sectionId: 2, materialId: 1, label: `Cap P${i+1}` });
+    elements.push({ id: eid++, type: 'beam', nodeI: rt, nodeJ: capR, sectionId: 2, materialId: 1, label: `Cap R P${i+1}` });
+  }
+
+  // Longitudinal deck girders (left edge and right edge)
+  const deckMidStart = capEdgeStart + pierX.length * 2;
+  // Left girder: pier cap L nodes + midspan L nodes, sorted by x
+  const leftGirderNodes = [];
+  const rightGirderNodes = [];
+  for (let i = 0; i < pierX.length; i++) {
+    leftGirderNodes.push({ id: capEdgeStart + i * 2, x: pierX[i] });
+    rightGirderNodes.push({ id: capEdgeStart + i * 2 + 1, x: pierX[i] });
+  }
+  for (let i = 0; i < midX.length; i++) {
+    leftGirderNodes.push({ id: deckMidStart + i * 2, x: midX[i] });
+    rightGirderNodes.push({ id: deckMidStart + i * 2 + 1, x: midX[i] });
+  }
+  leftGirderNodes.sort((a, b) => a.x - b.x);
+  rightGirderNodes.sort((a, b) => a.x - b.x);
+
+  for (let i = 0; i < leftGirderNodes.length - 1; i++) {
+    elements.push({ id: eid++, type: 'beam', nodeI: leftGirderNodes[i].id, nodeJ: leftGirderNodes[i+1].id, sectionId: 3, materialId: 2, label: `Girder L ${i+1}` });
+  }
+  for (let i = 0; i < rightGirderNodes.length - 1; i++) {
+    elements.push({ id: eid++, type: 'beam', nodeI: rightGirderNodes[i].id, nodeJ: rightGirderNodes[i+1].id, sectionId: 3, materialId: 2, label: `Girder R ${i+1}` });
+  }
+
+  // Cross-beams at midspan
+  for (let i = 0; i < midX.length; i++) {
+    elements.push({ id: eid++, type: 'beam', nodeI: deckMidStart + i * 2, nodeJ: deckMidStart + i * 2 + 1, sectionId: 2, materialId: 1, label: `Xbeam S${i+1}` });
+  }
+
+  return {
+    modelInfo: {
+      name: 'Alt A: Conventional Ductile Bridge',
+      description: '3-span reinforced concrete girder bridge with ductile column design per AASHTO SDC D. Columns are detailed as plastic hinge zones for seismic energy dissipation. Fixed bearings at all piers.',
+      units: 'kip-in'
+    },
+    nodes,
+    elements,
+    bearings: [],
+    materials: [
+      { id: 1, name: 'Concrete 6 ksi (Columns)', E: 4415, Fy: 6, density: 0.0868, nu: 0.2 },
+      { id: 2, name: 'Concrete 8 ksi (Deck)', E: 5098, Fy: 8, density: 0.0868, nu: 0.2 }
+    ],
+    sections: [
+      { id: 1, name: '7ft Circular Column', area: 5542, Ix: 113000, Iy: 113000, Zx: 6920, d: 84, bf: 84, tw: 42, tf: 42 },
+      { id: 2, name: 'Cap Beam 5x8 ft', area: 5760, Ix: 245760, Iy: 115200, Zx: 18000, d: 96, bf: 60, tw: 30, tf: 30 },
+      { id: 3, name: 'Box Girder 10x6 ft', area: 4320, Ix: 350000, Iy: 130000, Zx: 22000, d: 120, bf: 72, tw: 12, tf: 18 }
+    ],
+    loads: []
+  };
+}
+
+function createAltBDemo() {
+  // Same geometry as Alt A but with TFP bearings
+  const base = createAltADemo();
+  base.modelInfo.name = 'Alt B: TFP Isolated Bridge';
+  base.modelInfo.description = '3-span girder bridge with Triple Friction Pendulum (TFP) isolation bearings at pier caps. Columns designed to remain essentially elastic. Upper/lower bound analysis with lambda factors per ASCE 7-22 Ch.17.';
+
+  // Add bearing nodes just below column tops
+  const bearingOffset = 24; // 2 ft bearing height
+  const colH = 600;
+  const spanLen = 3300;
+  const deckW = 1800;
+  const halfW = deckW / 2;
+  const pierX = [0, spanLen, spanLen * 2, spanLen * 3];
+  const colZ = [-halfW * 0.35, halfW * 0.35];
+
+  let maxId = 0;
+  for (const n of base.nodes) { if (n.id > maxId) maxId = n.id; }
+  for (const e of base.elements) { if (e.id > maxId) maxId = e.id; }
+
+  let nid = maxId + 1;
+  let eid = maxId + 1;
+  const bearings = [];
+
+  // For each column top, insert a bearing node just below
+  for (let i = 0; i < pierX.length; i++) {
+    for (let j = 0; j < colZ.length; j++) {
+      const bearingNodeId = nid++;
+      base.nodes.push({
+        id: bearingNodeId,
+        x: pierX[i], y: colH - bearingOffset, z: colZ[j],
+        restraint: [false,false,false,false,false,false],
+        label: `Brg P${i+1}-C${j+1}`
+      });
+
+      // Find the column top node
+      const colTopNode = base.nodes.find(n =>
+        n.x === pierX[i] && n.y === colH && n.z === colZ[j] && !n.restraint[0]
+      );
+
+      if (colTopNode) {
+        // Add bearing element
+        bearings.push({
+          id: bearings.length + 1,
+          nodeI: bearingNodeId,
+          nodeJ: colTopNode.id,
+          surfaces: [
+            { type: 'VelDependent', muSlow: 0.015, muFast: 0.03, transRate: 50 },
+            { type: 'VelDependent', muSlow: 0.015, muFast: 0.03, transRate: 50 },
+            { type: 'VelDependent', muSlow: 0.06, muFast: 0.10, transRate: 50 },
+            { type: 'VelDependent', muSlow: 0.06, muFast: 0.10, transRate: 50 }
+          ],
+          radii: [406, 406, 4064],
+          dispCapacities: [76, 76, 508],
+          weight: 3500,
+          label: `TFP P${i+1}-C${j+1}`
+        });
+
+        // Add bearing connecting element
+        base.elements.push({
+          id: eid++, type: 'bearing',
+          nodeI: bearingNodeId, nodeJ: colTopNode.id,
+          sectionId: 1, materialId: 1,
+          label: `Brg Elem P${i+1}-C${j+1}`
+        });
+
+        // Adjust the column to connect to bearing node instead
+        const col = base.elements.find(e =>
+          e.type === 'column' && e.nodeJ === colTopNode.id
+        );
+        // Keep column connecting to column top; bearing sits between bearing node and column top
+      }
+    }
+  }
+
+  base.bearings = bearings;
+  return base;
+}
+
+function createAltCDemo() {
+  // Extradosed cable-stayed bridge with isolation
+  const mainSpan = 6000;  // 500 ft
+  const sideSpan = 3000;  // 250 ft
+  const totalLen = sideSpan + mainSpan + sideSpan;
+  const towerH = 1200;    // 100 ft above deck
+  const deckH = 600;      // 50 ft deck elevation
+  const deckW = 1800;     // 150 ft
+  const halfW = deckW / 2;
+
+  const nodes = [];
+  const elements = [];
+  const bearings = [];
+  let nid = 1, eid = 1;
+
+  // Pier/abutment X positions
+  const pierX = [0, sideSpan, sideSpan + mainSpan, totalLen];
+  const towerX = [sideSpan, sideSpan + mainSpan]; // towers at piers 2 and 3
+  const colZ = [-halfW * 0.35, halfW * 0.35];
+
+  // --- Ground nodes ---
+  for (let i = 0; i < pierX.length; i++) {
+    for (let j = 0; j < colZ.length; j++) {
+      nodes.push({ id: nid++, x: pierX[i], y: 0, z: colZ[j],
+        restraint: [true,true,true,true,true,true], label: `Ground P${i+1}-C${j+1}` });
+    }
+  }
+
+  // --- Column top / deck nodes at piers ---
+  const colTopStart = nid;
+  for (let i = 0; i < pierX.length; i++) {
+    for (let j = 0; j < colZ.length; j++) {
+      nodes.push({ id: nid++, x: pierX[i], y: deckH, z: colZ[j],
+        restraint: [false,false,false,false,false,false], label: `Deck P${i+1}-C${j+1}` });
+    }
+  }
+
+  // Cap beam edge nodes
+  const capEdgeStart = nid;
+  for (let i = 0; i < pierX.length; i++) {
+    nodes.push({ id: nid++, x: pierX[i], y: deckH, z: -halfW, restraint: [false,false,false,false,false,false], label: `Cap L P${i+1}` });
+    nodes.push({ id: nid++, x: pierX[i], y: deckH, z: halfW, restraint: [false,false,false,false,false,false], label: `Cap R P${i+1}` });
+  }
+
+  // --- Tower top nodes ---
+  const towerTopStart = nid;
+  for (let i = 0; i < towerX.length; i++) {
+    for (let j = 0; j < colZ.length; j++) {
+      nodes.push({ id: nid++, x: towerX[i], y: deckH + towerH, z: colZ[j],
+        restraint: [false,false,false,false,false,false], label: `Tower T${i+1}-C${j+1}` });
+    }
+  }
+
+  // --- Midspan deck nodes ---
+  const midPoints = [];
+  // Side span 1
+  midPoints.push((pierX[0] + pierX[1]) / 2);
+  // Main span - 3 points
+  midPoints.push(pierX[1] + mainSpan * 0.25);
+  midPoints.push(pierX[1] + mainSpan * 0.5);
+  midPoints.push(pierX[1] + mainSpan * 0.75);
+  // Side span 2
+  midPoints.push((pierX[2] + pierX[3]) / 2);
+
+  const midDeckStart = nid;
+  for (let i = 0; i < midPoints.length; i++) {
+    nodes.push({ id: nid++, x: midPoints[i], y: deckH, z: -halfW, restraint: [false,false,false,false,false,false], label: `Mid ${i+1} L` });
+    nodes.push({ id: nid++, x: midPoints[i], y: deckH, z: halfW, restraint: [false,false,false,false,false,false], label: `Mid ${i+1} R` });
+  }
+
+  // --- Columns ---
+  for (let i = 0; i < pierX.length; i++) {
+    for (let j = 0; j < colZ.length; j++) {
+      const gnd = 1 + i * colZ.length + j;
+      const top = colTopStart + i * colZ.length + j;
+      elements.push({ id: eid++, type: 'column', nodeI: gnd, nodeJ: top, sectionId: 1, materialId: 1, label: `Col P${i+1}-C${j+1}` });
+    }
+  }
+
+  // --- Tower legs (deck to tower top) ---
+  for (let i = 0; i < towerX.length; i++) {
+    const pierIdx = i + 1; // towers at piers 2 and 3
+    for (let j = 0; j < colZ.length; j++) {
+      const deckNode = colTopStart + pierIdx * colZ.length + j;
+      const towerTop = towerTopStart + i * colZ.length + j;
+      elements.push({ id: eid++, type: 'column', nodeI: deckNode, nodeJ: towerTop, sectionId: 4, materialId: 1, label: `Tower T${i+1}-C${j+1}` });
+    }
+  }
+
+  // --- Cap beams ---
+  for (let i = 0; i < pierX.length; i++) {
+    const lt = colTopStart + i * colZ.length;
+    const rt = lt + 1;
+    const capL = capEdgeStart + i * 2;
+    const capR = capL + 1;
+    elements.push({ id: eid++, type: 'beam', nodeI: capL, nodeJ: lt, sectionId: 2, materialId: 1, label: `Cap L P${i+1}` });
+    elements.push({ id: eid++, type: 'beam', nodeI: lt, nodeJ: rt, sectionId: 2, materialId: 1, label: `Cap P${i+1}` });
+    elements.push({ id: eid++, type: 'beam', nodeI: rt, nodeJ: capR, sectionId: 2, materialId: 1, label: `Cap R P${i+1}` });
+  }
+
+  // --- Longitudinal deck girders ---
+  const leftDeckNodes = [];
+  const rightDeckNodes = [];
+  for (let i = 0; i < pierX.length; i++) {
+    leftDeckNodes.push({ id: capEdgeStart + i * 2, x: pierX[i] });
+    rightDeckNodes.push({ id: capEdgeStart + i * 2 + 1, x: pierX[i] });
+  }
+  for (let i = 0; i < midPoints.length; i++) {
+    leftDeckNodes.push({ id: midDeckStart + i * 2, x: midPoints[i] });
+    rightDeckNodes.push({ id: midDeckStart + i * 2 + 1, x: midPoints[i] });
+  }
+  leftDeckNodes.sort((a, b) => a.x - b.x);
+  rightDeckNodes.sort((a, b) => a.x - b.x);
+
+  for (let i = 0; i < leftDeckNodes.length - 1; i++) {
+    elements.push({ id: eid++, type: 'beam', nodeI: leftDeckNodes[i].id, nodeJ: leftDeckNodes[i+1].id, sectionId: 3, materialId: 2, label: `Girder L ${i+1}` });
+  }
+  for (let i = 0; i < rightDeckNodes.length - 1; i++) {
+    elements.push({ id: eid++, type: 'beam', nodeI: rightDeckNodes[i].id, nodeJ: rightDeckNodes[i+1].id, sectionId: 3, materialId: 2, label: `Girder R ${i+1}` });
+  }
+
+  // Cross beams at midspan
+  for (let i = 0; i < midPoints.length; i++) {
+    elements.push({ id: eid++, type: 'beam', nodeI: midDeckStart + i * 2, nodeJ: midDeckStart + i * 2 + 1, sectionId: 2, materialId: 1, label: `Xbeam ${i+1}` });
+  }
+
+  // --- Stay cables (from tower tops to deck midspan points) ---
+  // Each tower connects to nearby midspan points
+  const cableTargetsT1 = [0, 1, 2]; // midpoint indices for tower 1
+  const cableTargetsT2 = [2, 3, 4]; // midpoint indices for tower 2
+
+  function addCables(towerIdx, targets) {
+    for (let j = 0; j < colZ.length; j++) {
+      const towerTop = towerTopStart + towerIdx * colZ.length + j;
+      for (const mi of targets) {
+        const deckNode = j === 0 ? midDeckStart + mi * 2 : midDeckStart + mi * 2 + 1;
+        elements.push({ id: eid++, type: 'brace', nodeI: towerTop, nodeJ: deckNode, sectionId: 5, materialId: 3, label: `Cable T${towerIdx+1}` });
+      }
+    }
+  }
+  addCables(0, cableTargetsT1);
+  addCables(1, cableTargetsT2);
+
+  // --- TFP Bearings at tower bases ---
+  const bearingOffset = 24;
+  for (let i = 0; i < towerX.length; i++) {
+    const pierIdx = i + 1;
+    for (let j = 0; j < colZ.length; j++) {
+      const brgNodeId = nid++;
+      nodes.push({
+        id: brgNodeId, x: towerX[i], y: deckH - bearingOffset, z: colZ[j],
+        restraint: [false,false,false,false,false,false],
+        label: `Brg T${i+1}-C${j+1}`
+      });
+
+      const colTopId = colTopStart + pierIdx * colZ.length + j;
+      bearings.push({
+        id: bearings.length + 1,
+        nodeI: brgNodeId, nodeJ: colTopId,
+        surfaces: [
+          { type: 'VelDependent', muSlow: 0.015, muFast: 0.03, transRate: 50 },
+          { type: 'VelDependent', muSlow: 0.015, muFast: 0.03, transRate: 50 },
+          { type: 'VelDependent', muSlow: 0.06, muFast: 0.10, transRate: 50 },
+          { type: 'VelDependent', muSlow: 0.06, muFast: 0.10, transRate: 50 }
+        ],
+        radii: [508, 508, 5080],
+        dispCapacities: [102, 102, 635],
+        weight: 5000,
+        label: `TFP T${i+1}-C${j+1}`
+      });
+
+      elements.push({
+        id: eid++, type: 'bearing',
+        nodeI: brgNodeId, nodeJ: colTopId,
+        sectionId: 1, materialId: 1,
+        label: `Brg Elem T${i+1}-C${j+1}`
+      });
+    }
+  }
+
+  return {
+    modelInfo: {
+      name: 'Alt C: Extradosed + TFP Isolated',
+      description: 'Extradosed cable-stayed bridge with 500 ft main span and TFP isolation at tower bases. Stay cables provide additional vertical support, reducing pier demands. Isolation decouples superstructure from substructure.',
+      units: 'kip-in'
+    },
+    nodes,
+    elements,
+    bearings,
+    materials: [
+      { id: 1, name: 'Concrete 6 ksi (Columns)', E: 4415, Fy: 6, density: 0.0868, nu: 0.2 },
+      { id: 2, name: 'Concrete 8 ksi (Deck)', E: 5098, Fy: 8, density: 0.0868, nu: 0.2 },
+      { id: 3, name: 'Prestressing Steel 270 ksi', E: 28500, Fy: 270, density: 0.284, nu: 0.3 }
+    ],
+    sections: [
+      { id: 1, name: '7ft Circular Column', area: 5542, Ix: 113000, Iy: 113000, Zx: 6920, d: 84, bf: 84, tw: 42, tf: 42 },
+      { id: 2, name: 'Cap Beam 5x8 ft', area: 5760, Ix: 245760, Iy: 115200, Zx: 18000, d: 96, bf: 60, tw: 30, tf: 30 },
+      { id: 3, name: 'Box Girder 10x6 ft', area: 4320, Ix: 350000, Iy: 130000, Zx: 22000, d: 120, bf: 72, tw: 12, tf: 18 },
+      { id: 4, name: 'Tower Leg 8x8 ft', area: 9216, Ix: 442368, Iy: 442368, Zx: 36000, d: 96, bf: 96, tw: 48, tf: 48 },
+      { id: 5, name: 'Stay Cable 270 ksi', area: 45, Ix: 100, Iy: 100, Zx: 30, d: 8, bf: 8, tw: 4, tf: 4 }
+    ],
+    loads: []
+  };
+}
+
+// ============================================================
+//  MODEL LOADING
+// ============================================================
+const MODEL_FILES = {
+  'alt-a': 'models/alt-a-ductile.json',
+  'alt-b': 'models/alt-b-isolated.json',
+  'alt-c': 'models/alt-c-extradosed.json',
+};
+
+const modelCache = {};
+
+async function loadModel(altKey) {
+  showLoading(true);
+
+  // Try cache first
+  if (modelCache[altKey]) {
+    currentModel = modelCache[altKey];
+    buildScene();
+    showLoading(false);
+    return;
+  }
+
+  // Try fetching from file
+  try {
+    const resp = await fetch(MODEL_FILES[altKey]);
+    if (resp.ok) {
+      const data = await resp.json();
+      modelCache[altKey] = data;
+      currentModel = data;
+      buildScene();
+      showLoading(false);
+      return;
+    }
+  } catch (e) {
+    // File not available, fall through to demo
+  }
+
+  // Fallback to demo model
+  const demo = createDemoModel(altKey);
+  modelCache[altKey] = demo;
+  currentModel = demo;
+  buildScene();
+  showLoading(false);
+}
+
+// ============================================================
+//  THREE.JS INITIALIZATION
+// ============================================================
+function initThree() {
+  const viewport = document.getElementById('viewport');
+
+  // Scene
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1a1a);
+  scene.fog = new THREE.Fog(0x1a1a1a, 30000, 60000);
+
+  // Camera
+  camera = new THREE.PerspectiveCamera(45, viewport.clientWidth / viewport.clientHeight, 1, 200000);
+  camera.position.set(5000, 3000, 8000);
+
+  // Renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+  renderer.shadowMap.enabled = false;
+  viewport.insertBefore(renderer.domElement, viewport.firstChild);
+
+  // Label renderer (CSS2D)
+  labelRenderer = new CSS2DRenderer();
+  labelRenderer.setSize(viewport.clientWidth, viewport.clientHeight);
+  labelRenderer.domElement.style.position = 'absolute';
+  labelRenderer.domElement.style.top = '0';
+  labelRenderer.domElement.style.left = '0';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  viewport.insertBefore(labelRenderer.domElement, viewport.children[1]);
+
+  // Controls
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 200;
+  controls.maxDistance = 100000;
+  controls.maxPolarAngle = Math.PI * 0.9;
+  controls.target.set(5000, 300, 0);
+
+  // Lights
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(10000, 15000, 8000);
+  scene.add(dirLight);
+
+  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+  dirLight2.position.set(-5000, 5000, -8000);
+  scene.add(dirLight2);
+
+  // Raycaster
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  // Resize handler
+  window.addEventListener('resize', onResize);
+
+  // Keyboard shortcuts
+  window.addEventListener('keydown', onKeyDown);
+
+  // Mouse hover for tooltip
+  renderer.domElement.addEventListener('mousemove', onMouseMove);
+
+  // Start render loop
+  animate();
+}
+
+function onResize() {
+  const viewport = document.getElementById('viewport');
+  const w = viewport.clientWidth;
+  const h = viewport.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  labelRenderer.setSize(w, h);
+}
+
+function onKeyDown(e) {
+  if (e.key === 'r' || e.key === 'R') resetCamera();
+  if (e.key === 'l' || e.key === 'L') toggleLabels();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+  if (showLabels) labelRenderer.render(scene, camera);
+}
+
+// ============================================================
+//  SCENE BUILDING
+// ============================================================
+function buildScene() {
+  // Clear previous model
+  if (modelGroup) { scene.remove(modelGroup); disposeGroup(modelGroup); }
+  if (labelGroup) { scene.remove(labelGroup); disposeGroup(labelGroup); }
+  if (gridHelper) { scene.remove(gridHelper); }
+  if (axesHelper) { scene.remove(axesHelper); }
+
+  modelGroup = new THREE.Group();
+  labelGroup = new THREE.Group();
+
+  const model = currentModel;
+  if (!model) return;
+
+  // Build node lookup
+  const nodeMap = {};
+  for (const n of model.nodes) { nodeMap[n.id] = n; }
+
+  // Build section lookup
+  const sectionMap = {};
+  if (model.sections) {
+    for (const s of model.sections) { sectionMap[s.id] = s; }
+  }
+
+  // Identify bearing node IDs
+  const bearingNodeIds = new Set();
+  if (model.bearings) {
+    for (const b of model.bearings) {
+      bearingNodeIds.add(b.nodeI);
+      bearingNodeIds.add(b.nodeJ);
+    }
+  }
+
+  // --- Render nodes ---
+  const nodeMaterial = {
+    fixed: new THREE.MeshStandardMaterial({ color: NODE_COLORS.fixed, roughness: 0.5, metalness: 0.3 }),
+    free: new THREE.MeshStandardMaterial({ color: NODE_COLORS.free, roughness: 0.7, metalness: 0.1 }),
+    bearing: new THREE.MeshStandardMaterial({ color: NODE_COLORS.bearing, roughness: 0.4, metalness: 0.5 }),
+  };
+
+  const nodeGeo = new THREE.SphereGeometry(NODE_RADIUS, 12, 8);
+  // Scale node size based on model extent
+  const bbox = computeBBox(model.nodes);
+  const modelExtent = Math.max(bbox.maxX - bbox.minX, bbox.maxY - bbox.minY, bbox.maxZ - bbox.minZ);
+  const nodeScale = Math.max(1, modelExtent / 500);
+
+  for (const n of model.nodes) {
+    const isFixed = n.restraint && n.restraint.some(r => r);
+    const isBearing = bearingNodeIds.has(n.id);
+    let mat;
+    if (isBearing) mat = nodeMaterial.bearing;
+    else if (isFixed) mat = nodeMaterial.fixed;
+    else mat = nodeMaterial.free;
+
+    const mesh = new THREE.Mesh(nodeGeo, mat);
+    mesh.position.set(n.x, n.y, n.z);
+    mesh.scale.setScalar(nodeScale);
+    mesh.userData = { type: 'node', data: n };
+    modelGroup.add(mesh);
+
+    // Fixed support indicator (larger base)
+    if (isFixed && !isBearing) {
+      const supportGeo = new THREE.ConeGeometry(NODE_RADIUS * nodeScale * 1.8, NODE_RADIUS * nodeScale * 2.5, 4);
+      const supportMesh = new THREE.Mesh(supportGeo, nodeMaterial.fixed);
+      supportMesh.position.set(n.x, n.y - NODE_RADIUS * nodeScale * 1.5, n.z);
+      supportMesh.rotation.y = Math.PI / 4;
+      modelGroup.add(supportMesh);
+    }
+
+    // Bearing indicator (diamond shape)
+    if (isBearing) {
+      const brgGeo = new THREE.OctahedronGeometry(NODE_RADIUS * nodeScale * 2, 0);
+      const brgMesh = new THREE.Mesh(brgGeo, nodeMaterial.bearing);
+      brgMesh.position.set(n.x, n.y, n.z);
+      modelGroup.add(brgMesh);
+    }
+  }
+
+  // --- Render elements ---
+  if (displayMode === 'wireframe') {
+    renderWireframe(model, nodeMap);
+  } else {
+    renderSolid(model, nodeMap, sectionMap, nodeScale);
+  }
+
+  // --- Labels ---
+  if (model.nodes) {
+    for (const n of model.nodes) {
+      if (n.label) {
+        const label = createLabel(n.label, n.x, n.y + NODE_RADIUS * nodeScale * 3, n.z);
+        labelGroup.add(label);
+      }
+    }
+  }
+
+  scene.add(modelGroup);
+  scene.add(labelGroup);
+  labelGroup.visible = showLabels;
+
+  // --- Grid ---
+  const gridSize = Math.ceil(modelExtent * 1.5 / 1000) * 1000;
+  gridHelper = new THREE.GridHelper(gridSize, 20, 0x3a3a3a, 0x2a2a2a);
+  gridHelper.position.y = bbox.minY;
+  gridHelper.position.x = (bbox.minX + bbox.maxX) / 2;
+  gridHelper.position.z = (bbox.minZ + bbox.maxZ) / 2;
+  scene.add(gridHelper);
+
+  // --- Axes ---
+  axesHelper = new THREE.AxesHelper(modelExtent * 0.15);
+  axesHelper.position.set(bbox.minX - modelExtent * 0.1, bbox.minY, bbox.minZ - modelExtent * 0.1);
+  axesHelper.visible = showAxes;
+  scene.add(axesHelper);
+
+  // Position camera
+  resetCamera();
+
+  // Update info panel
+  updateInfoPanel();
+}
+
+function renderWireframe(model, nodeMap) {
+  for (const elem of model.elements) {
+    const nI = nodeMap[elem.nodeI];
+    const nJ = nodeMap[elem.nodeJ];
+    if (!nI || !nJ) continue;
+
+    const colorHex = ELEMENT_COLORS[elem.type] || 0x888888;
+    const points = [
+      new THREE.Vector3(nI.x, nI.y, nI.z),
+      new THREE.Vector3(nJ.x, nJ.y, nJ.z)
+    ];
+
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 1 });
+    const line = new THREE.Line(geo, mat);
+    line.userData = { type: 'element', data: elem };
+    modelGroup.add(line);
+
+    // For bearing elements, add a thicker dashed line
+    if (elem.type === 'bearing') {
+      const dashMat = new THREE.LineDashedMaterial({
+        color: 0xffd700, linewidth: 1, dashSize: 20, gapSize: 10
+      });
+      const dashLine = new THREE.Line(geo.clone(), dashMat);
+      dashLine.computeLineDistances();
+      modelGroup.add(dashLine);
+    }
+  }
+
+  // Render bearings from bearings array (separate from elements)
+  if (model.bearings) {
+    for (const brg of model.bearings) {
+      const nI = nodeMap[brg.nodeI];
+      const nJ = nodeMap[brg.nodeJ];
+      if (!nI || !nJ) continue;
+
+      const points = [
+        new THREE.Vector3(nI.x, nI.y, nI.z),
+        new THREE.Vector3(nJ.x, nJ.y, nJ.z)
+      ];
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+
+      // Solid gold line
+      const mat = new THREE.LineBasicMaterial({ color: 0xd4af37, linewidth: 1 });
+      const line = new THREE.Line(geo, mat);
+      line.userData = { type: 'bearing', data: brg };
+      modelGroup.add(line);
+
+      // Dashed overlay
+      const dashMat = new THREE.LineDashedMaterial({
+        color: 0xffd700, linewidth: 1, dashSize: 15, gapSize: 8
+      });
+      const dashLine = new THREE.Line(geo.clone(), dashMat);
+      dashLine.computeLineDistances();
+      modelGroup.add(dashLine);
+    }
+  }
+}
+
+function renderSolid(model, nodeMap, sectionMap, nodeScale) {
+  const defaultDepth = 24 * nodeScale;
+  const defaultWidth = 12 * nodeScale;
+
+  for (const elem of model.elements) {
+    const nI = nodeMap[elem.nodeI];
+    const nJ = nodeMap[elem.nodeJ];
+    if (!nI || !nJ) continue;
+
+    const start = new THREE.Vector3(nI.x, nI.y, nI.z);
+    const end = new THREE.Vector3(nJ.x, nJ.y, nJ.z);
+    const dir = new THREE.Vector3().subVectors(end, start);
+    const length = dir.length();
+    if (length === 0) continue;
+
+    const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+    const quat = new THREE.Quaternion();
+    quat.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+
+    const section = sectionMap[elem.sectionId];
+    let depth, width;
+
+    if (elem.type === 'brace' || elem.type === 'cable') {
+      // Cables rendered as thin cylinders
+      const radius = (section ? Math.max(section.d, section.bf) : 8) * 0.3;
+      const cGeo = new THREE.CylinderGeometry(radius, radius, length, 6);
+      const cMat = new THREE.MeshStandardMaterial({
+        color: SOLID_ELEMENT_COLORS[elem.type] || 0x2ecc71,
+        roughness: 0.3, metalness: 0.6
+      });
+      const mesh = new THREE.Mesh(cGeo, cMat);
+      mesh.position.copy(midpoint);
+      mesh.quaternion.copy(quat);
+      mesh.userData = { type: 'element', data: elem };
+      modelGroup.add(mesh);
+    } else if (elem.type === 'bearing') {
+      // Bearing elements as gold cylinders
+      const radius = defaultWidth * 1.2;
+      const bGeo = new THREE.CylinderGeometry(radius, radius, length, 8);
+      const bMat = new THREE.MeshStandardMaterial({
+        color: SOLID_ELEMENT_COLORS.bearing,
+        roughness: 0.3, metalness: 0.5,
+        transparent: true, opacity: 0.8
+      });
+      const mesh = new THREE.Mesh(bGeo, bMat);
+      mesh.position.copy(midpoint);
+      mesh.quaternion.copy(quat);
+      mesh.userData = { type: 'element', data: elem };
+      modelGroup.add(mesh);
+    } else {
+      // Standard box cross-section
+      depth = section ? section.d : defaultDepth;
+      width = section ? section.bf : defaultWidth;
+
+      // Cap excessively wide sections (e.g., 150ft deck bf=1800") to a reasonable visual size
+      const maxVisualDim = 200;
+      if (width > maxVisualDim) width = maxVisualDim;
+      if (depth > maxVisualDim) depth = maxVisualDim;
+
+      // Scale section sizes to be visible
+      const sectionScale = Math.max(0.5, nodeScale * 0.3);
+      depth *= sectionScale;
+      width *= sectionScale;
+
+      const boxGeo = new THREE.BoxGeometry(width, length, depth);
+      const boxMat = new THREE.MeshStandardMaterial({
+        color: SOLID_ELEMENT_COLORS[elem.type] || 0x888888,
+        roughness: 0.6, metalness: 0.2
+      });
+      const mesh = new THREE.Mesh(boxGeo, boxMat);
+      mesh.position.copy(midpoint);
+      mesh.quaternion.copy(quat);
+      mesh.userData = { type: 'element', data: elem };
+      modelGroup.add(mesh);
+
+      // Wireframe edges
+      const edges = new THREE.EdgesGeometry(boxGeo);
+      const edgeMat = new THREE.LineBasicMaterial({ color: 0x555555 });
+      const edgeMesh = new THREE.LineSegments(edges, edgeMat);
+      edgeMesh.position.copy(midpoint);
+      edgeMesh.quaternion.copy(quat);
+      modelGroup.add(edgeMesh);
+    }
+  }
+
+  // Render bearings from bearings array as gold cylinders
+  if (model.bearings) {
+    for (const brg of model.bearings) {
+      const nI = nodeMap[brg.nodeI];
+      const nJ = nodeMap[brg.nodeJ];
+      if (!nI || !nJ) continue;
+
+      const start = new THREE.Vector3(nI.x, nI.y, nI.z);
+      const end = new THREE.Vector3(nJ.x, nJ.y, nJ.z);
+      const dir = new THREE.Vector3().subVectors(end, start);
+      const length = dir.length();
+      if (length === 0) continue;
+
+      const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+      const quat = new THREE.Quaternion();
+      quat.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+
+      const radius = defaultWidth * 1.5;
+      const bGeo = new THREE.CylinderGeometry(radius, radius * 1.3, length, 12);
+      const bMat = new THREE.MeshStandardMaterial({
+        color: SOLID_ELEMENT_COLORS.bearing,
+        roughness: 0.3, metalness: 0.5,
+        transparent: true, opacity: 0.85
+      });
+      const mesh = new THREE.Mesh(bGeo, bMat);
+      mesh.position.copy(midpoint);
+      mesh.quaternion.copy(quat);
+      mesh.userData = { type: 'bearing', data: brg };
+      modelGroup.add(mesh);
+    }
+  }
+}
+
+// ============================================================
+//  LABELS (CSS2D)
+// ============================================================
+function createLabel(text, x, y, z) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  div.style.cssText = `
+    font-size: 10px;
+    color: #aaa;
+    background: rgba(26,26,26,0.75);
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    pointer-events: none;
+  `;
+  const obj = new CSS2DObject(div);
+  obj.position.set(x, y, z);
+  return obj;
+}
+
+// ============================================================
+//  CAMERA
+// ============================================================
+function resetCamera() {
+  if (!currentModel || !currentModel.nodes || currentModel.nodes.length === 0) return;
+  const bbox = computeBBox(currentModel.nodes);
+  const cx = (bbox.minX + bbox.maxX) / 2;
+  const cy = (bbox.minY + bbox.maxY) / 2;
+  const cz = (bbox.minZ + bbox.maxZ) / 2;
+  const extent = Math.max(bbox.maxX - bbox.minX, bbox.maxY - bbox.minY, bbox.maxZ - bbox.minZ);
+  const dist = extent * 1.8;
+
+  controls.target.set(cx, cy, cz);
+
+  // For 2D models (z-extent ~0), position camera facing the XY plane from +Z
+  const zExtent = bbox.maxZ - bbox.minZ;
+  if (zExtent < 10) {
+    // 2D elevation view: camera directly in front on Z-axis, slightly above center
+    camera.position.set(cx, cy + dist * 0.15, cz + dist * 0.8);
+  } else {
+    // 3D perspective view
+    camera.position.set(cx + dist * 0.4, cy + dist * 0.5, cz + dist * 0.9);
+  }
+  camera.lookAt(cx, cy, cz);
+  controls.update();
+}
+
+function computeBBox(nodes) {
+  let minX = Infinity, minY = Infinity, minZ = Infinity;
+  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  for (const n of nodes) {
+    if (n.x < minX) minX = n.x;
+    if (n.y < minY) minY = n.y;
+    if (n.z < minZ) minZ = n.z;
+    if (n.x > maxX) maxX = n.x;
+    if (n.y > maxY) maxY = n.y;
+    if (n.z > maxZ) maxZ = n.z;
+  }
+  return { minX, minY, minZ, maxX, maxY, maxZ };
+}
+
+// ============================================================
+//  TOOLTIP (hover)
+// ============================================================
+function onMouseMove(event) {
+  const viewport = document.getElementById('viewport');
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(modelGroup ? modelGroup.children : [], false);
+
+  const tooltip = document.getElementById('tooltip');
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    if (obj.userData && obj.userData.data) {
+      const d = obj.userData.data;
+      let text = '';
+      if (obj.userData.type === 'node') {
+        text = `Node ${d.id}${d.label ? ': ' + d.label : ''}\nPos: (${(d.x/12).toFixed(1)}, ${(d.y/12).toFixed(1)}, ${(d.z/12).toFixed(1)}) ft`;
+      } else if (obj.userData.type === 'element') {
+        text = `Element ${d.id}: ${d.type}${d.label ? '\n' + d.label : ''}`;
+      } else if (obj.userData.type === 'bearing') {
+        text = `Bearing ${d.id}${d.label ? ': ' + d.label : ''}\nWeight: ${d.weight} kip`;
+        if (d.radii) text += `\nR_eff: [${d.radii.join(', ')}]`;
+      }
+      if (text) {
+        tooltip.style.display = 'block';
+        tooltip.textContent = text;
+        tooltip.style.whiteSpace = 'pre-line';
+        tooltip.style.left = (event.clientX - rect.left + 14) + 'px';
+        tooltip.style.top = (event.clientY - rect.top - 56 + 14) + 'px';
+        return;
+      }
+    }
+  }
+  tooltip.style.display = 'none';
+}
+
+// ============================================================
+//  INFO PANEL UPDATE
+// ============================================================
+function updateInfoPanel() {
+  const model = currentModel;
+  if (!model) return;
+
+  const info = model.modelInfo || {};
+  document.getElementById('info-name').textContent = info.name || '--';
+  document.getElementById('info-units').textContent = info.units || '--';
+  document.getElementById('info-description').textContent = info.description || '--';
+
+  const nodes = model.nodes || [];
+  const elems = model.elements || [];
+  const brgs = model.bearings || [];
+  const mats = model.materials || [];
+  const secs = model.sections || [];
+  const loads = model.loads || [];
+
+  document.getElementById('info-node-count').textContent = nodes.length;
+  document.getElementById('info-elem-count').textContent = elems.length;
+  document.getElementById('info-bearing-count').textContent = brgs.length;
+  document.getElementById('info-mat-count').textContent = mats.length;
+  document.getElementById('info-sec-count').textContent = secs.length;
+  document.getElementById('info-load-count').textContent = loads.length;
+
+  // Bounding box
+  if (nodes.length > 0) {
+    const bb = computeBBox(nodes);
+    const dx = ((bb.maxX - bb.minX) / 12).toFixed(0);
+    const dy = ((bb.maxY - bb.minY) / 12).toFixed(0);
+    const dz = ((bb.maxZ - bb.minZ) / 12).toFixed(0);
+    if (Number(dz) > 0) {
+      document.getElementById('info-bbox').textContent = `${dx} x ${dy} x ${dz}`;
+    } else {
+      document.getElementById('info-bbox').textContent = `${dx} x ${dy} (2D)`;
+    }
+  }
+
+  // Status bar
+  document.getElementById('status-model').textContent = info.name || 'Model loaded';
+  document.getElementById('status-nodes').textContent = nodes.length + ' nodes';
+  document.getElementById('status-elements').textContent = elems.length + ' elements';
+  document.getElementById('status-bearings').textContent = brgs.length + ' bearings';
+
+  // Span layout
+  const spanInfo = computeSpanInfo(model);
+  document.getElementById('span-info').innerHTML = spanInfo;
+
+  // Bearings
+  const bearingSection = document.getElementById('bearing-section');
+  if (brgs.length > 0) {
+    bearingSection.style.display = 'block';
+    document.getElementById('bearing-info').innerHTML = renderBearingTable(brgs);
+  } else {
+    bearingSection.style.display = 'none';
+  }
+
+  // Materials
+  document.getElementById('material-info').innerHTML = renderMaterials(mats);
+}
+
+function computeSpanInfo(model) {
+  if (!model.nodes || model.nodes.length === 0) return '--';
+
+  // Find fixed/ground nodes to determine pier locations
+  const fixedNodes = model.nodes.filter(n => n.restraint && n.restraint.some(r => r));
+  if (fixedNodes.length === 0) return 'No fixed supports found';
+
+  // Get unique X positions of fixed nodes
+  const pierXSet = new Set();
+  for (const n of fixedNodes) pierXSet.add(n.x);
+  const pierXArr = Array.from(pierXSet).sort((a, b) => a - b);
+
+  let html = `<div style="margin-bottom:6px;"><strong style="color:var(--text-bright);">${pierXArr.length} Support Lines</strong></div>`;
+
+  for (let i = 0; i < pierXArr.length - 1; i++) {
+    const spanFt = ((pierXArr[i + 1] - pierXArr[i]) / 12).toFixed(0);
+    html += `<div class="info-row"><span class="label">Span ${i + 1}</span><span class="value">${spanFt} ft</span></div>`;
+  }
+
+  const totalFt = ((pierXArr[pierXArr.length - 1] - pierXArr[0]) / 12).toFixed(0);
+  html += `<div class="info-divider"></div>`;
+  html += `<div class="info-row"><span class="label">Total Length</span><span class="value" style="color:var(--gold);">${totalFt} ft</span></div>`;
+
+  // Deck width (from z-extent; 2D models have z=0 so check section data instead)
+  const allZ = model.nodes.map(n => n.z);
+  const minZ = Math.min(...allZ);
+  const maxZ = Math.max(...allZ);
+  const zExtent = maxZ - minZ;
+  if (zExtent > 0) {
+    const widthFt = (zExtent / 12).toFixed(0);
+    html += `<div class="info-row"><span class="label">Deck Width</span><span class="value">${widthFt} ft</span></div>`;
+  } else if (model.sections) {
+    // For 2D models, infer deck width from largest section bf
+    const maxBf = Math.max(...model.sections.map(s => s.bf || 0));
+    if (maxBf > 100) {
+      html += `<div class="info-row"><span class="label">Deck Width</span><span class="value">${(maxBf / 12).toFixed(0)} ft (section)</span></div>`;
+    }
+  }
+
+  // Column height
+  const freeNodes = model.nodes.filter(n => !n.restraint || !n.restraint.some(r => r));
+  if (freeNodes.length > 0 && fixedNodes.length > 0) {
+    const maxY = Math.max(...freeNodes.map(n => n.y));
+    const minY = Math.min(...fixedNodes.map(n => n.y));
+    const heightFt = ((maxY - minY) / 12).toFixed(0);
+    html += `<div class="info-row"><span class="label">Max Height</span><span class="value">${heightFt} ft</span></div>`;
+  }
+
+  return html;
+}
+
+function renderBearingTable(bearings) {
+  let html = `<table class="bearing-table">
+    <thead><tr><th>ID</th><th>Label</th><th>Weight</th><th>R_eff</th><th>d_cap</th></tr></thead><tbody>`;
+
+  for (const b of bearings) {
+    // Radii: use the largest (outer) radius; show in inches and feet
+    const rArr = b.radii || [];
+    const rMax = Math.max(...rArr);
+    const rEff = rMax > 0 ? rMax.toFixed(1) + '" (' + (rMax / 12).toFixed(1) + ' ft)' : '--';
+    // Displacement capacity: use the largest
+    const dArr = b.dispCapacities || [];
+    const dMax = Math.max(...dArr);
+    const dCap = dMax > 0 ? dMax.toFixed(1) + '" (' + (dMax * 25.4).toFixed(0) + ' mm)' : '--';
+    html += `<tr>
+      <td>${b.id}</td>
+      <td>${b.label || '--'}</td>
+      <td>${b.weight ? b.weight + ' kip' : '--'}</td>
+      <td>${rEff}</td>
+      <td>${dCap}</td>
+    </tr>`;
+  }
+
+  html += '</tbody></table>';
+
+  // Friction coefficients
+  if (bearings.length > 0 && bearings[0].surfaces) {
+    const s = bearings[0].surfaces;
+    html += `<div style="margin-top:10px;font-size:12px;color:var(--text-dim);">
+      <div class="info-row"><span class="label">Inner mu (slow/fast)</span><span class="value">${s[0].muSlow} / ${s[0].muFast}</span></div>
+      <div class="info-row"><span class="label">Outer mu (slow/fast)</span><span class="value">${s[2].muSlow} / ${s[2].muFast}</span></div>
+      <div class="info-row"><span class="label">Friction model</span><span class="value">${s[0].type}</span></div>
+    </div>`;
+  }
+
+  return html;
+}
+
+function renderMaterials(materials) {
+  if (!materials || materials.length === 0) return '--';
+  let html = '';
+  for (const m of materials) {
+    html += `<div style="margin-bottom:8px;">
+      <div style="font-weight:600;color:var(--text-bright);font-size:12px;">${m.name}</div>
+      <div class="info-row"><span class="label">E</span><span class="value">${m.E.toLocaleString()} ksi</span></div>
+      <div class="info-row"><span class="label">Fy</span><span class="value">${m.Fy} ksi</span></div>
+    </div>`;
+  }
+  return html;
+}
+
+// ============================================================
+//  UTILITY
+// ============================================================
+function disposeGroup(group) {
+  group.traverse((child) => {
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material.forEach(m => m.dispose());
+      } else {
+        child.material.dispose();
+      }
+    }
+    // CSS2DObject cleanup
+    if (child.isCSS2DObject && child.element && child.element.parentNode) {
+      child.element.parentNode.removeChild(child.element);
+    }
+  });
+}
+
+function showLoading(show) {
+  const overlay = document.getElementById('loading-overlay');
+  if (show) overlay.classList.remove('hidden');
+  else overlay.classList.add('hidden');
+}
+
+// ============================================================
+//  UI EVENT HANDLERS
+// ============================================================
+function toggleLabels() {
+  showLabels = !showLabels;
+  if (labelGroup) labelGroup.visible = showLabels;
+  // Update label renderer visibility
+  if (labelRenderer) {
+    labelRenderer.domElement.style.display = showLabels ? 'block' : 'none';
+  }
+  const btn = document.getElementById('btn-labels');
+  btn.classList.toggle('active', showLabels);
+}
+
+function toggleAxes() {
+  showAxes = !showAxes;
+  if (axesHelper) axesHelper.visible = showAxes;
+  if (gridHelper) gridHelper.visible = showAxes;
+  const btn = document.getElementById('btn-axes');
+  btn.classList.toggle('active', showAxes);
+}
+
+function setDisplayMode(mode) {
+  displayMode = mode;
+  document.getElementById('btn-wireframe').classList.toggle('active', mode === 'wireframe');
+  document.getElementById('btn-solid').classList.toggle('active', mode === 'solid');
+  buildScene();
+}
+
+function togglePanel() {
+  const panel = document.getElementById('info-panel');
+  panel.classList.toggle('collapsed');
+  // Trigger resize after transition
+  setTimeout(onResize, 250);
+}
+
+// Panel section collapse/expand
+document.querySelectorAll('.panel-header').forEach(header => {
+  header.addEventListener('click', () => {
+    const sectionId = header.getAttribute('data-section');
+    const content = document.getElementById('section-' + sectionId);
+    if (content) {
+      content.classList.toggle('hidden');
+      header.classList.toggle('collapsed');
+    }
+  });
+});
+
+// Button bindings
+document.getElementById('btn-wireframe').addEventListener('click', () => setDisplayMode('wireframe'));
+document.getElementById('btn-solid').addEventListener('click', () => setDisplayMode('solid'));
+document.getElementById('btn-labels').addEventListener('click', toggleLabels);
+document.getElementById('btn-axes').addEventListener('click', toggleAxes);
+document.getElementById('btn-reset').addEventListener('click', resetCamera);
+document.getElementById('btn-panel').addEventListener('click', togglePanel);
+
+// Model select
+document.getElementById('model-select').addEventListener('change', (e) => {
+  loadModel(e.target.value);
+});
+
+// ============================================================
+//  INIT
+// ============================================================
+initThree();
+loadModel('alt-a');
+
+// Set initial button states
+document.getElementById('btn-labels').classList.add('active');
+document.getElementById('btn-axes').classList.add('active');
+</script>
+</body>
+</html>

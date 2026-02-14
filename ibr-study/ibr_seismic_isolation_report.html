@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IBR Seismic Isolation Study — Engineering Analysis Report — RPT-2026-0213-IBR</title>
+<style>
+/* ============================================================
+   GLOBAL RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary:    #1a1a2e;
+  --accent:     #d4a843;
+  --accent-light: #f5ecd7;
+  --success:    #2d6a4f;
+  --danger:     #c0392b;
+  --info:       #2563eb;
+  --bg:         #ffffff;
+  --row-alt:    #f8f9fa;
+  --text:       #222222;
+  --text-light: #555555;
+  --border:     #dee2e6;
+  --odot-green: #006747;
+  --wsdot-blue: #003366;
+  --alt-a:      #c0392b;
+  --alt-b:      #2563eb;
+  --alt-c:      #2d6a4f;
+}
+
+html { font-size: 15px; }
+
+body {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.65;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  color: var(--primary);
+  line-height: 1.25;
+}
+
+h1 { font-size: 2rem;   margin-bottom: 0.5em; }
+h2 { font-size: 1.55rem; margin: 1.6em 0 0.6em; border-bottom: 3px solid var(--accent); padding-bottom: 0.25em; }
+h3 { font-size: 1.2rem;  margin: 1.2em 0 0.4em; color: var(--primary); }
+h4 { font-size: 1.05rem; margin: 1em 0 0.3em; }
+
+p  { margin-bottom: 0.9em; text-align: justify; }
+
+strong { color: var(--primary); }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+ul, ol { margin: 0.5em 0 1em 1.5em; }
+li { margin-bottom: 0.3em; }
+
+/* ============================================================
+   COVER PAGE
+   ============================================================ */
+.cover-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border: 4px double var(--accent);
+  padding: 60px 40px;
+  margin: 20px 0;
+  position: relative;
+}
+
+.cover-page::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px solid var(--accent);
+  pointer-events: none;
+}
+
+.cover-classification {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: var(--primary);
+  color: #fff;
+  padding: 6px 24px;
+  margin-bottom: 40px;
+}
+
+.cover-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.cover-subtitle {
+  font-size: 1.3rem;
+  color: var(--text-light);
+  margin-bottom: 6px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+.cover-subtitle-2 {
+  font-size: 1.05rem;
+  color: var(--accent);
+  font-style: italic;
+  margin-bottom: 40px;
+}
+
+.cover-meta {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.cover-rule {
+  width: 200px;
+  height: 2px;
+  background: var(--accent);
+  border: none;
+  margin: 30px auto;
+}
+
+.cover-logos {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.cover-logo-badge {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 8px 20px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+/* ============================================================
+   TABLE OF CONTENTS
+   ============================================================ */
+.toc { padding: 30px 0; }
+.toc h2 { border-bottom-color: var(--accent); }
+
+.toc ol {
+  list-style: none;
+  counter-reset: toc-counter;
+  padding-left: 0;
+}
+
+.toc > ol > li {
+  counter-increment: toc-counter;
+  margin-bottom: 6px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.95rem;
+}
+
+.toc > ol > li::before {
+  content: counter(toc-counter) ".";
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 8px;
+  display: inline-block;
+  width: 28px;
+}
+
+.toc a { color: var(--primary); }
+.toc a:hover { color: var(--accent); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0 1.5em;
+  font-size: 0.9rem;
+}
+
+thead th {
+  background: var(--primary);
+  color: #fff;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.85rem;
+  letter-spacing: 0.3px;
+}
+
+tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:nth-child(even) { background: var(--row-alt); }
+tbody tr:hover { background: #eef0f2; }
+
+table.compact { font-size: 0.82rem; }
+table.compact td, table.compact th { padding: 6px 10px; }
+
+td.number, th.number { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+.badge {
+  display: inline-block;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+.badge-pass { background: var(--success); color: #fff; }
+.badge-warn { background: #e67e22; color: #fff; }
+.badge-fail { background: var(--danger); color: #fff; }
+.badge-io   { background: var(--success); color: #fff; }
+.badge-ls   { background: #e67e22; color: #fff; }
+.badge-cp   { background: var(--danger); color: #fff; }
+
+/* ============================================================
+   BOXES
+   ============================================================ */
+.summary-box {
+  border: 2px solid var(--accent);
+  border-left: 6px solid var(--accent);
+  background: linear-gradient(135deg, #fffdf6 0%, #fff 100%);
+  padding: 24px 28px;
+  margin: 1.5em 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.summary-box h3 {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  margin-top: 0;
+  color: var(--primary);
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+.conclusion-box {
+  background: var(--primary);
+  color: #fff;
+  padding: 18px 24px;
+  margin: 1.5em 0;
+  border-left: 6px solid var(--accent);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.conclusion-box strong { color: var(--accent); }
+
+.note-box {
+  background: var(--accent-light);
+  border-left: 4px solid var(--accent);
+  padding: 12px 18px;
+  margin: 1em 0;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* ============================================================
+   SVG / DIAGRAMS
+   ============================================================ */
+.diagram-container {
+  text-align: center;
+  margin: 1.5em 0;
+}
+
+.diagram-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.diagram-caption {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 6px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ============================================================
+   METRIC CARDS
+   ============================================================ */
+.metric-row {
+  display: flex;
+  gap: 16px;
+  margin: 1em 0;
+  flex-wrap: wrap;
+}
+
+.metric-card {
+  flex: 1;
+  min-width: 140px;
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  padding: 16px;
+  text-align: center;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.metric-card .metric-value {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+}
+
+.metric-card .metric-label {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.metric-card .metric-sub {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   TWO/THREE COLUMN LAYOUT
+   ============================================================ */
+.two-col { display: flex; gap: 30px; margin: 1em 0; }
+.two-col > div { flex: 1; }
+
+.three-col { display: flex; gap: 20px; margin: 1em 0; }
+.three-col > div { flex: 1; }
+
+/* ============================================================
+   SECTION FOOTER
+   ============================================================ */
+.section-footer {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.7rem;
+  color: #999;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  margin-top: 40px;
+}
+
+/* ============================================================
+   ALT COLOR CODING
+   ============================================================ */
+.alt-a-color { color: var(--alt-a); }
+.alt-b-color { color: var(--alt-b); }
+.alt-c-color { color: var(--alt-c); }
+
+.alt-a-bg { background: var(--alt-a); color: #fff; }
+.alt-b-bg { background: var(--alt-b); color: #fff; }
+.alt-c-bg { background: var(--alt-c); color: #fff; }
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+  body { max-width: 100%; padding: 0; font-size: 11pt; }
+  .cover-page { min-height: auto; page-break-after: always; }
+  .toc { page-break-after: always; }
+  h2 { page-break-before: always; }
+  table { page-break-inside: avoid; }
+  .diagram-container { page-break-inside: avoid; }
+  .summary-box, .conclusion-box { page-break-inside: avoid; }
+  .no-print { display: none; }
+  a { color: var(--primary); }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     COVER PAGE
+     ============================================================ -->
+<div class="cover-page">
+  <div class="cover-classification">Engineering Analysis Report</div>
+
+  <div style="margin-bottom:16px;">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <rect x="10" y="80" width="100" height="8" fill="#1a1a2e" rx="2"/>
+      <rect x="25" y="30" width="8" height="50" fill="#1a1a2e"/>
+      <rect x="57" y="20" width="8" height="60" fill="#1a1a2e"/>
+      <rect x="89" y="30" width="8" height="50" fill="#1a1a2e"/>
+      <line x1="10" y1="80" x2="29" y2="30" stroke="#d4a843" stroke-width="2"/>
+      <line x1="33" y1="30" x2="57" y2="20" stroke="#d4a843" stroke-width="2"/>
+      <line x1="65" y1="20" x2="89" y2="30" stroke="#d4a843" stroke-width="2"/>
+      <line x1="97" y1="30" x2="110" y2="80" stroke="#d4a843" stroke-width="2"/>
+      <ellipse cx="29" cy="80" rx="8" ry="5" fill="none" stroke="#2563eb" stroke-width="2"/>
+      <ellipse cx="93" cy="80" rx="8" ry="5" fill="none" stroke="#2563eb" stroke-width="2"/>
+      <rect x="0" y="95" width="120" height="14" fill="#2563eb" opacity="0.15" rx="2"/>
+      <text x="60" y="106" text-anchor="middle" font-size="8" fill="#2563eb" font-family="Helvetica,sans-serif">COLUMBIA RIVER</text>
+    </svg>
+  </div>
+
+  <div class="cover-title">Seismic Isolation Strategy Study</div>
+  <div class="cover-subtitle">Interstate Bridge Replacement Program</div>
+  <div class="cover-subtitle-2">I-5 Columbia River Crossing &mdash; Portland, OR to Vancouver, WA</div>
+
+  <hr class="cover-rule">
+
+  <div class="cover-meta"><strong>Report No:</strong> RPT-2026-0213-IBR</div>
+  <div class="cover-meta"><strong>Date:</strong> February 13, 2026</div>
+  <div class="cover-meta"><strong>Prepared by:</strong> AI Engineering Team (IsoVis Platform)</div>
+  <div class="cover-meta"><strong>Client:</strong> ODOT / WSDOT Joint Program Office</div>
+
+  <hr class="cover-rule">
+
+  <div class="cover-logos">
+    <div class="cover-logo-badge" style="background:#006747;color:#fff;">ODOT</div>
+    <div class="cover-logo-badge" style="background:#003366;color:#fff;">WSDOT</div>
+    <div class="cover-logo-badge" style="background:var(--primary);color:var(--accent);">IsoVis</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TABLE OF CONTENTS
+     ============================================================ -->
+<nav class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#executive-summary">Executive Summary</a></li>
+    <li><a href="#background">Project Background</a></li>
+    <li><a href="#seismic-hazard">Seismic Hazard</a></li>
+    <li><a href="#alternatives">Description of Alternatives</a></li>
+    <li><a href="#methodology">Analysis Methodology</a></li>
+    <li><a href="#results">Results &amp; Comparison</a></li>
+    <li><a href="#cost-benefit">Cost-Benefit Discussion</a></li>
+    <li><a href="#conclusions">Conclusions &amp; Recommendations</a></li>
+    <li><a href="#references">References</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================
+     1. EXECUTIVE SUMMARY
+     ============================================================ -->
+<h2 id="executive-summary">1. Executive Summary</h2>
+
+<div class="summary-box">
+  <h3>Key Findings</h3>
+  <div class="metric-row">
+    <div class="metric-card">
+      <span class="metric-value">66&ndash;72%</span>
+      <span class="metric-label">Base Shear Reduction</span>
+      <span class="metric-sub">with TFP isolation</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">98%+</span>
+      <span class="metric-label">Drift Reduction</span>
+      <span class="metric-sub">column/tower drift</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">0</span>
+      <span class="metric-label">Plastic Hinges</span>
+      <span class="metric-sub">isolated alternatives</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">IO</span>
+      <span class="metric-label">Performance Level</span>
+      <span class="metric-sub">Immediate Occupancy</span>
+    </div>
+  </div>
+</div>
+
+<p>This report presents the findings of a seismic isolation feasibility study for the Interstate Bridge Replacement (IBR) program, which will replace the aging I-5 Columbia River crossing between Portland, Oregon and Vancouver, Washington. Three bridge alternatives were evaluated using eigenvalue modal analysis, nonlinear static pushover analysis, and ASCE 7-22 property modification factor (lambda) bounding:</p>
+
+<ul>
+  <li><strong>Alternative A:</strong> Conventional ductile 3-span girder bridge with fixed-base RC columns (baseline)</li>
+  <li><strong>Alternative B:</strong> Same girder geometry with Triple Friction Pendulum (TFP) bearings at pier foundations</li>
+  <li><strong>Alternative C:</strong> Extradosed cable-stayed bridge with TFP bearings at tower bases</li>
+</ul>
+
+<div class="conclusion-box">
+  <strong>Recommendation:</strong> Both isolated alternatives (B and C) achieve Immediate Occupancy performance at both the Design Basis Earthquake (DBE) and Maximum Considered Earthquake (MCE) levels, compared to Life Safety (DBE) and Collapse Prevention (MCE) for the conventional design. Seismic isolation reduces substructure force demands by 66&ndash;72% and column drift by over 98%. For a critical lifeline structure carrying 130,000 vehicles per day, the 8&ndash;12% cost premium of Alternative B delivers compelling resilience benefits. Alternative C offers the highest performance but at a 22&ndash;30% cost premium. <strong>We recommend Alternative B as the primary design and Alternative C for further study.</strong>
+</div>
+
+<!-- ============================================================
+     2. PROJECT BACKGROUND
+     ============================================================ -->
+<h2 id="background">2. Project Background</h2>
+
+<h3>2.1 Existing Bridge</h3>
+<p>The existing Interstate Bridge consists of twin steel truss structures built in 1917 (northbound) and 1958 (southbound), spanning 3,538 feet across the Columbia River. Now over 100 years old, the bridge carries approximately 130,000 vehicles per day on six substandard lanes with no shoulders. The structure rests on timber piles driven 70&ndash;100 feet into sandy alluvial soils&mdash;a foundation system wholly inadequate for modern seismic demands.</p>
+
+<p>Seismic vulnerability assessments have concluded that the existing bridge faces catastrophic failure in a Cascadia Subduction Zone (CSZ) M9 event. The timber pile foundations in liquefiable soils, combined with non-ductile concrete piers and rocker bearings, provide no viable path for seismic retrofit.</p>
+
+<h3>2.2 Replacement Program</h3>
+<p>The IBR program, jointly managed by the Oregon Department of Transportation (ODOT) and Washington State Department of Transportation (WSDOT), will deliver an all-fixed-span replacement bridge with 116-foot navigation clearance, as approved by the U.S. Coast Guard in January 2026. The replacement bridge will accommodate eight travel lanes (three through plus one auxiliary in each direction), light rail transit, a shared-use path, and full shoulders. The estimated deck width is approximately 150 feet.</p>
+
+<p>Current cost estimates range from $12.2 billion to $17.7 billion (2025 dollars), with $2.1 billion in federal funding secured through the USDOT Mega Grant and FHWA Bridge Investment Program. Construction is planned to begin in 2026.</p>
+
+<!-- Bridge Elevation SVG -->
+<div class="diagram-container">
+  <svg viewBox="0 0 900 300" width="900" height="300">
+    <!-- Water -->
+    <rect x="0" y="220" width="900" height="80" fill="#d4e6f1" opacity="0.4"/>
+    <text x="450" y="270" text-anchor="middle" font-size="13" fill="#2563eb" font-family="Helvetica,sans-serif" opacity="0.7">Columbia River</text>
+
+    <!-- Ground / Abutments -->
+    <rect x="0" y="200" width="80" height="30" fill="#8B7355"/>
+    <rect x="820" y="200" width="80" height="30" fill="#8B7355"/>
+
+    <!-- Piers -->
+    <rect x="275" y="100" width="20" height="120" fill="#1a1a2e"/>
+    <rect x="605" y="100" width="20" height="120" fill="#1a1a2e"/>
+
+    <!-- Pier caps -->
+    <rect x="255" y="92" width="60" height="12" fill="#1a1a2e" rx="2"/>
+    <rect x="585" y="92" width="60" height="12" fill="#1a1a2e" rx="2"/>
+
+    <!-- Foundations -->
+    <rect x="260" y="220" width="50" height="20" fill="#666"/>
+    <rect x="590" y="220" width="50" height="20" fill="#666"/>
+    <line x1="270" y1="240" x2="265" y2="280" stroke="#666" stroke-width="2"/>
+    <line x1="280" y1="240" x2="278" y2="280" stroke="#666" stroke-width="2"/>
+    <line x1="290" y1="240" x2="291" y2="280" stroke="#666" stroke-width="2"/>
+    <line x1="300" y1="240" x2="304" y2="280" stroke="#666" stroke-width="2"/>
+    <line x1="600" y1="240" x2="595" y2="280" stroke="#666" stroke-width="2"/>
+    <line x1="610" y1="240" x2="608" y2="280" stroke="#666" stroke-width="2"/>
+    <line x1="620" y1="240" x2="621" y2="280" stroke="#666" stroke-width="2"/>
+    <line x1="630" y1="240" x2="634" y2="280" stroke="#666" stroke-width="2"/>
+
+    <!-- Deck -->
+    <rect x="40" y="82" width="820" height="14" fill="#1a1a2e" rx="3"/>
+
+    <!-- Barriers -->
+    <rect x="40" y="78" width="820" height="4" fill="#d4a843"/>
+
+    <!-- Span labels -->
+    <text x="175" y="75" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">Span 1: 275 ft</text>
+    <text x="450" y="75" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">Span 2: 275 ft</text>
+    <text x="725" y="75" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">Span 3: 275 ft</text>
+
+    <!-- Pier labels -->
+    <text x="285" y="180" text-anchor="middle" font-size="10" fill="#fff" font-family="Helvetica,sans-serif" transform="rotate(-90,285,165)">Pier 1</text>
+    <text x="615" y="180" text-anchor="middle" font-size="10" fill="#fff" font-family="Helvetica,sans-serif" transform="rotate(-90,615,165)">Pier 2</text>
+
+    <!-- Clearance -->
+    <line x1="440" y1="96" x2="440" y2="220" stroke="#999" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="455" y="160" font-size="10" fill="#999" font-family="Helvetica,sans-serif">116 ft CLR</text>
+
+    <!-- Title -->
+    <text x="450" y="25" text-anchor="middle" font-size="14" font-weight="bold" fill="#1a1a2e" font-family="Helvetica,sans-serif">Replacement Bridge Elevation &mdash; 3-Span Segment (Representative)</text>
+  </svg>
+  <div class="diagram-caption">Figure 2.1 &mdash; Replacement bridge elevation showing representative 3-span segment (3 x 275 ft)</div>
+</div>
+
+<h3>2.3 Design Standards</h3>
+<p>The replacement bridge must comply with AASHTO LRFD Bridge Design Specifications and, for the seismically isolated alternatives, the AASHTO Guide Specifications for Seismic Isolation Design (4th Edition). The bridge is classified under Seismic Design Category D due to the high seismic hazard and Site Class D soil conditions. Additional reference is made to ASCE 7-22 Chapter 17 for property modification factors governing isolation bearing properties.</p>
+
+<!-- ============================================================
+     3. SEISMIC HAZARD
+     ============================================================ -->
+<h2 id="seismic-hazard">3. Seismic Hazard</h2>
+
+<h3>3.1 Cascadia Subduction Zone</h3>
+<p>The Cascadia Subduction Zone (CSZ) extends approximately 620 miles from northern California to southern British Columbia, posing the dominant seismic threat to the bridge site. Paleoseismic studies have documented 41 great earthquakes (M8.0&ndash;9.2) over the past 10,000 years, yielding an average recurrence interval of approximately 243 years. The most recent event occurred on January 26, 1700&mdash;over 326 years ago.</p>
+
+<p>A CSZ megathrust event would produce ground shaking of extraordinary duration (2&ndash;5 minutes), far exceeding the 10&ndash;30 second duration of typical crustal earthquakes. This long-duration demand is particularly damaging to conventional ductile structures, which accumulate damage through many inelastic cycles. The Portland Hills Fault and East Bank Fault also contribute to local seismic hazard as near-fault crustal sources.</p>
+
+<h3>3.2 Site Conditions</h3>
+<p>The bridge site is characterized by soft alluvial soils deposited by the Columbia River, classified as Site Class D to D/E. Liquefaction is expected to depths of 50&ndash;60 feet under 500&ndash;1,000 year return period events. The existing timber pile foundations, set in these liquefiable soils without reaching bedrock, exemplify the vulnerability of structures not designed for modern seismic standards.</p>
+
+<h3>3.3 Design Spectral Parameters</h3>
+
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Value</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>S<sub>DS</sub></strong></td><td class="number">1.00 g</td><td>Short-period design spectral acceleration</td></tr>
+    <tr><td><strong>S<sub>D1</sub></strong></td><td class="number">0.60 g</td><td>1-second design spectral acceleration</td></tr>
+    <tr><td><strong>PGA</strong></td><td class="number">0.45 g</td><td>Peak ground acceleration</td></tr>
+    <tr><td><strong>S<sub>M1</sub></strong></td><td class="number">0.90 g</td><td>MCE-level 1-second spectral acceleration</td></tr>
+    <tr><td><strong>T<sub>s</sub></strong></td><td class="number">0.60 s</td><td>Corner period (S<sub>D1</sub>/S<sub>DS</sub>)</td></tr>
+    <tr><td><strong>T<sub>0</sub></strong></td><td class="number">0.12 s</td><td>Short-period transition (0.2 T<sub>s</sub>)</td></tr>
+    <tr><td><strong>Site Class</strong></td><td>D</td><td>Stiff soil (alluvial deposits)</td></tr>
+    <tr><td><strong>SDC</strong></td><td>D</td><td>Seismic Design Category (highest)</td></tr>
+  </tbody>
+</table>
+
+<!-- Design Spectrum SVG Chart -->
+<div class="diagram-container">
+  <svg viewBox="0 0 700 400" width="700" height="400">
+    <!-- Background -->
+    <rect x="80" y="20" width="580" height="320" fill="#fafafa" stroke="#ddd"/>
+
+    <!-- Grid lines -->
+    <line x1="80" y1="100" x2="660" y2="100" stroke="#eee" stroke-width="1"/>
+    <line x1="80" y1="180" x2="660" y2="180" stroke="#eee" stroke-width="1"/>
+    <line x1="80" y1="260" x2="660" y2="260" stroke="#eee" stroke-width="1"/>
+    <line x1="196" y1="20" x2="196" y2="340" stroke="#eee" stroke-width="1"/>
+    <line x1="312" y1="20" x2="312" y2="340" stroke="#eee" stroke-width="1"/>
+    <line x1="428" y1="20" x2="428" y2="340" stroke="#eee" stroke-width="1"/>
+    <line x1="544" y1="20" x2="544" y2="340" stroke="#eee" stroke-width="1"/>
+
+    <!-- Axes -->
+    <line x1="80" y1="340" x2="660" y2="340" stroke="#333" stroke-width="2"/>
+    <line x1="80" y1="20" x2="80" y2="340" stroke="#333" stroke-width="2"/>
+
+    <!-- Y-axis labels -->
+    <text x="72" y="344" text-anchor="end" font-size="11" fill="#555" font-family="Helvetica,sans-serif">0.0</text>
+    <text x="72" y="264" text-anchor="end" font-size="11" fill="#555" font-family="Helvetica,sans-serif">0.25</text>
+    <text x="72" y="184" text-anchor="end" font-size="11" fill="#555" font-family="Helvetica,sans-serif">0.50</text>
+    <text x="72" y="104" text-anchor="end" font-size="11" fill="#555" font-family="Helvetica,sans-serif">0.75</text>
+    <text x="72" y="24" text-anchor="end" font-size="11" fill="#555" font-family="Helvetica,sans-serif">1.00</text>
+
+    <!-- X-axis labels -->
+    <text x="80" y="360" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">0</text>
+    <text x="196" y="360" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">1.0</text>
+    <text x="312" y="360" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">2.0</text>
+    <text x="428" y="360" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">3.0</text>
+    <text x="544" y="360" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">4.0</text>
+    <text x="660" y="360" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif">5.0</text>
+
+    <!-- Axis titles -->
+    <text x="370" y="390" text-anchor="middle" font-size="13" fill="#333" font-family="Helvetica,sans-serif">Period, T (sec)</text>
+    <text x="25" y="180" text-anchor="middle" font-size="13" fill="#333" font-family="Helvetica,sans-serif" transform="rotate(-90,25,180)">S<tspan font-size="9" dy="3">a</tspan><tspan dy="-3"> (g)</tspan></text>
+
+    <!-- Design spectrum curve -->
+    <polyline points="80,196 94,20 150,20 196,148 312,228 370,248 428,264 486,276 544,284 602,292 660,296"
+              fill="none" stroke="#1a1a2e" stroke-width="3"/>
+
+    <!-- Period markers for alternatives -->
+    <!-- Alt A: T=1.186s -->
+    <line x1="218" y1="20" x2="218" y2="340" stroke="#c0392b" stroke-width="2" stroke-dasharray="6,3"/>
+    <circle cx="218" cy="178" r="6" fill="#c0392b"/>
+    <text x="225" y="172" font-size="10" fill="#c0392b" font-family="Helvetica,sans-serif" font-weight="bold">Alt A (T=1.19s)</text>
+    <text x="225" y="184" font-size="10" fill="#c0392b" font-family="Helvetica,sans-serif">Sa=0.506g</text>
+
+    <!-- Alt B: T=2.536s -->
+    <line x1="374" y1="20" x2="374" y2="340" stroke="#2563eb" stroke-width="2" stroke-dasharray="6,3"/>
+    <circle cx="374" cy="264" r="6" fill="#2563eb"/>
+    <text x="381" y="258" font-size="10" fill="#2563eb" font-family="Helvetica,sans-serif" font-weight="bold">Alt B (T=2.54s)</text>
+    <text x="381" y="270" font-size="10" fill="#2563eb" font-family="Helvetica,sans-serif">Sa=0.237g</text>
+
+    <!-- Alt C: T=2.905s -->
+    <line x1="418" y1="20" x2="418" y2="340" stroke="#2d6a4f" stroke-width="2" stroke-dasharray="6,3"/>
+    <circle cx="418" cy="274" r="6" fill="#2d6a4f"/>
+    <text x="425" y="300" font-size="10" fill="#2d6a4f" font-family="Helvetica,sans-serif" font-weight="bold">Alt C (T=2.91s)</text>
+    <text x="425" y="312" font-size="10" fill="#2d6a4f" font-family="Helvetica,sans-serif">Sa=0.207g</text>
+
+    <!-- Ts marker -->
+    <line x1="150" y1="20" x2="150" y2="340" stroke="#999" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="153" y="36" font-size="9" fill="#999" font-family="Helvetica,sans-serif">Ts=0.6s</text>
+
+    <!-- Title -->
+    <text x="370" y="14" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a2e" font-family="Helvetica,sans-serif">AASHTO Design Response Spectrum &mdash; Site Class D</text>
+  </svg>
+  <div class="diagram-caption">Figure 3.1 &mdash; Design response spectrum showing fundamental periods of the three alternatives. Isolation shifts the response into the low-acceleration region (T &gt; 2.0 s).</div>
+</div>
+
+<h3>3.4 Significance for Isolation Design</h3>
+<p>The seismic hazard characteristics at this site make an exceptionally strong case for seismic isolation. The long-duration CSZ ground motions (2&ndash;5 minutes) subject conventional ductile columns to hundreds of inelastic cycles, accumulating damage far beyond what is considered in standard pushover analysis. Isolation bearings, by keeping the substructure elastic, eliminate this cumulative damage vulnerability entirely. Furthermore, the heavy superstructure (approximately 45,000 kips for the 3-span segment) provides ideal conditions for friction pendulum isolation, as the large gravity load ensures reliable bearing performance and self-centering capability.</p>
+
+<!-- ============================================================
+     4. DESCRIPTION OF ALTERNATIVES
+     ============================================================ -->
+<h2 id="alternatives">4. Description of Alternatives</h2>
+
+<h3>4.1 Alternative A: Conventional Ductile Bridge</h3>
+<p>The baseline design is a 3-span continuous concrete box-girder bridge with 275-foot spans (825 feet total for the representative segment). Each pier consists of a group of four 7-foot diameter reinforced concrete columns, designed for plastic hinge formation at the column bases and tops per AASHTO SDC D requirements. The 150-foot wide deck carries eight lanes plus light rail, resulting in a total tributary weight of approximately 45,000 kips for the 3-span segment.</p>
+
+<div class="note-box">
+  <strong>Key parameters:</strong> f'c = 6,000 psi (columns), A706 Grade 60 rebar, pier height = 40 ft (480 in), elastic lateral stiffness = 433.4 kip/in (both piers combined), plastic moment capacity = 271,800 kip-in per pier group.
+</div>
+
+<!-- Alt A Elevation SVG -->
+<div class="diagram-container">
+  <svg viewBox="0 0 800 260" width="800" height="260">
+    <!-- Abutments -->
+    <rect x="20" y="155" width="40" height="60" fill="#999" stroke="#666" stroke-width="1"/>
+    <rect x="740" y="155" width="40" height="60" fill="#999" stroke="#666" stroke-width="1"/>
+
+    <!-- Pier 1 columns (group of 4 shown as 2) -->
+    <rect x="230" y="80" width="12" height="80" fill="#1a1a2e"/>
+    <rect x="258" y="80" width="12" height="80" fill="#1a1a2e"/>
+    <!-- Pier cap -->
+    <rect x="215" y="68" width="70" height="16" fill="#1a1a2e" rx="2"/>
+    <!-- Foundation -->
+    <rect x="218" y="160" width="64" height="14" fill="#888"/>
+    <!-- Plastic hinges -->
+    <ellipse cx="236" cy="158" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+    <ellipse cx="264" cy="158" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+    <ellipse cx="236" cy="84" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+    <ellipse cx="264" cy="84" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+
+    <!-- Pier 2 columns -->
+    <rect x="530" y="80" width="12" height="80" fill="#1a1a2e"/>
+    <rect x="558" y="80" width="12" height="80" fill="#1a1a2e"/>
+    <rect x="515" y="68" width="70" height="16" fill="#1a1a2e" rx="2"/>
+    <rect x="518" y="160" width="64" height="14" fill="#888"/>
+    <ellipse cx="536" cy="158" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+    <ellipse cx="564" cy="158" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+    <ellipse cx="536" cy="84" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+    <ellipse cx="564" cy="84" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+
+    <!-- Deck -->
+    <rect x="30" y="56" width="740" height="14" fill="#1a1a2e" rx="2"/>
+    <rect x="30" y="52" width="740" height="6" fill="#d4a843" rx="1"/>
+
+    <!-- Fixed bearings at abutments -->
+    <rect x="36" y="66" width="16" height="8" fill="#c0392b"/>
+    <rect x="748" y="66" width="16" height="8" fill="#c0392b"/>
+
+    <!-- Labels -->
+    <text x="250" y="140" text-anchor="middle" font-size="9" fill="#fff" font-family="Helvetica,sans-serif" transform="rotate(-90,250,130)">40 ft</text>
+    <text x="250" y="200" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Pier 1</text>
+    <text x="550" y="200" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Pier 2</text>
+
+    <!-- Hinge legend -->
+    <ellipse cx="620" cy="230" rx="6" ry="4" fill="#c0392b" opacity="0.7"/>
+    <text x="632" y="234" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Plastic hinge zone</text>
+
+    <text x="400" y="25" text-anchor="middle" font-size="13" font-weight="bold" fill="#c0392b" font-family="Helvetica,sans-serif">Alternative A: Conventional Ductile Bridge</text>
+    <text x="400" y="40" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Energy dissipation via column plastic hinging (4 hinges at DBE)</text>
+  </svg>
+  <div class="diagram-caption">Figure 4.1 &mdash; Alternative A elevation showing plastic hinge zones at column ends (ductile design)</div>
+</div>
+
+<h3>4.2 Alternative B: TFP Isolated Bridge</h3>
+<p>Alternative B uses the same superstructure geometry as Alternative A but introduces Triple Friction Pendulum (TFP) bearings at the pier foundations, decoupling the superstructure from the substructure. The columns are designed to remain elastic under seismic loading, with 25% higher moment of inertia (I<sub>x</sub> = 565,500 in<sup>4</sup> vs. 452,400 in<sup>4</sup>) to resist the transmitted bearing forces without yielding.</p>
+
+<div class="note-box">
+  <strong>TFP Bearing parameters:</strong> R<sub>eff</sub> = 157.5 in (outer surface), friction &mu;<sub>fast</sub> = 0.08 (outer), 0.02 (inner), displacement capacity = 23.6 in, characteristic strength Q<sub>d</sub> = 1,166 kips, post-yield stiffness K<sub>post</sub> = 95.24 kip/in.
+</div>
+
+<!-- Alt B Elevation SVG -->
+<div class="diagram-container">
+  <svg viewBox="0 0 800 260" width="800" height="260">
+    <!-- Abutments -->
+    <rect x="20" y="155" width="40" height="60" fill="#999" stroke="#666" stroke-width="1"/>
+    <rect x="740" y="155" width="40" height="60" fill="#999" stroke="#666" stroke-width="1"/>
+
+    <!-- Pier 1 columns -->
+    <rect x="230" y="80" width="12" height="80" fill="#1a1a2e"/>
+    <rect x="258" y="80" width="12" height="80" fill="#1a1a2e"/>
+    <rect x="215" y="68" width="70" height="16" fill="#1a1a2e" rx="2"/>
+    <rect x="218" y="160" width="64" height="14" fill="#888"/>
+
+    <!-- TFP Bearings at Pier 1 -->
+    <ellipse cx="236" cy="163" rx="10" ry="5" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+    <ellipse cx="264" cy="163" rx="10" ry="5" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+    <line x1="226" y1="163" x2="246" y2="163" stroke="#2563eb" stroke-width="1.5"/>
+    <line x1="254" y1="163" x2="274" y2="163" stroke="#2563eb" stroke-width="1.5"/>
+
+    <!-- Pier 2 columns -->
+    <rect x="530" y="80" width="12" height="80" fill="#1a1a2e"/>
+    <rect x="558" y="80" width="12" height="80" fill="#1a1a2e"/>
+    <rect x="515" y="68" width="70" height="16" fill="#1a1a2e" rx="2"/>
+    <rect x="518" y="160" width="64" height="14" fill="#888"/>
+
+    <!-- TFP Bearings at Pier 2 -->
+    <ellipse cx="536" cy="163" rx="10" ry="5" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+    <ellipse cx="564" cy="163" rx="10" ry="5" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+    <line x1="526" y1="163" x2="546" y2="163" stroke="#2563eb" stroke-width="1.5"/>
+    <line x1="554" y1="163" x2="574" y2="163" stroke="#2563eb" stroke-width="1.5"/>
+
+    <!-- Deck -->
+    <rect x="30" y="56" width="740" height="14" fill="#1a1a2e" rx="2"/>
+    <rect x="30" y="52" width="740" height="6" fill="#d4a843" rx="1"/>
+
+    <!-- Sliding bearings at abutments -->
+    <rect x="36" y="66" width="16" height="8" fill="#2563eb"/>
+    <rect x="748" y="66" width="16" height="8" fill="#2563eb"/>
+
+    <!-- Labels -->
+    <text x="250" y="200" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Pier 1</text>
+    <text x="550" y="200" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Pier 2</text>
+
+    <!-- Bearing legend -->
+    <ellipse cx="620" cy="230" rx="10" ry="5" fill="none" stroke="#2563eb" stroke-width="2"/>
+    <text x="636" y="234" font-size="10" fill="#555" font-family="Helvetica,sans-serif">TFP bearing (elastic columns)</text>
+
+    <text x="400" y="25" text-anchor="middle" font-size="13" font-weight="bold" fill="#2563eb" font-family="Helvetica,sans-serif">Alternative B: TFP Isolated Bridge</text>
+    <text x="400" y="40" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Energy dissipation via friction pendulum bearings (0 hinges at DBE)</text>
+  </svg>
+  <div class="diagram-caption">Figure 4.2 &mdash; Alternative B elevation showing TFP bearings at pier foundations (columns remain elastic)</div>
+</div>
+
+<h3>4.3 Alternative C: Extradosed Bridge with TFP Isolation</h3>
+<p>Alternative C uses an extradosed cable-stayed configuration with spans of 250&ndash;500&ndash;250 feet (1,000 feet total). The two towers rise approximately 90 feet above the deck, with stay cables providing additional stiffness and redundancy. TFP bearings are placed at the tower bases, isolating the entire superstructure-and-tower system from the foundations. The total tributary weight is approximately 52,000 kips, reflecting the heavier tower and cable system. This configuration reduces the number of in-water foundations from two piers to two towers, offering environmental benefits.</p>
+
+<!-- Alt C Elevation SVG -->
+<div class="diagram-container">
+  <svg viewBox="0 0 800 320" width="800" height="320">
+    <!-- Abutments -->
+    <rect x="20" y="210" width="40" height="50" fill="#999" stroke="#666" stroke-width="1"/>
+    <rect x="740" y="210" width="40" height="50" fill="#999" stroke="#666" stroke-width="1"/>
+
+    <!-- Tower 1 -->
+    <rect x="235" y="30" width="10" height="190" fill="#1a1a2e"/>
+    <rect x="255" y="30" width="10" height="190" fill="#1a1a2e"/>
+    <!-- Tower cap -->
+    <rect x="228" y="22" width="44" height="12" fill="#1a1a2e" rx="2"/>
+    <!-- Tower foundation -->
+    <rect x="225" y="220" width="50" height="14" fill="#888"/>
+
+    <!-- TFP Bearings at Tower 1 -->
+    <ellipse cx="240" cy="222" rx="10" ry="5" fill="none" stroke="#2d6a4f" stroke-width="2.5"/>
+    <ellipse cx="260" cy="222" rx="10" ry="5" fill="none" stroke="#2d6a4f" stroke-width="2.5"/>
+
+    <!-- Tower 2 -->
+    <rect x="535" y="30" width="10" height="190" fill="#1a1a2e"/>
+    <rect x="555" y="30" width="10" height="190" fill="#1a1a2e"/>
+    <rect x="528" y="22" width="44" height="12" fill="#1a1a2e" rx="2"/>
+    <rect x="525" y="220" width="50" height="14" fill="#888"/>
+
+    <!-- TFP Bearings at Tower 2 -->
+    <ellipse cx="540" cy="222" rx="10" ry="5" fill="none" stroke="#2d6a4f" stroke-width="2.5"/>
+    <ellipse cx="560" cy="222" rx="10" ry="5" fill="none" stroke="#2d6a4f" stroke-width="2.5"/>
+
+    <!-- Stay cables - Tower 1 -->
+    <line x1="240" y1="40" x2="120" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="242" y1="60" x2="160" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="244" y1="80" x2="200" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="260" y1="40" x2="350" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="258" y1="60" x2="320" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="256" y1="80" x2="290" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+
+    <!-- Stay cables - Tower 2 -->
+    <line x1="540" y1="40" x2="450" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="542" y1="60" x2="480" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="544" y1="80" x2="510" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="560" y1="40" x2="680" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="558" y1="60" x2="640" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+    <line x1="556" y1="80" x2="600" y2="145" stroke="#d4a843" stroke-width="1.5"/>
+
+    <!-- Deck -->
+    <rect x="30" y="142" width="740" height="12" fill="#1a1a2e" rx="2"/>
+    <rect x="30" y="138" width="740" height="6" fill="#d4a843" rx="1"/>
+
+    <!-- Span labels -->
+    <text x="145" y="175" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">250 ft</text>
+    <text x="400" y="175" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">500 ft (main span)</text>
+    <text x="655" y="175" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">250 ft</text>
+
+    <!-- Tower labels -->
+    <text x="250" y="270" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Tower 1</text>
+    <text x="550" y="270" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Tower 2</text>
+
+    <!-- Bearing legend -->
+    <ellipse cx="620" cy="290" rx="10" ry="5" fill="none" stroke="#2d6a4f" stroke-width="2"/>
+    <text x="636" y="294" font-size="10" fill="#555" font-family="Helvetica,sans-serif">TFP bearing at tower base</text>
+
+    <text x="400" y="14" text-anchor="middle" font-size="13" font-weight="bold" fill="#2d6a4f" font-family="Helvetica,sans-serif">Alternative C: Extradosed Bridge + TFP Isolation</text>
+  </svg>
+  <div class="diagram-caption">Figure 4.3 &mdash; Alternative C elevation showing extradosed configuration with TFP bearings at tower bases</div>
+</div>
+
+<h3>4.4 TFP Bearing Detail</h3>
+<p>The Triple Friction Pendulum (TFP) bearing used in Alternatives B and C consists of four concave sliding surfaces arranged in a nested configuration. The inner surfaces (small radius, low friction) accommodate service-level movements, while the outer surfaces (large radius, higher friction) engage during seismic events to provide period shift and energy dissipation.</p>
+
+<!-- TFP Bearing Detail SVG -->
+<div class="diagram-container">
+  <svg viewBox="0 0 700 350" width="700" height="350">
+    <!-- Outer housing - top plate -->
+    <path d="M 100,80 Q 350,20 600,80" fill="none" stroke="#1a1a2e" stroke-width="3"/>
+    <line x1="100" y1="80" x2="100" y2="90" stroke="#1a1a2e" stroke-width="3"/>
+    <line x1="600" y1="80" x2="600" y2="90" stroke="#1a1a2e" stroke-width="3"/>
+    <rect x="100" y="60" width="500" height="20" fill="#1a1a2e"/>
+
+    <!-- Outer housing - bottom plate -->
+    <path d="M 100,250 Q 350,310 600,250" fill="none" stroke="#1a1a2e" stroke-width="3"/>
+    <line x1="100" y1="240" x2="100" y2="250" stroke="#1a1a2e" stroke-width="3"/>
+    <line x1="600" y1="240" x2="600" y2="250" stroke="#1a1a2e" stroke-width="3"/>
+    <rect x="100" y="250" width="500" height="20" fill="#1a1a2e"/>
+
+    <!-- Inner slider assembly -->
+    <ellipse cx="350" cy="130" rx="100" ry="15" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+    <ellipse cx="350" cy="200" rx="100" ry="15" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+
+    <!-- Central slider -->
+    <rect x="310" y="140" width="80" height="55" fill="#d4a843" rx="5" opacity="0.8"/>
+    <text x="350" y="172" text-anchor="middle" font-size="11" fill="#1a1a2e" font-family="Helvetica,sans-serif" font-weight="bold">Slider</text>
+
+    <!-- Dimension lines -->
+    <!-- Outer radius -->
+    <line x1="620" y1="80" x2="620" y2="250" stroke="#555" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="615" y1="80" x2="640" y2="80" stroke="#555" stroke-width="1"/>
+    <line x1="615" y1="250" x2="640" y2="250" stroke="#555" stroke-width="1"/>
+    <text x="650" y="170" font-size="10" fill="#555" font-family="Helvetica,sans-serif">R<tspan font-size="7" dy="2">eff</tspan><tspan dy="-2"> = 157.5 in</tspan></text>
+
+    <!-- Labels -->
+    <text x="350" y="50" text-anchor="middle" font-size="11" fill="#1a1a2e" font-family="Helvetica,sans-serif" font-weight="bold">Top Plate (connected to superstructure)</text>
+    <text x="350" y="295" text-anchor="middle" font-size="11" fill="#1a1a2e" font-family="Helvetica,sans-serif" font-weight="bold">Bottom Plate (connected to foundation)</text>
+
+    <!-- Surface labels -->
+    <text x="170" y="95" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Outer surface 1: &mu;=0.08, R=157.5 in</text>
+    <text x="170" y="120" font-size="9" fill="#2563eb" font-family="Helvetica,sans-serif">Inner surface 1: &mu;=0.02, R=17.7 in</text>
+    <text x="170" y="225" font-size="9" fill="#2563eb" font-family="Helvetica,sans-serif">Inner surface 2: &mu;=0.02, R=17.7 in</text>
+    <text x="170" y="245" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Outer surface 2: &mu;=0.08, R=157.5 in</text>
+
+    <!-- Displacement capacity arrow -->
+    <line x1="200" y1="320" x2="500" y2="320" stroke="#c0392b" stroke-width="2"/>
+    <polygon points="200,320 208,316 208,324" fill="#c0392b"/>
+    <polygon points="500,320 492,316 492,324" fill="#c0392b"/>
+    <text x="350" y="340" text-anchor="middle" font-size="10" fill="#c0392b" font-family="Helvetica,sans-serif" font-weight="bold">Displacement Capacity: 23.6 in (600 mm)</text>
+
+    <text x="350" y="14" text-anchor="middle" font-size="14" font-weight="bold" fill="#1a1a2e" font-family="Helvetica,sans-serif">Triple Friction Pendulum (TFP) Bearing Detail</text>
+  </svg>
+  <div class="diagram-caption">Figure 4.4 &mdash; Schematic cross-section of the Triple Friction Pendulum bearing showing four sliding surfaces</div>
+</div>
+
+<!-- Deck cross-section SVG -->
+<div class="diagram-container">
+  <svg viewBox="0 0 700 250" width="700" height="250">
+    <!-- Box girder outline -->
+    <rect x="50" y="60" width="600" height="80" fill="none" stroke="#1a1a2e" stroke-width="2" rx="3"/>
+    <!-- Internal webs -->
+    <line x1="150" y1="60" x2="150" y2="140" stroke="#1a1a2e" stroke-width="1.5"/>
+    <line x1="250" y1="60" x2="250" y2="140" stroke="#1a1a2e" stroke-width="1.5"/>
+    <line x1="350" y1="60" x2="350" y2="140" stroke="#1a1a2e" stroke-width="1.5"/>
+    <line x1="450" y1="60" x2="450" y2="140" stroke="#1a1a2e" stroke-width="1.5"/>
+    <line x1="550" y1="60" x2="550" y2="140" stroke="#1a1a2e" stroke-width="1.5"/>
+    <!-- Top slab (deck surface) -->
+    <rect x="45" y="48" width="610" height="14" fill="#1a1a2e" rx="2"/>
+    <!-- Barriers -->
+    <rect x="45" y="34" width="8" height="14" fill="#888"/>
+    <rect x="647" y="34" width="8" height="14" fill="#888"/>
+
+    <!-- Lane markings -->
+    <line x1="125" y1="48" x2="125" y2="44" stroke="#d4a843" stroke-width="2"/>
+    <line x1="195" y1="48" x2="195" y2="44" stroke="#d4a843" stroke-width="2"/>
+    <line x1="265" y1="48" x2="265" y2="44" stroke="#d4a843" stroke-width="2"/>
+    <line x1="335" y1="48" x2="335" y2="44" stroke="#fff" stroke-width="3"/>
+    <line x1="405" y1="48" x2="405" y2="44" stroke="#d4a843" stroke-width="2"/>
+    <line x1="475" y1="48" x2="475" y2="44" stroke="#d4a843" stroke-width="2"/>
+    <line x1="545" y1="48" x2="545" y2="44" stroke="#d4a843" stroke-width="2"/>
+
+    <!-- Labels -->
+    <text x="190" y="30" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">4 lanes NB</text>
+    <text x="350" y="30" text-anchor="middle" font-size="9" fill="#2563eb" font-family="Helvetica,sans-serif" font-weight="bold">LRT</text>
+    <text x="510" y="30" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">4 lanes SB</text>
+
+    <!-- Width dimension -->
+    <line x1="50" y1="165" x2="650" y2="165" stroke="#555" stroke-width="1"/>
+    <polygon points="50,165 58,161 58,169" fill="#555"/>
+    <polygon points="650,165 642,161 642,169" fill="#555"/>
+    <text x="350" y="180" text-anchor="middle" font-size="11" fill="#555" font-family="Helvetica,sans-serif" font-weight="bold">~150 ft (45.7 m)</text>
+
+    <!-- Depth dimension -->
+    <line x1="670" y1="48" x2="670" y2="140" stroke="#555" stroke-width="1"/>
+    <line x1="665" y1="48" x2="680" y2="48" stroke="#555" stroke-width="1"/>
+    <line x1="665" y1="140" x2="680" y2="140" stroke="#555" stroke-width="1"/>
+    <text x="695" y="98" font-size="10" fill="#555" font-family="Helvetica,sans-serif">~9 ft</text>
+
+    <text x="350" y="14" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a2e" font-family="Helvetica,sans-serif">Typical Deck Cross-Section</text>
+    <text x="350" y="210" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">8 lanes (3 through + 1 auxiliary each direction) + light rail + shared-use path</text>
+  </svg>
+  <div class="diagram-caption">Figure 4.5 &mdash; Typical deck cross-section showing 8 lanes, light rail, and box-girder configuration</div>
+</div>
+
+<h3>4.5 Alternatives Comparison Summary</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th class="alt-a-color">Alt A: Ductile</th>
+      <th class="alt-b-color">Alt B: Isolated</th>
+      <th class="alt-c-color">Alt C: Extradosed+Iso</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Span Configuration</strong></td><td>3 x 275 ft</td><td>3 x 275 ft</td><td>250 + 500 + 250 ft</td></tr>
+    <tr><td><strong>Substructure</strong></td><td>RC columns (ductile)</td><td>RC columns (elastic)</td><td>RC towers + cables</td></tr>
+    <tr><td><strong>Bearing Type</strong></td><td>Fixed/elastomeric</td><td>TFP at piers</td><td>TFP at tower bases</td></tr>
+    <tr><td><strong>Energy Dissipation</strong></td><td>Column plastic hinging</td><td>Bearing friction</td><td>Bearing friction + cable damping</td></tr>
+    <tr><td><strong>Seismic Philosophy</strong></td><td>Accept damage, ensure life safety</td><td>Prevent damage, immediate use</td><td>Prevent damage, redundant system</td></tr>
+    <tr><td><strong>Total Weight (segment)</strong></td><td>45,000 kips</td><td>45,000 kips</td><td>52,000 kips</td></tr>
+    <tr><td><strong>In-Water Foundations</strong></td><td>2 piers</td><td>2 piers</td><td>2 towers (wider spacing)</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================
+     5. ANALYSIS METHODOLOGY
+     ============================================================ -->
+<h2 id="methodology">5. Analysis Methodology</h2>
+
+<h3>5.1 Eigenvalue Modal Analysis</h3>
+<p>Free-vibration analysis was performed on all three models by solving the generalized eigenvalue problem <strong>[K - &omega;<sup>2</sup>M]{&phi;} = 0</strong>, where K is the stiffness matrix, M is the mass matrix, &omega; is the circular frequency, and {&phi;} is the mode shape vector. For the isolated models, the bearing stiffness was represented using the secant stiffness at the design displacement (K<sub>eff</sub>) to obtain linearized periods appropriate for spectral demand estimation.</p>
+
+<h3>5.2 Nonlinear Static Pushover Analysis</h3>
+<p>Displacement-controlled pushover analysis was performed using a linear load pattern (forces proportional to mass and height at deck-level nodes). The analysis tracked:</p>
+<ul>
+  <li>Base shear vs. control-node displacement (capacity curve)</li>
+  <li>Plastic hinge formation sequence and locations</li>
+  <li>Bearing displacement demand vs. capacity (isolated alternatives)</li>
+  <li>Column/tower force demand-to-capacity ratios</li>
+</ul>
+
+<h3>5.3 TFP Bearing Model</h3>
+<p>The TFP bearings were modeled using the bilinear hysteretic force-displacement relationship defined by:</p>
+<ul>
+  <li><strong>Characteristic strength:</strong> Q<sub>d</sub> = &mu;<sub>eff</sub> &times; W (friction force at zero displacement)</li>
+  <li><strong>Post-yield stiffness:</strong> K<sub>post</sub> = W / L<sub>eff</sub> (gravity-restoring stiffness)</li>
+  <li><strong>Effective period:</strong> T<sub>eff</sub> = 2&pi;&radic;(W / K<sub>eff</sub> &times; g) where K<sub>eff</sub> = K<sub>post</sub> + Q<sub>d</sub>/D</li>
+</ul>
+<p>Design displacement was determined through iterative convergence of the equivalent linearization procedure per AASHTO Guide Specifications for Seismic Isolation Design.</p>
+
+<h3>5.4 Property Modification Factors (Lambda)</h3>
+<p>Upper and lower bound analyses were performed per ASCE 7-22 Section 17.2.8.4 to account for variability in bearing properties due to aging, contamination, temperature, and velocity effects:</p>
+
+<table class="compact">
+  <thead>
+    <tr><th>Factor</th><th class="number">&lambda;<sub>min</sub></th><th class="number">&lambda;<sub>max</sub></th><th>Basis</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Aging</td><td class="number">1.0</td><td class="number">1.1</td><td>50-year service life</td></tr>
+    <tr><td>Contamination</td><td class="number">1.0</td><td class="number">1.1</td><td>Bridge environment exposure</td></tr>
+    <tr><td>Temperature</td><td class="number">1.0</td><td class="number">1.2</td><td>Portland climate range</td></tr>
+    <tr><td>Velocity</td><td class="number">0.85</td><td class="number">1.0</td><td>Velocity dependence of PTFE</td></tr>
+    <tr><td><strong>Combined &lambda;</strong></td><td class="number"><strong>0.85</strong></td><td class="number"><strong>1.80</strong></td><td><strong>Product of individual factors</strong></td></tr>
+  </tbody>
+</table>
+
+<p>The lower bound (&lambda; = 0.85) reduces friction, producing longer periods and larger displacements (governing displacement design). The upper bound (&lambda; = 1.80) increases friction, producing shorter periods and higher forces (governing force design).</p>
+
+<!-- ============================================================
+     6. RESULTS & COMPARISON
+     ============================================================ -->
+<h2 id="results">6. Results &amp; Comparison</h2>
+
+<h3>6.1 Modal Analysis</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mode</th>
+      <th colspan="2" style="text-align:center;color:#c0392b;">Alt A (Ductile)</th>
+      <th colspan="2" style="text-align:center;color:#2563eb;">Alt B (Isolated)</th>
+      <th colspan="2" style="text-align:center;color:#2d6a4f;">Alt C (Extradosed)</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th class="number">Period (s)</th><th class="number">Mass Part.</th>
+      <th class="number">Period (s)</th><th class="number">Mass Part.</th>
+      <th class="number">Period (s)</th><th class="number">Mass Part.</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td class="number">1.186</td><td class="number">89.2%</td>
+      <td class="number">2.536</td><td class="number">99.87%</td>
+      <td class="number">2.905</td><td class="number">99.91%</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td class="number">0.398</td><td class="number">8.6%</td>
+      <td class="number">0.321</td><td class="number">0.10%</td>
+      <td class="number">0.487</td><td class="number">0.06%</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td class="number">0.237</td><td class="number">2.2%</td>
+      <td class="number">0.198</td><td class="number">0.02%</td>
+      <td class="number">0.281</td><td class="number">0.02%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note-box">
+  <strong>Key observation:</strong> The isolated alternatives concentrate virtually all seismic mass participation (99.9%) in the fundamental mode, confirming near-rigid-body behavior of the superstructure on the isolation system. This makes the response highly predictable and amenable to simplified analysis methods per AASHTO.
+</div>
+
+<h3>6.2 Pushover Capacity Curves</h3>
+
+<!-- Pushover Curve SVG Chart -->
+<div class="diagram-container">
+  <svg viewBox="0 0 720 440" width="720" height="440">
+    <!-- Background -->
+    <rect x="80" y="30" width="600" height="340" fill="#fafafa" stroke="#ddd"/>
+
+    <!-- Grid -->
+    <line x1="80" y1="98" x2="680" y2="98" stroke="#eee"/>
+    <line x1="80" y1="166" x2="680" y2="166" stroke="#eee"/>
+    <line x1="80" y1="234" x2="680" y2="234" stroke="#eee"/>
+    <line x1="80" y1="302" x2="680" y2="302" stroke="#eee"/>
+    <line x1="180" y1="30" x2="180" y2="370" stroke="#eee"/>
+    <line x1="280" y1="30" x2="280" y2="370" stroke="#eee"/>
+    <line x1="380" y1="30" x2="380" y2="370" stroke="#eee"/>
+    <line x1="480" y1="30" x2="480" y2="370" stroke="#eee"/>
+    <line x1="580" y1="30" x2="580" y2="370" stroke="#eee"/>
+
+    <!-- Axes -->
+    <line x1="80" y1="370" x2="680" y2="370" stroke="#333" stroke-width="2"/>
+    <line x1="80" y1="30" x2="80" y2="370" stroke="#333" stroke-width="2"/>
+
+    <!-- Y-axis labels (0 to 4000 kips) -->
+    <text x="72" y="374" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0</text>
+    <text x="72" y="306" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">1000</text>
+    <text x="72" y="238" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">2000</text>
+    <text x="72" y="170" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">3000</text>
+    <text x="72" y="102" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">4000</text>
+
+    <!-- X-axis labels (0 to 30 in) -->
+    <text x="80" y="388" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0</text>
+    <text x="180" y="388" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">5</text>
+    <text x="280" y="388" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">10</text>
+    <text x="380" y="388" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">15</text>
+    <text x="480" y="388" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">20</text>
+    <text x="580" y="388" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">25</text>
+    <text x="680" y="388" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">30</text>
+
+    <!-- Axis titles -->
+    <text x="380" y="415" text-anchor="middle" font-size="12" fill="#333" font-family="Helvetica,sans-serif">Lateral Displacement (in)</text>
+    <text x="25" y="200" text-anchor="middle" font-size="12" fill="#333" font-family="Helvetica,sans-serif" transform="rotate(-90,25,200)">Base Shear (kips)</text>
+
+    <!-- Alt A curve (red) - ductile with peak and degradation -->
+    <polyline points="80,370 85,363 90,356 95,349 100,342 110,328 120,314 128,304 132,301 140,298 148,296 168,293 188,288 220,283 260,278 300,274 340,270 380,268 430,267 480,270 540,276 580,282 620,290"
+              fill="none" stroke="#c0392b" stroke-width="2.5"/>
+
+    <!-- Alt B curve (blue) - bilinear bearing -->
+    <polyline points="80,370 80.2,350 80.4,330 82,329 84,328 90,326 100,323 110,320 130,314 150,308 170,302 210,290 250,277 330,253 370,241 410,228 450,216 478,209"
+              fill="none" stroke="#2563eb" stroke-width="2.5"/>
+
+    <!-- Alt C curve (green) - bilinear bearing + cables -->
+    <polyline points="80,370 80.2,349 80.4,328 82,327 84,326 90,324 100,321 110,318 130,311 150,303 170,296 210,281 250,266 330,237 370,222 410,207 450,192 478,184 500,175"
+              fill="none" stroke="#2d6a4f" stroke-width="2.5"/>
+
+    <!-- DBE demand line -->
+    <line x1="220" y1="30" x2="220" y2="370" stroke="#999" stroke-width="1.5" stroke-dasharray="8,4"/>
+    <text x="224" y="46" font-size="9" fill="#999" font-family="Helvetica,sans-serif" font-weight="bold">DBE Demand</text>
+
+    <!-- Legend -->
+    <rect x="490" y="44" width="180" height="70" fill="#fff" stroke="#ddd" rx="3"/>
+    <line x1="500" y1="58" x2="530" y2="58" stroke="#c0392b" stroke-width="2.5"/>
+    <text x="536" y="62" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt A: Ductile</text>
+    <line x1="500" y1="78" x2="530" y2="78" stroke="#2563eb" stroke-width="2.5"/>
+    <text x="536" y="82" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt B: Isolated</text>
+    <line x1="500" y1="98" x2="530" y2="98" stroke="#2d6a4f" stroke-width="2.5"/>
+    <text x="536" y="102" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt C: Extradosed+Iso</text>
+
+    <!-- Title -->
+    <text x="380" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a2e" font-family="Helvetica,sans-serif">Pushover Capacity Curves &mdash; All Alternatives</text>
+  </svg>
+  <div class="diagram-caption">Figure 6.1 &mdash; Pushover capacity curves showing base shear vs. lateral displacement for all three alternatives. Alt A exhibits ductile yielding and post-peak degradation; Alts B and C show stable bilinear bearing response.</div>
+</div>
+
+<h3>6.3 Performance Comparison Summary</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th class="number" style="color:#c0392b;">Alt A: Ductile</th>
+      <th class="number" style="color:#2563eb;">Alt B: Isolated</th>
+      <th class="number" style="color:#2d6a4f;">Alt C: Extradosed</th>
+      <th>Unit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Fundamental Period</strong></td><td class="number">1.186</td><td class="number">2.536</td><td class="number">2.905</td><td>sec</td></tr>
+    <tr><td><strong>Period Shift Ratio</strong></td><td class="number">N/A</td><td class="number">2.14x</td><td class="number">3.57x</td><td>&mdash;</td></tr>
+    <tr><td><strong>Spectral Accel. (DBE)</strong></td><td class="number">0.506</td><td class="number">0.237</td><td class="number">0.207</td><td>g</td></tr>
+    <tr><td><strong>Column/Tower Force</strong></td><td class="number">1,290</td><td class="number">436</td><td class="number">356</td><td>kips</td></tr>
+    <tr><td><strong>Base Shear Reduction</strong></td><td class="number">baseline</td><td class="number">66.2%</td><td class="number">72.4%</td><td>&mdash;</td></tr>
+    <tr><td><strong>Peak Column/Tower Drift</strong></td><td class="number">1.483%</td><td class="number">0.028%</td><td class="number">0.021%</td><td>&mdash;</td></tr>
+    <tr><td><strong>Drift Reduction</strong></td><td class="number">baseline</td><td class="number">98.1%</td><td class="number">98.6%</td><td>&mdash;</td></tr>
+    <tr><td><strong>Bearing Disp. (DBE)</strong></td><td class="number">N/A</td><td class="number">7.99</td><td class="number">8.42</td><td>in</td></tr>
+    <tr><td><strong>Bearing D/C (DBE)</strong></td><td class="number">N/A</td><td class="number">0.339</td><td class="number">0.357</td><td>&mdash;</td></tr>
+    <tr><td><strong>Bearing D/C (MCE)</strong></td><td class="number">N/A</td><td class="number">0.609</td><td class="number">0.642</td><td>&mdash;</td></tr>
+    <tr><td><strong>Plastic Hinges (DBE)</strong></td><td class="number">4</td><td class="number">0</td><td class="number">0</td><td>count</td></tr>
+    <tr><td><strong>Performance (DBE)</strong></td><td><span class="badge badge-ls">Life Safety</span></td><td><span class="badge badge-io">Immed. Occupancy</span></td><td><span class="badge badge-io">Immed. Occupancy</span></td><td>&mdash;</td></tr>
+    <tr><td><strong>Performance (MCE)</strong></td><td><span class="badge badge-cp">Collapse Prev.</span></td><td><span class="badge badge-io">Immed. Occupancy</span></td><td><span class="badge badge-io">Immed. Occupancy</span></td><td>&mdash;</td></tr>
+    <tr><td><strong>Ductility Demand</strong></td><td class="number">2.72</td><td class="number">N/A (elastic)</td><td class="number">N/A (elastic)</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
+
+<h3>6.4 Base Shear Reduction</h3>
+
+<!-- Base Shear Bar Chart SVG -->
+<div class="diagram-container">
+  <svg viewBox="0 0 600 320" width="600" height="320">
+    <rect x="80" y="20" width="460" height="250" fill="#fafafa" stroke="#ddd"/>
+
+    <!-- Grid -->
+    <line x1="80" y1="70" x2="540" y2="70" stroke="#eee"/>
+    <line x1="80" y1="120" x2="540" y2="120" stroke="#eee"/>
+    <line x1="80" y1="170" x2="540" y2="170" stroke="#eee"/>
+    <line x1="80" y1="220" x2="540" y2="220" stroke="#eee"/>
+
+    <!-- Axes -->
+    <line x1="80" y1="270" x2="540" y2="270" stroke="#333" stroke-width="2"/>
+    <line x1="80" y1="20" x2="80" y2="270" stroke="#333" stroke-width="2"/>
+
+    <!-- Y-axis: 0 to 1500 kips -->
+    <text x="72" y="274" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0</text>
+    <text x="72" y="224" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">300</text>
+    <text x="72" y="174" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">600</text>
+    <text x="72" y="124" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">900</text>
+    <text x="72" y="74" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">1200</text>
+    <text x="72" y="24" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">1500</text>
+
+    <!-- Alt A bar: 1290 kips -->
+    <rect x="130" y="55" width="80" height="215" fill="#c0392b" rx="3"/>
+    <text x="170" y="48" text-anchor="middle" font-size="11" font-weight="bold" fill="#c0392b" font-family="Helvetica,sans-serif">1,290</text>
+
+    <!-- Alt B bar: 436 kips -->
+    <rect x="270" y="197" width="80" height="73" fill="#2563eb" rx="3"/>
+    <text x="310" y="192" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563eb" font-family="Helvetica,sans-serif">436</text>
+    <text x="310" y="295" text-anchor="middle" font-size="9" fill="#2563eb" font-family="Helvetica,sans-serif" font-weight="bold">-66.2%</text>
+
+    <!-- Alt C bar: 356 kips -->
+    <rect x="410" y="211" width="80" height="59" fill="#2d6a4f" rx="3"/>
+    <text x="450" y="206" text-anchor="middle" font-size="11" font-weight="bold" fill="#2d6a4f" font-family="Helvetica,sans-serif">356</text>
+    <text x="450" y="295" text-anchor="middle" font-size="9" fill="#2d6a4f" font-family="Helvetica,sans-serif" font-weight="bold">-72.4%</text>
+
+    <!-- X-axis labels -->
+    <text x="170" y="286" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt A: Ductile</text>
+    <text x="310" y="286" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt B: Isolated</text>
+    <text x="450" y="286" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt C: Extradosed</text>
+
+    <!-- Y-axis title -->
+    <text x="25" y="150" text-anchor="middle" font-size="12" fill="#333" font-family="Helvetica,sans-serif" transform="rotate(-90,25,150)">Column/Tower Force (kips)</text>
+
+    <text x="310" y="14" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a2e" font-family="Helvetica,sans-serif">Substructure Force Demand at DBE</text>
+  </svg>
+  <div class="diagram-caption">Figure 6.2 &mdash; Substructure force demand comparison at the Design Basis Earthquake level</div>
+</div>
+
+<h3>6.5 Drift Comparison</h3>
+
+<!-- Drift Bar Chart SVG -->
+<div class="diagram-container">
+  <svg viewBox="0 0 600 300" width="600" height="300">
+    <rect x="80" y="20" width="460" height="230" fill="#fafafa" stroke="#ddd"/>
+
+    <line x1="80" y1="250" x2="540" y2="250" stroke="#333" stroke-width="2"/>
+    <line x1="80" y1="20" x2="80" y2="250" stroke="#333" stroke-width="2"/>
+
+    <!-- Y grid: 0 to 1.6% -->
+    <text x="72" y="254" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0.0%</text>
+    <text x="72" y="110" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">1.0%</text>
+    <line x1="80" y1="106" x2="540" y2="106" stroke="#eee"/>
+    <text x="72" y="24" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">1.6%</text>
+
+    <!-- Alt A: 1.483% drift -->
+    <rect x="130" y="37" width="80" height="213" fill="#c0392b" rx="3"/>
+    <text x="170" y="30" text-anchor="middle" font-size="11" font-weight="bold" fill="#c0392b" font-family="Helvetica,sans-serif">1.483%</text>
+
+    <!-- Alt B: 0.028% drift (tiny bar) -->
+    <rect x="270" y="246" width="80" height="4" fill="#2563eb" rx="1"/>
+    <text x="310" y="240" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563eb" font-family="Helvetica,sans-serif">0.028%</text>
+
+    <!-- Alt C: 0.021% drift (tiny bar) -->
+    <rect x="410" y="247" width="80" height="3" fill="#2d6a4f" rx="1"/>
+    <text x="450" y="240" text-anchor="middle" font-size="11" font-weight="bold" fill="#2d6a4f" font-family="Helvetica,sans-serif">0.021%</text>
+
+    <!-- X-axis labels -->
+    <text x="170" y="270" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt A: Ductile</text>
+    <text x="310" y="270" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt B: Isolated</text>
+    <text x="450" y="270" text-anchor="middle" font-size="10" fill="#555" font-family="Helvetica,sans-serif">Alt C: Extradosed</text>
+
+    <text x="25" y="140" text-anchor="middle" font-size="12" fill="#333" font-family="Helvetica,sans-serif" transform="rotate(-90,25,140)">Peak Drift Ratio</text>
+    <text x="310" y="14" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a2e" font-family="Helvetica,sans-serif">Peak Column/Tower Drift at DBE</text>
+  </svg>
+  <div class="diagram-caption">Figure 6.3 &mdash; Peak drift ratio comparison. Isolation reduces column drift from 1.48% to below 0.03% (98%+ reduction).</div>
+</div>
+
+<h3>6.6 Bearing Demand vs. Capacity</h3>
+
+<!-- Bearing D/C Chart -->
+<div class="diagram-container">
+  <svg viewBox="0 0 600 320" width="600" height="320">
+    <rect x="80" y="20" width="460" height="250" fill="#fafafa" stroke="#ddd"/>
+
+    <line x1="80" y1="270" x2="540" y2="270" stroke="#333" stroke-width="2"/>
+    <line x1="80" y1="20" x2="80" y2="270" stroke="#333" stroke-width="2"/>
+
+    <!-- Y-axis: 0 to 1.0 (D/C ratio) -->
+    <text x="72" y="274" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0.0</text>
+    <text x="72" y="224" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0.2</text>
+    <text x="72" y="174" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0.4</text>
+    <text x="72" y="124" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0.6</text>
+    <text x="72" y="74" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">0.8</text>
+    <text x="72" y="24" text-anchor="end" font-size="10" fill="#555" font-family="Helvetica,sans-serif">1.0</text>
+    <line x1="80" y1="220" x2="540" y2="220" stroke="#eee"/>
+    <line x1="80" y1="170" x2="540" y2="170" stroke="#eee"/>
+    <line x1="80" y1="120" x2="540" y2="120" stroke="#eee"/>
+    <line x1="80" y1="70" x2="540" y2="70" stroke="#eee"/>
+
+    <!-- D/C = 1.0 line -->
+    <line x1="80" y1="20" x2="540" y2="20" stroke="#c0392b" stroke-width="2" stroke-dasharray="6,3"/>
+    <text x="545" y="24" font-size="9" fill="#c0392b" font-family="Helvetica,sans-serif">D/C = 1.0</text>
+
+    <!-- Alt B DBE: 0.339 -->
+    <rect x="140" y="185" width="60" height="85" fill="#2563eb" rx="3"/>
+    <text x="170" y="180" text-anchor="middle" font-size="10" font-weight="bold" fill="#2563eb" font-family="Helvetica,sans-serif">0.339</text>
+
+    <!-- Alt B MCE: 0.609 -->
+    <rect x="220" y="118" width="60" height="152" fill="#2563eb" rx="3" opacity="0.6"/>
+    <text x="250" y="112" text-anchor="middle" font-size="10" font-weight="bold" fill="#2563eb" font-family="Helvetica,sans-serif">0.609</text>
+
+    <!-- Alt C DBE: 0.357 -->
+    <rect x="340" y="181" width="60" height="89" fill="#2d6a4f" rx="3"/>
+    <text x="370" y="176" text-anchor="middle" font-size="10" font-weight="bold" fill="#2d6a4f" font-family="Helvetica,sans-serif">0.357</text>
+
+    <!-- Alt C MCE: 0.642 -->
+    <rect x="420" y="110" width="60" height="160" fill="#2d6a4f" rx="3" opacity="0.6"/>
+    <text x="450" y="104" text-anchor="middle" font-size="10" font-weight="bold" fill="#2d6a4f" font-family="Helvetica,sans-serif">0.642</text>
+
+    <!-- X labels -->
+    <text x="170" y="290" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Alt B DBE</text>
+    <text x="250" y="290" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Alt B MCE</text>
+    <text x="370" y="290" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Alt C DBE</text>
+    <text x="450" y="290" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Alt C MCE</text>
+
+    <text x="25" y="150" text-anchor="middle" font-size="12" fill="#333" font-family="Helvetica,sans-serif" transform="rotate(-90,25,150)">Bearing D/C Ratio</text>
+    <text x="310" y="14" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a2e" font-family="Helvetica,sans-serif">Bearing Displacement Demand / Capacity</text>
+  </svg>
+  <div class="diagram-caption">Figure 6.4 &mdash; Bearing demand-to-capacity ratios at DBE and MCE levels. All values well below 1.0, indicating adequate bearing capacity with substantial reserve.</div>
+</div>
+
+<h3>6.7 Plastic Hinge Distribution</h3>
+
+<div class="three-col">
+  <div style="text-align:center;">
+    <svg viewBox="0 0 180 200" width="180" height="200">
+      <text x="90" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#c0392b" font-family="Helvetica,sans-serif">Alt A: Ductile</text>
+      <!-- Column 1 -->
+      <rect x="50" y="50" width="10" height="100" fill="#1a1a2e"/>
+      <rect x="35" y="40" width="40" height="14" fill="#1a1a2e" rx="2"/>
+      <!-- Hinges -->
+      <circle cx="55" cy="50" r="6" fill="#c0392b"/>
+      <circle cx="55" cy="150" r="6" fill="#c0392b"/>
+      <!-- Column 2 -->
+      <rect x="120" y="50" width="10" height="100" fill="#1a1a2e"/>
+      <rect x="105" y="40" width="40" height="14" fill="#1a1a2e" rx="2"/>
+      <circle cx="125" cy="50" r="6" fill="#c0392b"/>
+      <circle cx="125" cy="150" r="6" fill="#c0392b"/>
+      <!-- Deck -->
+      <rect x="15" y="30" width="150" height="12" fill="#1a1a2e" rx="2"/>
+      <!-- Foundation -->
+      <line x1="30" y1="155" x2="150" y2="155" stroke="#888" stroke-width="3"/>
+      <text x="90" y="180" text-anchor="middle" font-size="12" font-weight="bold" fill="#c0392b" font-family="Helvetica,sans-serif">4 Hinges</text>
+      <text x="90" y="195" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Life Safety</text>
+    </svg>
+  </div>
+  <div style="text-align:center;">
+    <svg viewBox="0 0 180 200" width="180" height="200">
+      <text x="90" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563eb" font-family="Helvetica,sans-serif">Alt B: Isolated</text>
+      <rect x="50" y="50" width="10" height="100" fill="#1a1a2e"/>
+      <rect x="35" y="40" width="40" height="14" fill="#1a1a2e" rx="2"/>
+      <rect x="120" y="50" width="10" height="100" fill="#1a1a2e"/>
+      <rect x="105" y="40" width="40" height="14" fill="#1a1a2e" rx="2"/>
+      <rect x="15" y="30" width="150" height="12" fill="#1a1a2e" rx="2"/>
+      <!-- TFP bearings -->
+      <ellipse cx="55" cy="155" rx="10" ry="5" fill="none" stroke="#2563eb" stroke-width="2"/>
+      <ellipse cx="125" cy="155" rx="10" ry="5" fill="none" stroke="#2563eb" stroke-width="2"/>
+      <line x1="30" y1="162" x2="150" y2="162" stroke="#888" stroke-width="3"/>
+      <text x="90" y="180" text-anchor="middle" font-size="12" font-weight="bold" fill="#2563eb" font-family="Helvetica,sans-serif">0 Hinges</text>
+      <text x="90" y="195" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Immediate Occupancy</text>
+    </svg>
+  </div>
+  <div style="text-align:center;">
+    <svg viewBox="0 0 180 200" width="180" height="200">
+      <text x="90" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#2d6a4f" font-family="Helvetica,sans-serif">Alt C: Extradosed</text>
+      <!-- Towers -->
+      <rect x="55" y="30" width="8" height="125" fill="#1a1a2e"/>
+      <rect x="117" y="30" width="8" height="125" fill="#1a1a2e"/>
+      <!-- Cables -->
+      <line x1="59" y1="35" x2="25" y2="85" stroke="#d4a843" stroke-width="1"/>
+      <line x1="59" y1="45" x2="35" y2="85" stroke="#d4a843" stroke-width="1"/>
+      <line x1="121" y1="35" x2="155" y2="85" stroke="#d4a843" stroke-width="1"/>
+      <line x1="121" y1="45" x2="145" y2="85" stroke="#d4a843" stroke-width="1"/>
+      <!-- Deck -->
+      <rect x="15" y="82" width="150" height="10" fill="#1a1a2e" rx="2"/>
+      <!-- TFP bearings -->
+      <ellipse cx="59" cy="158" rx="10" ry="5" fill="none" stroke="#2d6a4f" stroke-width="2"/>
+      <ellipse cx="121" cy="158" rx="10" ry="5" fill="none" stroke="#2d6a4f" stroke-width="2"/>
+      <line x1="30" y1="165" x2="150" y2="165" stroke="#888" stroke-width="3"/>
+      <text x="90" y="180" text-anchor="middle" font-size="12" font-weight="bold" fill="#2d6a4f" font-family="Helvetica,sans-serif">0 Hinges</text>
+      <text x="90" y="195" text-anchor="middle" font-size="9" fill="#555" font-family="Helvetica,sans-serif">Immediate Occupancy</text>
+    </svg>
+  </div>
+</div>
+<div class="diagram-caption">Figure 6.5 &mdash; Plastic hinge distribution at DBE. Alternative A develops 4 hinges (double-curvature mechanism); Alternatives B and C remain fully elastic.</div>
+
+<h3>6.8 Lambda Bound Envelope</h3>
+
+<p>Upper and lower bound analyses confirm that the isolation design is robust across the full range of bearing property variation:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th colspan="3" style="text-align:center;color:#2563eb;">Alternative B</th>
+      <th colspan="3" style="text-align:center;color:#2d6a4f;">Alternative C</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th class="number">Lower (&lambda;=0.85)</th>
+      <th class="number">Nominal</th>
+      <th class="number">Upper (&lambda;=1.80)</th>
+      <th class="number">Lower (&lambda;=0.85)</th>
+      <th class="number">Nominal</th>
+      <th class="number">Upper (&lambda;=1.80)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>&mu;<sub>eff</sub></strong></td>
+      <td class="number">0.066</td><td class="number">0.078</td><td class="number">0.140</td>
+      <td class="number">0.066</td><td class="number">0.078</td><td class="number">0.140</td>
+    </tr>
+    <tr>
+      <td><strong>T<sub>eff</sub> (s)</strong></td>
+      <td class="number">2.751</td><td class="number">2.536</td><td class="number">2.086</td>
+      <td class="number">3.148</td><td class="number">2.905</td><td class="number">2.392</td>
+    </tr>
+    <tr>
+      <td><strong>Displacement (in)</strong></td>
+      <td class="number">9.18</td><td class="number">7.99</td><td class="number">5.71</td>
+      <td class="number">9.68</td><td class="number">8.42</td><td class="number">6.02</td>
+    </tr>
+    <tr>
+      <td><strong>Base Shear (kips)</strong></td>
+      <td class="number">1,739</td><td class="number">1,928</td><td class="number">2,696</td>
+      <td class="number">1,886</td><td class="number">2,095</td><td class="number">2,931</td>
+    </tr>
+    <tr>
+      <td><strong>Bearing D/C</strong></td>
+      <td class="number">0.389</td><td class="number">0.339</td><td class="number">0.242</td>
+      <td class="number">0.410</td><td class="number">0.357</td><td class="number">0.255</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note-box">
+  <strong>Design envelope:</strong> The maximum bearing D/C ratio across all lambda combinations is 0.410 (Alt C, lower bound), still well below 1.0. The maximum column force (upper bound) remains far below the elastic capacity of the columns in both isolated alternatives. The isolation design is robust across the full range of property modification factors.
+</div>
+
+<!-- ============================================================
+     7. COST-BENEFIT DISCUSSION
+     ============================================================ -->
+<h2 id="cost-benefit">7. Cost-Benefit Discussion</h2>
+
+<h3>7.1 Initial Construction Cost</h3>
+<p>Alternative B adds an estimated 8&ndash;12% to the superstructure cost through the procurement of TFP bearings, but partially offsets this through reduced column reinforcement requirements (elastic design vs. ductile detailing) and potentially smaller foundation elements due to the 66% reduction in substructure force demands. Alternative C carries a higher premium of 22&ndash;30% due to the extradosed tower and cable system, but eliminates one in-water pier foundation, reducing environmental impact and marine construction risk.</p>
+
+<h3>7.2 Post-Earthquake Costs</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Scenario</th>
+      <th class="alt-a-color">Alt A: Ductile</th>
+      <th class="alt-b-color">Alt B: Isolated</th>
+      <th class="alt-c-color">Alt C: Extradosed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>DBE Repair</strong></td>
+      <td>High &mdash; column repairs, 6&ndash;12 month closure</td>
+      <td>Minimal &mdash; bearing inspection, operational in days</td>
+      <td>Minimal &mdash; bearing inspection, operational in days</td>
+    </tr>
+    <tr>
+      <td><strong>MCE Repair</strong></td>
+      <td>Very high &mdash; possible reconstruction, 12&ndash;24 month closure</td>
+      <td>Low &mdash; bearing replacement if needed, weeks</td>
+      <td>Low &mdash; bearing replacement if needed, weeks</td>
+    </tr>
+    <tr>
+      <td><strong>Resilience</strong></td>
+      <td>Moderate &mdash; Life Safety but extended downtime</td>
+      <td>High &mdash; Immediate Occupancy, minimal downtime</td>
+      <td>Highest &mdash; IO with structural redundancy</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>7.3 Lifecycle Value</h3>
+<p>For a critical lifeline structure carrying 130,000 vehicles per day and serving as the primary freight corridor for the West Coast supply chain, the economic impact of extended bridge closure after an earthquake would be measured in billions of dollars. A 6&ndash;12 month closure of this I-5 crossing would disrupt regional and national commerce, emergency response capabilities, and daily commuter traffic for over 300,000 people. The 8&ndash;12% cost premium for seismic isolation in Alternative B&mdash;potentially $1&ndash;2 billion on a $12&ndash;18 billion project&mdash;is a fraction of the avoided economic losses from a single major earthquake.</p>
+
+<!-- ============================================================
+     8. CONCLUSIONS & RECOMMENDATIONS
+     ============================================================ -->
+<h2 id="conclusions">8. Conclusions &amp; Recommendations</h2>
+
+<div class="conclusion-box">
+  <p><strong>Primary Recommendation:</strong> Adopt <strong>Alternative B (TFP Isolated Girder Bridge)</strong> as the preferred seismic design strategy for the Interstate Bridge Replacement. The 8&ndash;12% cost premium delivers transformative seismic performance: Immediate Occupancy at both DBE and MCE levels, zero structural damage, and minimal post-earthquake downtime for this critical lifeline crossing.</p>
+  <p style="margin-top:12px;"><strong>Secondary Recommendation:</strong> Advance <strong>Alternative C (Extradosed + TFP Isolation)</strong> for further study as a potential premium alternative. While the 22&ndash;30% cost premium is substantial, the reduced environmental footprint (fewer in-water foundations), longer main span, and highest seismic resilience may justify the investment, particularly given evolving seismic hazard understanding and the bridge's planned 100+ year service life.</p>
+</div>
+
+<h3>8.1 Summary of Key Findings</h3>
+<ol>
+  <li>Both isolated alternatives achieve <strong>Immediate Occupancy</strong> performance at both DBE and MCE levels, compared to Life Safety (DBE) and Collapse Prevention (MCE) for the conventional ductile design.</li>
+  <li>Substructure force demand is reduced by <strong>66&ndash;72%</strong>, enabling elastic column/tower design and eliminating the need for plastic hinge detailing.</li>
+  <li>Column drift ratios are reduced by <strong>98%+</strong>, virtually eliminating post-earthquake structural damage.</li>
+  <li>TFP bearing displacement demands are well within capacity (<strong>D/C = 0.34&ndash;0.36</strong> at DBE), providing substantial reserve for beyond-design-basis events including the long-duration CSZ motions.</li>
+  <li>Upper/lower bound lambda analysis confirms <strong>robust isolation design</strong> across the full range of bearing property modification factors (D/C &le; 0.41 at the most demanding combination).</li>
+  <li>The 2&ndash;5 minute duration of CSZ ground motions particularly favors isolation, as conventional ductile columns would accumulate <strong>cumulative damage</strong> through hundreds of inelastic cycles&mdash;a failure mode entirely eliminated by isolation.</li>
+  <li>For a critical lifeline structure, the modest cost premium provides a <strong>compelling return</strong> through near-elimination of earthquake damage and post-event downtime.</li>
+</ol>
+
+<h3>8.2 Next Steps</h3>
+<ul>
+  <li>Perform site-specific nonlinear time-history analyses using recorded CSZ subduction zone ground motion suites.</li>
+  <li>Conduct detailed TFP bearing procurement and prototype testing specification.</li>
+  <li>Develop foundation design alternatives accounting for the reduced seismic demands of isolated alternatives.</li>
+  <li>Perform probabilistic lifecycle cost analysis comparing all three alternatives.</li>
+  <li>Engage TFP bearing manufacturers for preliminary sizing verification and cost estimation.</li>
+</ul>
+
+<!-- ============================================================
+     9. REFERENCES
+     ============================================================ -->
+<h2 id="references">9. References</h2>
+
+<ol style="font-size:0.9rem;">
+  <li>AASHTO (2023). <em>LRFD Bridge Design Specifications</em>, 10th Edition. American Association of State Highway and Transportation Officials.</li>
+  <li>AASHTO (2014). <em>Guide Specifications for Seismic Isolation Design</em>, 4th Edition. American Association of State Highway and Transportation Officials.</li>
+  <li>ASCE/SEI 7-22 (2022). <em>Minimum Design Loads and Associated Criteria for Buildings and Other Structures</em>, Chapter 17: Seismic Design Requirements for Seismically Isolated Structures.</li>
+  <li>AASHTO (2011). <em>Guide Specifications for LRFD Seismic Bridge Design</em>, 2nd Edition.</li>
+  <li>Constantinou, M.C., Kalpakidis, I., Filiatrault, A., and Ecker Lay, R.A. (2011). <em>LRFD-Based Analysis and Design Procedures for Bridge Bearings and Seismic Isolators</em>. MCEER Report 11-0004.</li>
+  <li>Earthquake Protection Systems, Inc. <em>Triple Pendulum Seismic Isolation Bearing</em>. Technical Documentation.</li>
+  <li>Interstate Bridge Replacement Program (2026). <em>Modified Locally Preferred Alternative Documentation</em>. ODOT/WSDOT.</li>
+  <li>Fenz, D.M. and Constantinou, M.C. (2006). <em>Behaviour of the triple friction pendulum bearing under cyclic excitation</em>. Earthquake Engineering &amp; Structural Dynamics, 35(11), 1403-1424.</li>
+  <li>USGS (2023). <em>Unified Hazard Tool &mdash; 2023 National Seismic Hazard Model</em>. Portland, OR site coordinates.</li>
+</ol>
+
+<!-- ============================================================
+     APPENDIX A: COMPUTE DETAILS
+     ============================================================ -->
+<h2 id="appendix-compute" style="page-break-before:always;">Appendix A: Compute Details</h2>
+
+<h3>A.1 Platform &amp; Model</h3>
+<table>
+  <tr><td style="font-weight:600;width:200px;">AI Model</td><td>Claude Opus 4.6 (claude-opus-4-6)</td></tr>
+  <tr><td style="font-weight:600;">Platform</td><td>Claude Code CLI (Terminal Agent)</td></tr>
+  <tr><td style="font-weight:600;">Subscription</td><td>Claude Code Max &mdash; $200/month flat rate</td></tr>
+  <tr><td style="font-weight:600;">Provider</td><td>Anthropic</td></tr>
+  <tr><td style="font-weight:600;">Session Date</td><td>February 13&ndash;14, 2026</td></tr>
+  <tr><td style="font-weight:600;">Session Duration</td><td>~60 minutes wall clock (03:03&ndash;04:02 UTC, Feb 14 2026)</td></tr>
+  <tr><td style="font-weight:600;">Parallel Agents (peak)</td><td>3 concurrent (modeler + viz-dev + analyst)</td></tr>
+</table>
+
+<h3>A.2 Agent Team Compute Summary</h3>
+<table>
+  <tr>
+    <th>Agent</th><th>Role</th><th>Work Packages</th><th>Est. Turns</th><th>Active Window</th><th>Output Files</th><th>Output Size</th>
+  </tr>
+  <tr>
+    <td><strong>Team Lead</strong></td><td>Project Orchestrator</td><td>All (coordination)</td><td>~22</td><td>Full session (60 min)</td><td>Task mgmt, appendix, org chart</td><td>&mdash;</td>
+  </tr>
+  <tr>
+    <td><strong>Researcher</strong></td><td>Research Engineer</td><td>WP-1</td><td>~8</td><td>Pre-session</td><td>ibr-seismic-study-brief.md + plan</td><td>16 KB</td>
+  </tr>
+  <tr>
+    <td><strong>Modeler</strong></td><td>Structural Modeler</td><td>WP-2, WP-3, WP-4</td><td>~18</td><td>03:03&ndash;03:09 (6 min)</td><td>3 model JSON files</td><td>23 KB</td>
+  </tr>
+  <tr>
+    <td><strong>Analyst</strong></td><td>Analysis Engineer</td><td>WP-5</td><td>~18</td><td>03:09&ndash;03:14 (5 min)</td><td>3 result JSON files</td><td>34 KB</td>
+  </tr>
+  <tr>
+    <td><strong>Viz-Dev</strong></td><td>Visualization Developer</td><td>WP-6</td><td>~14</td><td>03:03&ndash;03:14 (11 min)</td><td>viewer.html (1,893 lines)</td><td>62 KB</td>
+  </tr>
+  <tr>
+    <td><strong>Reporter</strong></td><td>Report Architect</td><td>WP-7, WP-8</td><td>~18</td><td>03:14&ndash;04:00 (46 min)</td><td>report.html + meet_the_agents.html</td><td>128 KB</td>
+  </tr>
+  <tr style="font-weight:600;background:#f8f6f0;">
+    <td colspan="3">TOTAL</td><td>~98</td><td>60 min wall clock</td><td>9 deliverable files</td><td>~264 KB</td>
+  </tr>
+</table>
+
+<h3>A.3 Execution Timeline</h3>
+<table>
+  <tr><th>Time (UTC)</th><th>Event</th><th>Agents Active</th></tr>
+  <tr><td>03:03</td><td>Session start: wake-up, team creation, task setup</td><td>Team Lead</td></tr>
+  <tr><td>03:04</td><td>Modeler + Viz-Dev spawned in parallel</td><td>Team Lead, Modeler, Viz-Dev</td></tr>
+  <tr><td>03:08</td><td>Modeler delivers all 3 bridge models (Alt A, B, C)</td><td>Team Lead, Modeler, Viz-Dev</td></tr>
+  <tr><td>03:09</td><td>Analyst spawned; Modeler shutdown</td><td>Team Lead, Viz-Dev, Analyst</td></tr>
+  <tr><td>03:12</td><td>Viz-Dev delivers viewer.html (first pass)</td><td>Team Lead, Viz-Dev, Analyst</td></tr>
+  <tr><td>03:14</td><td>Analyst delivers all 3 result JSONs; Viz-Dev applies model integration fixes</td><td>Team Lead, Viz-Dev, Analyst</td></tr>
+  <tr><td>03:14</td><td>Reporter spawned; Analyst + Viz-Dev shutdown</td><td>Team Lead, Reporter</td></tr>
+  <tr><td>04:00</td><td>Reporter delivers report.html + meet_the_agents.html</td><td>Team Lead, Reporter</td></tr>
+  <tr><td>04:02</td><td>Team Lead adds compute appendix + org chart; Reporter shutdown; team cleanup</td><td>Team Lead</td></tr>
+</table>
+
+<h3>A.4 Cost Analysis</h3>
+<table>
+  <tr><td style="font-weight:600;width:280px;">Subscription Model</td><td>Claude Code Max &mdash; flat $200/month (not per-token)</td></tr>
+  <tr><td style="font-weight:600;">Estimated Total Tokens (input)</td><td>~1.5&ndash;2.5M (system prompts + growing conversation context across 6 agents)</td></tr>
+  <tr><td style="font-weight:600;">Estimated Total Tokens (output)</td><td>~200&ndash;400K (code, JSON, HTML generation across ~98 turns)</td></tr>
+  <tr><td style="font-weight:600;">Estimated Total Tokens (combined)</td><td>~1.7&ndash;2.9M</td></tr>
+  <tr><td style="font-weight:600;">Equivalent API Cost (Opus 4)</td><td>~$50&ndash;70 at API rates ($15/M input, $75/M output)</td></tr>
+  <tr><td style="font-weight:600;">Actual Cost (Max subscription)</td><td>Fraction of $200/month flat rate &mdash; no per-token charges</td></tr>
+  <tr><td style="font-weight:600;">Session as % of Monthly Capacity</td><td>~2&ndash;5% of monthly subscription value</td></tr>
+  <tr><td style="font-weight:600;">Effective Cost per Deliverable</td><td>~$4&ndash;10 for the entire study (based on $200/mo subscription)</td></tr>
+</table>
+
+<h3>A.5 Output Inventory</h3>
+<table>
+  <tr><th>File</th><th>Description</th><th>Lines</th><th>Size</th></tr>
+  <tr><td>models/alt-a-ductile.json</td><td>Conventional ductile bridge model</td><td>110</td><td>5.5 KB</td></tr>
+  <tr><td>models/alt-b-isolated.json</td><td>TFP isolated bridge model</td><td>153</td><td>7.5 KB</td></tr>
+  <tr><td>models/alt-c-extradosed.json</td><td>Extradosed + isolated bridge model</td><td>189</td><td>10 KB</td></tr>
+  <tr><td>results/modal_comparison.json</td><td>Eigenvalue analysis results</td><td>247</td><td>10 KB</td></tr>
+  <tr><td>results/pushover_results.json</td><td>Pushover curves &amp; hinge states</td><td>278</td><td>11 KB</td></tr>
+  <tr><td>results/comparison_metrics.json</td><td>Full comparison metrics &amp; lambda bounds</td><td>305</td><td>13 KB</td></tr>
+  <tr><td>viewer.html</td><td>Standalone 3D model viewer (Three.js)</td><td>1,893</td><td>62 KB</td></tr>
+  <tr><td>ibr_seismic_isolation_report.html</td><td>Engineering analysis report (this document)</td><td>1,640</td><td>91 KB</td></tr>
+  <tr><td>meet_the_agents.html</td><td>Agent team documentation + org chart</td><td>814</td><td>37 KB</td></tr>
+  <tr style="font-weight:600;background:#f8f6f0;">
+    <td colspan="2">TOTAL</td><td>5,629</td><td>264 KB</td>
+  </tr>
+</table>
+
+<h3>A.6 Comparison to Traditional Engineering Workflow</h3>
+<p>A comparable seismic isolation feasibility study performed by a traditional engineering team would typically require:</p>
+<table>
+  <tr><th>Metric</th><th>Traditional Approach</th><th>AI Agent Team</th><th>Reduction Factor</th></tr>
+  <tr><td>Team size</td><td>3&ndash;5 engineers (structural, seismic, CAD, technical writer)</td><td>6 AI agents (autonomous)</td><td>&mdash;</td></tr>
+  <tr><td>Duration</td><td>4&ndash;8 weeks</td><td>~60 minutes</td><td>~500&ndash;1,000x</td></tr>
+  <tr><td>Labor cost</td><td>$40,000&ndash;$120,000 (at $150&ndash;$250/hr)</td><td>$4&ndash;10 (subscription fraction)</td><td>~5,000&ndash;25,000x</td></tr>
+  <tr><td>Software licenses</td><td>$5,000&ndash;$15,000/yr (SAP2000, ETABS, AutoCAD)</td><td>$0 (included in subscription)</td><td>&infin;</td></tr>
+  <tr><td>Deliverables</td><td>Report PDF + CAD drawings</td><td>9 files: interactive 3D viewer, models, analysis data, HTML report</td><td>More formats, interactive</td></tr>
+</table>
+<p style="margin-top:12px;">While AI-generated results require verification by licensed professional engineers before use in final design, the approach enables rapid feasibility screening, parametric studies, and preliminary design exploration at a fraction of traditional cost and time. The 60-minute session produced 5,629 lines of deliverable content across 9 files, including an interactive 3D model viewer that has no equivalent in traditional workflows.</p>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<div class="section-footer">
+  <p>RPT-2026-0213-IBR &mdash; IBR Seismic Isolation Strategy Study &mdash; AI Engineering Team (IsoVis Platform)</p>
+  <p>This report was produced by an autonomous AI engineering team for feasibility evaluation purposes. All analyses use representative structural models and approximate seismic parameters. Results should be verified by licensed professional engineers before use in final design.</p>
+  <p style="margin-top:8px;">&copy; 2026 IsoVis Platform &mdash; Generated February 13, 2026</p>
+</div>
+
+</body>
+</html>

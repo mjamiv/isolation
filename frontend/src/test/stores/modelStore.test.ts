@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useModelStore } from '@/stores/modelStore';
 import type { Node, Element, TFPBearing, FrictionSurface } from '@/stores/modelStore';
+import type { ModelJSON } from '@/types/modelJSON';
 
 // Helper: get a fresh snapshot of the store state.
 const getState = () => useModelStore.getState();
@@ -227,7 +228,10 @@ describe('modelStore — element operations', () => {
 
 function makeTestBearing(id: number): TFPBearing {
   const surface: FrictionSurface = {
-    type: 'VelDependent', muSlow: 0.01, muFast: 0.02, transRate: 0.4,
+    type: 'VelDependent',
+    muSlow: 0.01,
+    muFast: 0.02,
+    transRate: 0.4,
   };
   return {
     id,
@@ -282,5 +286,90 @@ describe('modelStore — bearing CRUD', () => {
   it('does not update a non-existent bearing', () => {
     getState().updateBearing(999, { weight: 200 });
     expect(getState().bearings.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// loadModelFromJSON
+// ---------------------------------------------------------------------------
+
+function makeTestJSON(): ModelJSON {
+  return {
+    modelInfo: { name: 'Test Bridge', units: 'kip-in', description: 'A test bridge model' },
+    nodes: [
+      { id: 1, x: 0, y: 0, z: 0, restraint: [true, true, true, true, true, true] },
+      { id: 2, x: 100, y: 50, z: 0, restraint: [false, false, false, false, false, false] },
+    ],
+    elements: [{ id: 1, type: 'column', nodeI: 1, nodeJ: 2, sectionId: 1, materialId: 1 }],
+    sections: [
+      {
+        id: 1,
+        name: 'W14x68',
+        area: 20,
+        Ix: 723,
+        Iy: 121,
+        Zx: 115,
+        d: 14,
+        bf: 10,
+        tw: 0.4,
+        tf: 0.7,
+      },
+    ],
+    materials: [{ id: 1, name: 'Steel', E: 29000, Fy: 50, density: 490, nu: 0.3 }],
+    bearings: [],
+    loads: [{ id: 1, nodeId: 2, fx: 0, fy: -100, fz: 0, mx: 0, my: 0, mz: 0 }],
+    groundMotions: [],
+  };
+}
+
+describe('modelStore — loadModelFromJSON', () => {
+  it('populates all maps from JSON arrays', () => {
+    const json = makeTestJSON();
+    getState().loadModelFromJSON(json);
+    const state = getState();
+
+    expect(state.model).toEqual({
+      name: 'Test Bridge',
+      units: 'kip-in',
+      description: 'A test bridge model',
+    });
+    expect(state.nodes.size).toBe(2);
+    expect(state.nodes.get(1)!.x).toBe(0);
+    expect(state.nodes.get(2)!.x).toBe(100);
+    expect(state.elements.size).toBe(1);
+    expect(state.sections.size).toBe(1);
+    expect(state.materials.size).toBe(1);
+    expect(state.bearings.size).toBe(0);
+    expect(state.loads.size).toBe(1);
+    expect(state.groundMotions.size).toBe(0);
+  });
+
+  it('replaces existing data when loading a new model', () => {
+    // Load sample first
+    getState().loadSampleModel();
+    expect(getState().nodes.size).toBe(15);
+    expect(getState().bearings.size).toBe(3);
+
+    // Load JSON — should fully replace
+    getState().loadModelFromJSON(makeTestJSON());
+    expect(getState().nodes.size).toBe(2);
+    expect(getState().bearings.size).toBe(0);
+    expect(getState().model!.name).toBe('Test Bridge');
+  });
+
+  it('preserves entity properties through JSON round-trip', () => {
+    const json = makeTestJSON();
+    getState().loadModelFromJSON(json);
+
+    const node = getState().nodes.get(1)!;
+    expect(node.restraint).toEqual([true, true, true, true, true, true]);
+
+    const section = getState().sections.get(1)!;
+    expect(section.name).toBe('W14x68');
+    expect(section.area).toBe(20);
+
+    const load = getState().loads.get(1)!;
+    expect(load.nodeId).toBe(2);
+    expect(load.fy).toBe(-100);
   });
 });

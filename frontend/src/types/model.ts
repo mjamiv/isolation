@@ -93,8 +93,9 @@ export type FrictionModelType = 'Coulomb' | 'VelDependent' | 'VelPressureDep';
 
 export interface FrictionModel {
   type: FrictionModelType;
-  /** Friction model parameters. Expected keys: muSlow, muFast, transRate. */
-  params: Record<string, number>;
+  muSlow: number;
+  muFast: number;
+  transRate: number;
 }
 
 /**
@@ -114,13 +115,13 @@ export interface TFPBearing {
   /** Vertical load on bearing (force units). */
   weight: number;
   /** Yield displacement for initial stiffness calculation. */
-  yieldDisp: number;
+  uy: number;
   /** Vertical stiffness factor. */
-  vertStiffness: number;
+  kvt: number;
   /** Minimum vertical force ratio. */
-  minVertForce: number;
+  minFv: number;
   /** Newton-Raphson convergence tolerance. */
-  tolerance: number;
+  tol: number;
 }
 
 // ---------------------------------------------------------------------------

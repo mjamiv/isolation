@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useModelStore } from '../../stores/modelStore';
 import { useDisplayStore, type DisplayMode } from '../../stores/displayStore';
 import { useAnalysisStore } from '../../stores/analysisStore';
+import { useComparisonStore } from '../../stores/comparisonStore';
+import { useToastStore } from '../../stores/toastStore';
+import { PRESET_MODELS } from '../../types/modelJSON';
+import type { ModelJSON } from '../../types/modelJSON';
 import { AnalysisDialog } from '../analysis/AnalysisDialog';
 
 const DISPLAY_MODES: { value: DisplayMode; label: string }[] = [
@@ -10,14 +14,78 @@ const DISPLAY_MODES: { value: DisplayMode; label: string }[] = [
   { value: 'solid', label: 'Solid' },
 ];
 
+const IMPORT_FILE_VALUE = '__import__';
+
 export function Toolbar() {
   const loadSampleModel = useModelStore((state) => state.loadSampleModel);
+  const loadModelFromJSON = useModelStore((state) => state.loadModelFromJSON);
   const clearModel = useModelStore((state) => state.clearModel);
   const displayMode = useDisplayStore((state) => state.displayMode);
   const setDisplayMode = useDisplayStore((state) => state.setDisplayMode);
   const analysisStatus = useAnalysisStore((state) => state.status);
+  const resetAnalysis = useAnalysisStore((state) => state.resetAnalysis);
+  const resetComparison = useComparisonStore((state) => state.resetComparison);
+  const addToast = useToastStore((state) => state.addToast);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleModelSelect = async (value: string) => {
+    if (value === IMPORT_FILE_VALUE) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    const index = Number(value);
+    const preset = PRESET_MODELS[index];
+    if (!preset) return;
+
+    resetAnalysis();
+    resetComparison();
+
+    if (preset.url === null) {
+      loadSampleModel();
+      addToast('success', `Loaded "${preset.label}"`);
+      return;
+    }
+
+    try {
+      const response = await fetch(preset.url);
+      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
+      const json = (await response.json()) as ModelJSON;
+      loadModelFromJSON(json);
+      addToast('success', `Loaded "${preset.label}"`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      addToast('error', `Failed to load model: ${msg}`);
+    }
+  };
+
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const json = JSON.parse(reader.result as string) as ModelJSON;
+        if (!json.modelInfo || !Array.isArray(json.nodes)) {
+          throw new Error('Invalid model JSON structure');
+        }
+        resetAnalysis();
+        resetComparison();
+        loadModelFromJSON(json);
+        addToast('success', `Imported "${file.name}"`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        addToast('error', `Failed to import: ${msg}`);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset so the same file can be re-imported
+    e.target.value = '';
+  };
 
   return (
     <div className="flex h-12 items-center justify-between border-b border-gray-700 bg-gray-900 px-4">
@@ -33,12 +101,33 @@ export function Toolbar() {
 
       {/* Center: Action buttons */}
       <div className="flex items-center gap-2">
-        <button
-          onClick={loadSampleModel}
-          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500"
+        <select
+          defaultValue=""
+          onChange={(e) => {
+            void handleModelSelect(e.target.value);
+            e.target.value = '';
+          }}
+          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500 cursor-pointer"
+          aria-label="Load model"
         >
-          Load Sample Model
-        </button>
+          <option value="" disabled>
+            Load Model
+          </option>
+          {PRESET_MODELS.map((preset, i) => (
+            <option key={preset.label} value={String(i)}>
+              {preset.label}
+            </option>
+          ))}
+          <option value={IMPORT_FILE_VALUE}>Import JSON File...</option>
+        </select>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleFileImport}
+        />
 
         <button
           onClick={() => setDialogOpen(true)}

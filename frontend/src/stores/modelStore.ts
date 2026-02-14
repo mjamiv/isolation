@@ -11,6 +11,7 @@ import type {
   GroundMotionRecord,
   StructuralModel,
 } from '@/types/storeModel';
+import type { ModelJSON } from '@/types/modelJSON';
 
 // Re-export types for backward compat
 export type {
@@ -228,8 +229,9 @@ interface ModelState {
   updateGroundMotion: (id: number, updates: Partial<GroundMotionRecord>) => void;
   removeGroundMotion: (id: number) => void;
 
-  // Demo loader
+  // Model loaders
   loadSampleModel: () => void;
+  loadModelFromJSON: (json: ModelJSON) => void;
   clearModel: () => void;
 }
 
@@ -422,6 +424,27 @@ export const useModelStore = create<ModelState>((set) => ({
       groundMotions.delete(id);
       return { groundMotions };
     }),
+
+  // ── Load from JSON ──────────────────────────────
+  loadModelFromJSON: (json: ModelJSON) => {
+    const toMap = <T extends { id: number }>(arr: T[]): Map<number, T> =>
+      new Map(arr.map((item) => [item.id, item]));
+
+    set({
+      model: {
+        name: json.modelInfo.name,
+        units: json.modelInfo.units,
+        description: json.modelInfo.description,
+      },
+      nodes: toMap(json.nodes),
+      elements: toMap(json.elements),
+      sections: toMap(json.sections),
+      materials: toMap(json.materials),
+      bearings: toMap(json.bearings),
+      loads: toMap(json.loads),
+      groundMotions: toMap(json.groundMotions),
+    });
+  },
 
   // ── Clear ────────────────────────────────────────
   clearModel: () =>
