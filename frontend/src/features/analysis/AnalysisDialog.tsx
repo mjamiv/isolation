@@ -77,8 +77,8 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     if (runComparisonMode && !hasBearings) {
       return 'Comparison requires bearings in the model.';
     }
-    if (runComparisonMode && analysisType !== 'pushover') {
-      return 'Comparison mode requires pushover analysis type.';
+    if (runComparisonMode && analysisType !== 'pushover' && analysisType !== 'time_history') {
+      return 'Comparison mode requires pushover or time-history analysis type.';
     }
     return null;
   };
@@ -119,10 +119,11 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
 
     onOpenChange(false);
 
-    if (runComparisonMode && analysisType === 'pushover') {
-      const lambdaFactors = enableLambda
-        ? { min: Number(lambdaMin) || 0.85, max: Number(lambdaMax) || 1.8 }
-        : undefined;
+    if (runComparisonMode && (analysisType === 'pushover' || analysisType === 'time_history')) {
+      const lambdaFactors =
+        enableLambda && analysisType === 'pushover'
+          ? { min: Number(lambdaMin) || 0.85, max: Number(lambdaMax) || 1.8 }
+          : undefined;
       void runComparison(params, lambdaFactors);
     } else {
       void runAnalysis(params);
@@ -304,29 +305,34 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                     ))}
                   </div>
                 </div>
+              </>
+            )}
 
-                {/* Comparison toggle */}
-                {hasBearings && (
-                  <div className="rounded-lg bg-gray-800/50 p-3 space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={runComparisonMode}
-                        onChange={(e) => setRunComparisonMode(e.target.checked)}
-                        className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
-                      />
-                      <span className="text-xs font-medium text-gray-300">
-                        Run Comparison (Isolated vs Fixed-Base)
-                      </span>
-                    </label>
+            {/* Comparison toggle — available for pushover and time-history */}
+            {(analysisType === 'pushover' || analysisType === 'time_history') && hasBearings && (
+              <div className="rounded-lg bg-gray-800/50 p-3 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={runComparisonMode}
+                    onChange={(e) => setRunComparisonMode(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+                  />
+                  <span className="text-xs font-medium text-gray-300">
+                    Run Comparison (Isolated vs Fixed-Base)
+                  </span>
+                </label>
 
-                    {runComparisonMode && (
+                {runComparisonMode && (
+                  <>
+                    <p className="text-[10px] text-gray-400">
+                      {analysisType === 'time_history'
+                        ? 'Runs time-history on both the isolated model and an auto-generated fixed-base variant with animated overlay.'
+                        : 'Runs pushover on both the isolated model and an auto-generated fixed-base variant.'}
+                    </p>
+
+                    {analysisType === 'pushover' && (
                       <>
-                        <p className="text-[10px] text-gray-400">
-                          Runs pushover on both the isolated model and an auto-generated fixed-base
-                          variant.
-                        </p>
-
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -373,9 +379,9 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                         )}
                       </>
                     )}
-                  </div>
+                  </>
                 )}
-              </>
+              </div>
             )}
 
             {/* Validation error */}
@@ -404,7 +410,8 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             >
               {submitting
                 ? 'Submitting...'
-                : runComparisonMode && analysisType === 'pushover'
+                : runComparisonMode &&
+                    (analysisType === 'pushover' || analysisType === 'time_history')
                   ? 'Run Comparison'
                   : 'Run'}
             </button>

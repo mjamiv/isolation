@@ -15,6 +15,8 @@ export type ComparisonStatus = 'idle' | 'running' | 'complete' | 'error';
 interface ComparisonState {
   status: ComparisonStatus;
   comparisonId: string | null;
+  /** Type of comparison analysis performed. */
+  comparisonType: 'pushover' | 'time_history' | null;
   /** Isolated system results (nominal friction). */
   isolated: VariantResult | null;
   /** Isolated with upper-bound lambda factor. */
@@ -43,6 +45,7 @@ interface ComparisonState {
 export const useComparisonStore = create<ComparisonState>((set) => ({
   status: 'idle',
   comparisonId: null,
+  comparisonType: null,
   isolated: null,
   isolatedUpper: null,
   isolatedLower: null,
@@ -54,6 +57,7 @@ export const useComparisonStore = create<ComparisonState>((set) => ({
   startComparison: () =>
     set({
       status: 'running',
+      comparisonType: null,
       isolated: null,
       isolatedUpper: null,
       isolatedLower: null,
@@ -63,13 +67,13 @@ export const useComparisonStore = create<ComparisonState>((set) => ({
       error: null,
     }),
 
-  setComparisonId: (id) =>
-    set({ comparisonId: id }),
+  setComparisonId: (id) => set({ comparisonId: id }),
 
   setResults: (run) =>
     set({
       status: run.status === 'complete' ? 'complete' : run.status === 'error' ? 'error' : 'running',
       comparisonId: run.comparisonId,
+      comparisonType: run.comparisonType ?? 'pushover',
       isolated: run.isolated,
       isolatedUpper: run.isolatedUpper,
       isolatedLower: run.isolatedLower,
@@ -78,16 +82,15 @@ export const useComparisonStore = create<ComparisonState>((set) => ({
       error: run.error ?? null,
     }),
 
-  setSummary: (summary) =>
-    set({ summary }),
+  setSummary: (summary) => set({ summary }),
 
-  setError: (error) =>
-    set({ error, status: 'error' }),
+  setError: (error) => set({ error, status: 'error' }),
 
   resetComparison: () =>
     set({
       status: 'idle',
       comparisonId: null,
+      comparisonType: null,
       isolated: null,
       isolatedUpper: null,
       isolatedLower: null,

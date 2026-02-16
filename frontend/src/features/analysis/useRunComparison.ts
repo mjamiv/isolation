@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import type { AnalysisParams } from '@/types/analysis';
 import type { ComparisonRun, LambdaFactors } from '@/types/comparison';
 import { useComparisonStore } from '@/stores/comparisonStore';
+import { useAnalysisStore } from '@/stores/analysisStore';
+import { useDisplayStore } from '@/stores/displayStore';
 import { useToastStore } from '@/stores/toastStore';
 import { runComparison } from '@/services/api';
 import { useRunAsync } from './useRunAsync';
@@ -27,6 +29,15 @@ export function useRunComparison() {
       onStart: () => startComparison(),
       onResult: (result: ComparisonRun) => {
         setResults(result);
+
+        // For time-history comparisons, enable overlay and set up playback
+        if (result.comparisonType === 'time_history' && result.isolated?.timeHistoryResults) {
+          useDisplayStore.getState().setShowDeformed(true);
+          useDisplayStore.getState().setShowComparisonOverlay(true);
+          useAnalysisStore.getState().setTimeStep(0);
+          useAnalysisStore.getState().setIsPlaying(false);
+        }
+
         useToastStore.getState().addToast('success', 'Comparison completed successfully.');
       },
       onError: (message: string) => {

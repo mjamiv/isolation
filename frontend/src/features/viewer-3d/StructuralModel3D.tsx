@@ -1,6 +1,7 @@
 import { useModelStore } from '../../stores/modelStore';
 import { useDisplayStore } from '../../stores/displayStore';
 import { useAnalysisStore } from '../../stores/analysisStore';
+import { useComparisonStore } from '../../stores/comparisonStore';
 import { NodePoints } from './NodePoints';
 import { MemberLines } from './MemberLines';
 import { SupportSymbols } from './SupportSymbols';
@@ -19,6 +20,7 @@ export function StructuralModel3D() {
   const forceType = useDisplayStore((state) => state.forceType);
   const results = useAnalysisStore((state) => state.results);
   const selectedModeNumber = useAnalysisStore((state) => state.selectedModeNumber);
+  const comparisonType = useComparisonStore((state) => state.comparisonType);
 
   if (!model) {
     return null;
@@ -27,6 +29,7 @@ export function StructuralModel3D() {
   const hasModalResults = results?.type === 'modal' && selectedModeNumber !== null;
   const hasHingeStates = (results?.hingeStates?.length ?? 0) > 0;
   const hasTimeHistory = results?.type === 'time_history';
+  const hasComparisonTimeHistory = comparisonType === 'time_history';
   const hasForceResults =
     results?.type === 'static' || results?.type === 'time_history' || results?.type === 'pushover';
 
@@ -42,7 +45,7 @@ export function StructuralModel3D() {
       {showForces && forceType !== 'none' && hasForceResults && <ForceDiagrams />}
       {hasModalResults && <ModeShapeAnimation />}
       {hasHingeStates && <PlasticHinges />}
-      {hasTimeHistory && <PlaybackDriver />}
+      {(hasTimeHistory || hasComparisonTimeHistory) && <PlaybackDriver />}
     </group>
   );
 }

@@ -2,6 +2,7 @@ import { lazy, Suspense, useMemo } from 'react';
 import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useComparisonStore } from '@/stores/comparisonStore';
+import { useAnalysisStore } from '@/stores/analysisStore';
 import { useModelStore } from '@/stores/modelStore';
 import { useDisplayStore } from '@/stores/displayStore';
 import { computeComparisonSummary } from '@/services/comparisonMetrics';
@@ -36,8 +37,145 @@ function AccordionItem({
   );
 }
 
+const PLAYBACK_SPEEDS = [0.25, 0.5, 1, 2, 4];
+
+function TimeHistoryComparisonPanel() {
+  const isolated = useComparisonStore((s) => s.isolated);
+  const fixedBase = useComparisonStore((s) => s.fixedBase);
+  const showComparisonOverlay = useDisplayStore((s) => s.showComparisonOverlay);
+  const setShowComparisonOverlay = useDisplayStore((s) => s.setShowComparisonOverlay);
+  const isPlaying = useAnalysisStore((s) => s.isPlaying);
+  const playbackSpeed = useAnalysisStore((s) => s.playbackSpeed);
+  const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
+  const togglePlayback = useAnalysisStore((s) => s.togglePlayback);
+  const setPlaybackSpeed = useAnalysisStore((s) => s.setPlaybackSpeed);
+  const setTimeStep = useAnalysisStore((s) => s.setTimeStep);
+
+  if (!isolated || !fixedBase) {
+    return <div className="p-3 text-xs text-gray-500">Comparison data incomplete.</div>;
+  }
+
+  const isoTH = isolated.timeHistoryResults;
+  const fbTH = fixedBase.timeHistoryResults;
+
+  const isoPeakShear = isoTH?.peakValues?.maxBaseShear?.value ?? isolated.maxBaseShear;
+  const fbPeakShear = fbTH?.peakValues?.maxBaseShear?.value ?? fixedBase.maxBaseShear;
+  const isoPeakDisp = isoTH?.peakValues?.maxDrift?.value ?? isolated.maxRoofDisplacement;
+  const fbPeakDisp = fbTH?.peakValues?.maxDrift?.value ?? fixedBase.maxRoofDisplacement;
+
+  const shearReduction = fbPeakShear > 0 ? ((fbPeakShear - isoPeakShear) / fbPeakShear) * 100 : 0;
+  const dispReduction = fbPeakDisp > 0 ? ((fbPeakDisp - isoPeakDisp) / fbPeakDisp) * 100 : 0;
+
+  const totalSteps = isoTH?.timeSteps?.length ?? 0;
+  const currentTime = isoTH?.timeSteps?.[currentTimeStep]?.time ?? 0;
+  const totalTime = isoTH?.totalTime ?? 0;
+
+  return (
+    <div className="space-y-2 p-3">
+      {/* Summary header */}
+      <div className="rounded bg-gray-800/50 p-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-gray-300">Time-History Comparison</span>
+          <span className="text-[10px] text-yellow-400">{totalSteps} steps</span>
+        </div>
+      </div>
+
+      {/* Key metrics */}
+      <div className="grid grid-cols-3 gap-1 text-center">
+        <div className="rounded bg-gray-800/50 p-2">
+          <div className="text-sm font-bold text-yellow-400">{shearReduction.toFixed(0)}%</div>
+          <div className="text-[9px] text-gray-400">Shear Reduction</div>
+        </div>
+        <div className="rounded bg-gray-800/50 p-2">
+          <div className="text-sm font-bold text-yellow-400">{isoPeakShear.toFixed(1)}</div>
+          <div className="text-[9px] text-gray-400">Iso Shear (kip)</div>
+        </div>
+        <div className="rounded bg-gray-800/50 p-2">
+          <div className="text-sm font-bold text-yellow-400">{fbPeakShear.toFixed(1)}</div>
+          <div className="text-[9px] text-gray-400">FB Shear (kip)</div>
+        </div>
+      </div>
+
+      {/* Displacement metrics */}
+      <div className="grid grid-cols-3 gap-1 text-center">
+        <div className="rounded bg-gray-800/50 p-2">
+          <div className="text-sm font-bold text-yellow-400">{dispReduction.toFixed(0)}%</div>
+          <div className="text-[9px] text-gray-400">Disp Reduction</div>
+        </div>
+        <div className="rounded bg-gray-800/50 p-2">
+          <div className="text-sm font-bold text-yellow-400">{isoPeakDisp.toFixed(2)}</div>
+          <div className="text-[9px] text-gray-400">Iso Disp (in)</div>
+        </div>
+        <div className="rounded bg-gray-800/50 p-2">
+          <div className="text-sm font-bold text-yellow-400">{fbPeakDisp.toFixed(2)}</div>
+          <div className="text-[9px] text-gray-400">FB Disp (in)</div>
+        </div>
+      </div>
+
+      {/* 3D Overlay toggle */}
+      <label className="flex items-center gap-2 px-1 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={showComparisonOverlay}
+          onChange={(e) => setShowComparisonOverlay(e.target.checked)}
+          className="h-3 w-3 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+        />
+        <span className="text-[10px] text-gray-400">Show 3D overlay (both deformed shapes)</span>
+      </label>
+
+      {/* Playback controls */}
+      <div className="rounded bg-gray-800/50 p-2 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-medium text-gray-400">Playback</span>
+          <span className="text-[10px] text-gray-500">
+            {currentTime.toFixed(2)}s / {totalTime.toFixed(2)}s
+          </span>
+        </div>
+
+        {/* Playback slider */}
+        <input
+          type="range"
+          min={0}
+          max={Math.max(totalSteps - 1, 0)}
+          value={currentTimeStep}
+          onChange={(e) => setTimeStep(Number(e.target.value))}
+          className="w-full h-1 accent-yellow-500"
+        />
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={togglePlayback}
+            className="rounded bg-yellow-600 px-3 py-1 text-[10px] font-medium text-white hover:bg-yellow-500"
+          >
+            {isPlaying ? 'Pause' : 'Play'}
+          </button>
+
+          <div className="flex gap-0.5">
+            {PLAYBACK_SPEEDS.map((speed) => (
+              <button
+                key={speed}
+                type="button"
+                onClick={() => setPlaybackSpeed(speed)}
+                className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-colors ${
+                  playbackSpeed === speed
+                    ? 'bg-yellow-600 text-white'
+                    : 'bg-gray-700 text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                {speed}x
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ComparisonPanel() {
   const status = useComparisonStore((s) => s.status);
+  const comparisonType = useComparisonStore((s) => s.comparisonType);
   const isolated = useComparisonStore((s) => s.isolated);
   const isolatedUpper = useComparisonStore((s) => s.isolatedUpper);
   const isolatedLower = useComparisonStore((s) => s.isolatedLower);
@@ -51,15 +189,16 @@ export function ComparisonPanel() {
 
   const summary = useMemo(() => {
     if (!isolated || !fixedBase) return null;
+    if (comparisonType === 'time_history') return null;
     return computeComparisonSummary(isolated, fixedBase, nodes, bearings);
-  }, [isolated, fixedBase, nodes, bearings]);
+  }, [isolated, fixedBase, nodes, bearings, comparisonType]);
 
   if (status === 'idle') {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
         <p className="text-sm font-medium text-gray-400">No comparison data</p>
         <p className="mt-1 text-xs text-gray-500">
-          Run a pushover comparison to compare isolated vs fixed-base performance
+          Run a pushover or time-history comparison to compare isolated vs fixed-base performance
         </p>
       </div>
     );
@@ -80,7 +219,17 @@ export function ComparisonPanel() {
     return <div className="p-3 text-xs text-red-400">Comparison failed: {error}</div>;
   }
 
-  if (!isolated || !fixedBase || !summary) {
+  if (!isolated || !fixedBase) {
+    return <div className="p-3 text-xs text-gray-500">Comparison data incomplete.</div>;
+  }
+
+  // Time-history comparison panel
+  if (comparisonType === 'time_history') {
+    return <TimeHistoryComparisonPanel />;
+  }
+
+  // Pushover comparison panel
+  if (!summary) {
     return <div className="p-3 text-xs text-gray-500">Comparison data incomplete.</div>;
   }
 

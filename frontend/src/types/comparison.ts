@@ -5,7 +5,7 @@
  * Chapter 17 lambda factor bounds, and summary dashboard metrics.
  */
 
-import type { AnalysisParams, PushoverResults, HingeState } from './analysis';
+import type { AnalysisParams, PushoverResults, HingeState, TimeHistoryResults } from './analysis';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -38,8 +38,10 @@ export type ModelVariant = 'isolated' | 'fixedBase';
 // ---------------------------------------------------------------------------
 
 export interface VariantResult {
-  /** Pushover capacity curve data. */
+  /** Pushover capacity curve data (populated for pushover comparisons). */
   pushoverResults: PushoverResults;
+  /** Time-history results (populated for time-history comparisons). */
+  timeHistoryResults?: TimeHistoryResults | null;
   /** Plastic hinge states at final step. */
   hingeStates: HingeState[];
   /** Max base shear achieved. */
@@ -52,6 +54,8 @@ export interface ComparisonRun {
   comparisonId: string;
   modelId: string;
   status: 'pending' | 'running' | 'complete' | 'error';
+  /** Type of comparison analysis performed. */
+  comparisonType?: 'pushover' | 'time_history';
   /** Isolated system results (nominal friction). */
   isolated: VariantResult | null;
   /** Isolated with upper-bound lambda factor. */

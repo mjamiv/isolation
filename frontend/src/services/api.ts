@@ -416,7 +416,7 @@ export async function getAnalysisStatus(
 
 /**
  * Run a ductile vs isolated comparison analysis.
- * Posts the model and runs pushover on both isolated and fixed-base variants.
+ * Posts the model and runs pushover or time-history on both isolated and fixed-base variants.
  */
 export async function runComparison(
   modelId: string,
@@ -432,5 +432,21 @@ export async function runComparison(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(keysToSnake(body)),
   });
-  return handleResponse<ComparisonRun>(response);
+  const run = await handleResponse<ComparisonRun>(response);
+
+  // Normalize time-history results in each variant if present.
+  // keysToCamel converts "time_history" → "timeHistory", so check the raw camelCase value.
+  const rawType = (run as RawMap).comparisonType as string | undefined;
+  if (rawType === 'timeHistory' || rawType === 'time_history') {
+    (run as RawMap).comparisonType = 'time_history';
+    for (const variant of [run.isolated, run.fixedBase] as (RawMap | null)[]) {
+      if (variant?.timeHistoryResults) {
+        variant.timeHistoryResults = normalizeTimeHistoryResults(
+          variant.timeHistoryResults as RawMap,
+        );
+      }
+    }
+  }
+
+  return run;
 }

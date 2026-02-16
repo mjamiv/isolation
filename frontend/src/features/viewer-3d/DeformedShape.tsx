@@ -13,6 +13,37 @@ const DEFORMED_OPACITY = 0.5;
 const NODE_RADIUS = 2;
 const NODE_SEGMENTS = 8;
 
+/** Helper to build a displaced-node map from a displacement record. */
+function buildDisplacedNodeMap(
+  nodes: Map<number, { x: number; y: number; z: number }>,
+  disps: Record<number | string, number[]> | null,
+  scaleFactor: number,
+): Map<number, THREE.Vector3> | null {
+  if (!disps) return null;
+  const map = new Map<number, THREE.Vector3>();
+  for (const [nodeId, node] of nodes) {
+    const disp = disps[nodeId] ?? disps[String(nodeId)];
+    if (disp && disp.length >= 3) {
+      map.set(
+        nodeId,
+        new THREE.Vector3(
+          node.x + disp[0]! * scaleFactor,
+          node.y + disp[1]! * scaleFactor,
+          node.z + disp[2]! * scaleFactor,
+        ),
+      );
+    } else if (disp && disp.length >= 2) {
+      map.set(
+        nodeId,
+        new THREE.Vector3(node.x + disp[0]! * scaleFactor, node.y + disp[1]! * scaleFactor, node.z),
+      );
+    } else {
+      map.set(nodeId, new THREE.Vector3(node.x, node.y, node.z));
+    }
+  }
+  return map;
+}
+
 export function DeformedShape() {
   const nodes = useModelStore((s) => s.nodes);
   const elements = useModelStore((s) => s.elements);
@@ -22,8 +53,18 @@ export function DeformedShape() {
   const results = useAnalysisStore((s) => s.results);
   const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
   const comparisonFixedBase = useComparisonStore((s) => s.fixedBase);
+  const comparisonIsolated = useComparisonStore((s) => s.isolated);
+  const comparisonType = useComparisonStore((s) => s.comparisonType);
 
+  // Primary displacements: prefer comparison TH isolated data when active
   const displacements = useMemo(() => {
+    // Time-history comparison: use isolated variant's TH step data
+    if (comparisonType === 'time_history' && comparisonIsolated?.timeHistoryResults) {
+      const thResults = comparisonIsolated.timeHistoryResults;
+      const step = thResults.timeSteps[currentTimeStep];
+      return step?.nodeDisplacements ?? null;
+    }
+
     if (!results?.results) return null;
 
     if (results.type === 'static') {
@@ -47,67 +88,40 @@ export function DeformedShape() {
     }
 
     return null;
-  }, [results, currentTimeStep]);
+  }, [results, currentTimeStep, comparisonType, comparisonIsolated]);
 
-  const displacedNodes = useMemo(() => {
-    if (!displacements) return null;
-    const map = new Map<number, THREE.Vector3>();
-    for (const [nodeId, node] of nodes) {
-      const disp = displacements[nodeId];
-      if (disp) {
-        map.set(
-          nodeId,
-          new THREE.Vector3(
-            node.x + disp[0] * scaleFactor,
-            node.y + disp[1] * scaleFactor,
-            node.z + disp[2] * scaleFactor,
-          ),
-        );
-      } else {
-        map.set(nodeId, new THREE.Vector3(node.x, node.y, node.z));
-      }
-    }
-    return map;
-  }, [nodes, displacements, scaleFactor]);
+  const displacedNodes = useMemo(
+    () => buildDisplacedNodeMap(nodes, displacements, scaleFactor),
+    [nodes, displacements, scaleFactor],
+  );
 
-  // Fixed-base overlay displacements (from comparison results)
+  // Overlay displacements (fixed-base variant)
   const overlayDisplacedNodes = useMemo(() => {
     if (!showComparisonOverlay || !comparisonFixedBase) return null;
 
+    // Time-history comparison: animate fixed-base from TH step data
+    if (comparisonType === 'time_history' && comparisonFixedBase.timeHistoryResults) {
+      const thResults = comparisonFixedBase.timeHistoryResults;
+      const step = thResults.timeSteps[currentTimeStep];
+      return buildDisplacedNodeMap(nodes, step?.nodeDisplacements ?? null, scaleFactor);
+    }
+
+    // Pushover comparison: use static pushover displacements
     const fbDisps = (
       comparisonFixedBase.pushoverResults as PushoverResults & {
         nodeDisplacements?: Record<string, number[]>;
       }
     ).nodeDisplacements;
-    if (!fbDisps) return null;
 
-    const map = new Map<number, THREE.Vector3>();
-    for (const [nodeId, node] of nodes) {
-      const disp = fbDisps[String(nodeId)];
-      if (disp && disp.length >= 3) {
-        map.set(
-          nodeId,
-          new THREE.Vector3(
-            node.x + disp[0]! * scaleFactor,
-            node.y + disp[1]! * scaleFactor,
-            node.z + disp[2]! * scaleFactor,
-          ),
-        );
-      } else if (disp && disp.length >= 2) {
-        map.set(
-          nodeId,
-          new THREE.Vector3(
-            node.x + disp[0]! * scaleFactor,
-            node.y + disp[1]! * scaleFactor,
-            node.z,
-          ),
-        );
-      } else {
-        map.set(nodeId, new THREE.Vector3(node.x, node.y, node.z));
-      }
-    }
-    return map;
-  }, [nodes, showComparisonOverlay, comparisonFixedBase, scaleFactor]);
+    return buildDisplacedNodeMap(nodes, fbDisps ?? null, scaleFactor);
+  }, [
+    nodes,
+    showComparisonOverlay,
+    comparisonFixedBase,
+    comparisonType,
+    currentTimeStep,
+    scaleFactor,
+  ]);
 
   const elementArray = useMemo(() => Array.from(elements.values()), [elements]);
 

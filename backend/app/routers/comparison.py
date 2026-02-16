@@ -1,8 +1,8 @@
 """REST endpoint for running ductile vs isolated comparison analyses.
 
 Generates a fixed-base variant from the isolated model, runs pushover
-analysis on both variants (and optionally upper/lower bound lambda
-variants), and returns paired results.
+or time-history analysis on both variants (and optionally upper/lower
+bound lambda variants for pushover), and returns paired results.
 
 Endpoints:
     POST /api/comparison/run  -- Run comparison analysis
@@ -41,9 +41,9 @@ class RunComparisonRequest(BaseModel):
     """Request body for POST /api/comparison/run."""
 
     model_id: str = Field(..., description="ID of the isolated model to compare")
-    params: AnalysisParamsSchema = Field(..., description="Pushover analysis parameters")
+    params: AnalysisParamsSchema = Field(..., description="Analysis parameters (pushover or time_history)")
     lambda_factors: LambdaFactorsSchema | None = Field(
-        default=None, description="Optional lambda factors for upper/lower bound"
+        default=None, description="Optional lambda factors for upper/lower bound (pushover only)"
     )
 
 
@@ -87,6 +87,33 @@ def _run_variant_pushover(
     }
 
 
+def _run_variant_time_history(
+    model_data: dict, params: AnalysisParamsSchema
+) -> dict[str, Any]:
+    """Run time-history analysis on a model variant and return structured results."""
+    from app.services.solver import run_time_history
+
+    if not params.ground_motions:
+        raise ValueError("No ground motion records provided for time-history comparison")
+
+    gm = params.ground_motions[0]
+    accel = [a * gm.scale_factor for a in gm.acceleration]
+
+    results = run_time_history(
+        model_data,
+        ground_motion=accel,
+        dt=params.dt or gm.dt,
+        num_steps=params.num_steps or len(accel),
+        direction=gm.direction,
+    )
+
+    return {
+        "time_history_results": results,
+        "max_base_shear": results.get("max_base_shear", 0.0),
+        "max_roof_displacement": results.get("max_roof_displacement", 0.0),
+    }
+
+
 @router.post(
     "/api/comparison/run",
     status_code=status.HTTP_200_OK,
@@ -94,14 +121,16 @@ def _run_variant_pushover(
     response_description="Paired comparison results",
 )
 async def run_comparison(request: RunComparisonRequest) -> dict[str, Any]:
-    """Run pushover analysis on both isolated and fixed-base variants.
+    """Run analysis on both isolated and fixed-base variants.
 
-    1. Runs pushover on the original (isolated) model.
-    2. Generates a fixed-base variant and runs pushover on it.
-    3. Optionally runs upper/lower bound lambda variants.
+    Supports pushover and time-history comparison types.
+
+    1. Runs analysis on the original (isolated) model.
+    2. Generates a fixed-base variant and runs the same analysis on it.
+    3. For pushover, optionally runs upper/lower bound lambda variants.
 
     Args:
-        request: Contains model_id, pushover params, and optional lambda factors.
+        request: Contains model_id, analysis params, and optional lambda factors.
 
     Returns:
         A dict with comparison_id, status, and paired results for each variant.
@@ -117,18 +146,40 @@ async def run_comparison(request: RunComparisonRequest) -> dict[str, Any]:
 
     model_data = model_store[request.model_id]
     comparison_id = str(uuid.uuid4())
+    comparison_type = request.params.type or "pushover"
 
     try:
-        # 1. Run isolated (nominal) pushover
+        fixed_base_model = generate_fixed_base_variant(model_data)
+
+        if comparison_type == "time_history":
+            # Time-history comparison: run on both variants, no lambda factors
+            logger.info("Comparison %s: running isolated time-history", comparison_id)
+            isolated_results = _run_variant_time_history(model_data, request.params)
+
+            logger.info("Comparison %s: running fixed-base time-history", comparison_id)
+            fixed_base_results = _run_variant_time_history(fixed_base_model, request.params)
+
+            return {
+                "comparison_id": comparison_id,
+                "model_id": request.model_id,
+                "comparison_type": "time_history",
+                "status": "complete",
+                "isolated": isolated_results,
+                "isolated_upper": None,
+                "isolated_lower": None,
+                "fixed_base": fixed_base_results,
+                "lambda_factors": None,
+                "error": None,
+            }
+
+        # Default: pushover comparison
         logger.info("Comparison %s: running isolated (nominal) pushover", comparison_id)
         isolated_results = _run_variant_pushover(model_data, request.params)
 
-        # 2. Generate fixed-base variant and run pushover
         logger.info("Comparison %s: running fixed-base pushover", comparison_id)
-        fixed_base_model = generate_fixed_base_variant(model_data)
         fixed_base_results = _run_variant_pushover(fixed_base_model, request.params)
 
-        # 3. Optional upper/lower bound runs
+        # Optional upper/lower bound runs
         isolated_upper = None
         isolated_lower = None
         lambda_factors_out = None
@@ -159,6 +210,7 @@ async def run_comparison(request: RunComparisonRequest) -> dict[str, Any]:
         return {
             "comparison_id": comparison_id,
             "model_id": request.model_id,
+            "comparison_type": "pushover",
             "status": "complete",
             "isolated": isolated_results,
             "isolated_upper": isolated_upper,

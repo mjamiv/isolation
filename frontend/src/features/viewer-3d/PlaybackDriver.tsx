@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import { useAnalysisStore } from '@/stores/analysisStore';
+import { useComparisonStore } from '@/stores/comparisonStore';
 import type { TimeHistoryResults } from '@/types/analysis';
 
 export function PlaybackDriver() {
@@ -8,13 +9,24 @@ export function PlaybackDriver() {
   const playbackSpeed = useAnalysisStore((s) => s.playbackSpeed);
   const results = useAnalysisStore((s) => s.results);
   const setTimeStep = useAnalysisStore((s) => s.setTimeStep);
+  const comparisonType = useComparisonStore((s) => s.comparisonType);
+  const comparisonIsolated = useComparisonStore((s) => s.isolated);
 
   const accumulatorRef = useRef(0);
 
   useFrame((_, delta) => {
-    if (!isPlaying || !results?.results || results.type !== 'time_history') return;
+    if (!isPlaying) return;
 
-    const thResults = results.results as TimeHistoryResults;
+    // Determine TH source: comparison TH or regular analysis TH
+    let thResults: TimeHistoryResults | null = null;
+    if (comparisonType === 'time_history' && comparisonIsolated?.timeHistoryResults) {
+      thResults = comparisonIsolated.timeHistoryResults;
+    } else if (results?.results && results.type === 'time_history') {
+      thResults = results.results as TimeHistoryResults;
+    }
+
+    if (!thResults) return;
+
     const totalSteps = thResults.timeSteps.length;
     if (totalSteps === 0) return;
 
