@@ -41,7 +41,11 @@ export function useRunAnalysis() {
           }
 
           if (status === 'error' || status === 'failed') {
-            throw new Error(`Analysis failed (status: ${status})`);
+            const serverError =
+              typeof statusResp.error === 'string' && statusResp.error
+                ? statusResp.error
+                : `Analysis failed (status: ${status})`;
+            throw new Error(serverError);
           }
 
           // status === 'complete' or 'completed'

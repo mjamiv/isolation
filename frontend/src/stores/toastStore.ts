@@ -23,11 +23,14 @@ export const useToastStore = create<ToastState>((set) => ({
     set((state) => ({
       toasts: [...state.toasts, { id, type, message }],
     }));
-    setTimeout(() => {
-      set((state) => ({
-        toasts: state.toasts.filter((t) => t.id !== id),
-      }));
-    }, 5000);
+    // Error toasts persist until manually dismissed; others auto-dismiss
+    if (type !== 'error') {
+      setTimeout(() => {
+        set((state) => ({
+          toasts: state.toasts.filter((t) => t.id !== id),
+        }));
+      }, 5000);
+    }
   },
   removeToast: (id) =>
     set((state) => ({

@@ -1,5 +1,9 @@
 import { lazy, Suspense } from 'react';
-import type { PushoverResults as PushoverResultsType, HingeState, PerformanceLevel } from '@/types/analysis';
+import type {
+  PushoverResults as PushoverResultsType,
+  HingeState,
+  PerformanceLevel,
+} from '@/types/analysis';
 
 const Plot = lazy(() => import('react-plotly.js'));
 
@@ -40,23 +44,37 @@ export function PushoverResults({ data, hingeStates }: PushoverResultsProps) {
       <div>
         <h3 className="mb-1 text-xs font-semibold text-gray-300">Capacity Curve</h3>
         <div className="h-48 rounded bg-gray-800/50">
-          <Suspense fallback={<div className="flex h-full items-center justify-center text-xs text-gray-500">Loading chart...</div>}>
+          <Suspense
+            fallback={
+              <div className="flex h-full items-center justify-center text-xs text-gray-500">
+                Loading chart...
+              </div>
+            }
+          >
             <Plot
-              data={[{
-                x: roofDisps,
-                y: baseShears,
-                type: 'scatter' as const,
-                mode: 'lines' as const,
-                line: { color: '#f59e0b', width: 1.5 },
-                name: 'Capacity Curve',
-              }]}
+              data={[
+                {
+                  x: roofDisps,
+                  y: baseShears,
+                  type: 'scattergl' as const,
+                  mode: 'lines' as const,
+                  line: { color: '#f59e0b', width: 1.5 },
+                  name: 'Capacity Curve',
+                },
+              ]}
               layout={{
                 margin: { t: 10, r: 10, b: 30, l: 40 },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 font: { color: '#9ca3af', size: 9 },
-                xaxis: { title: { text: 'Roof Displacement (in)', font: { size: 9 } }, gridcolor: '#374151' },
-                yaxis: { title: { text: 'Base Shear (kip)', font: { size: 9 } }, gridcolor: '#374151' },
+                xaxis: {
+                  title: { text: 'Roof Displacement (in)', font: { size: 9 } },
+                  gridcolor: '#374151',
+                },
+                yaxis: {
+                  title: { text: 'Base Shear (kip)', font: { size: 9 } },
+                  gridcolor: '#374151',
+                },
                 showlegend: false,
               }}
               config={{ displayModeBar: false, responsive: true }}
@@ -89,8 +107,12 @@ export function PushoverResults({ data, hingeStates }: PushoverResultsProps) {
                     <td className="px-2 py-0.5 font-mono">{h.end}</td>
                     <td className="px-2 py-0.5 text-right font-mono">{h.rotation.toFixed(5)}</td>
                     <td className="px-2 py-0.5 text-right font-mono">{h.moment.toFixed(2)}</td>
-                    <td className="px-2 py-0.5 text-right font-mono">{h.demandCapacityRatio.toFixed(2)}</td>
-                    <td className={`px-2 py-0.5 font-mono ${PERF_LEVEL_COLORS[h.performanceLevel]}`}>
+                    <td className="px-2 py-0.5 text-right font-mono">
+                      {h.demandCapacityRatio.toFixed(2)}
+                    </td>
+                    <td
+                      className={`px-2 py-0.5 font-mono ${PERF_LEVEL_COLORS[h.performanceLevel]}`}
+                    >
                       {h.performanceLevel}
                     </td>
                   </tr>

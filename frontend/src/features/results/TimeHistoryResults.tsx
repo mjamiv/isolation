@@ -167,7 +167,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                 {
                   x: times,
                   y: nodeTrace.dx,
-                  type: 'scatter' as const,
+                  type: 'scattergl' as const,
                   mode: 'lines' as const,
                   line: { color: '#38bdf8', width: 1.3 },
                   name: 'Ux',
@@ -175,7 +175,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                 {
                   x: times,
                   y: nodeTrace.dy,
-                  type: 'scatter' as const,
+                  type: 'scattergl' as const,
                   mode: 'lines' as const,
                   line: { color: '#22c55e', width: 1.1 },
                   name: 'Uy',
@@ -183,7 +183,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                 {
                   x: times,
                   y: nodeTrace.dz,
-                  type: 'scatter' as const,
+                  type: 'scattergl' as const,
                   mode: 'lines' as const,
                   line: { color: '#f59e0b', width: 1.1 },
                   name: 'Uz',
@@ -191,7 +191,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                 {
                   x: [currentTime],
                   y: [nodeTrace.dx[stepIndex] ?? 0],
-                  type: 'scatter' as const,
+                  type: 'scattergl' as const,
                   mode: 'markers' as const,
                   marker: { color: '#f43f5e', size: 7 },
                   name: 'Current',
@@ -245,7 +245,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                     {
                       x: times,
                       y: bearingTrace.dispX,
-                      type: 'scatter' as const,
+                      type: 'scattergl' as const,
                       mode: 'lines' as const,
                       line: { color: '#34d399', width: 1.4 },
                       name: 'Disp X',
@@ -253,7 +253,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                     {
                       x: times,
                       y: bearingTrace.forceX,
-                      type: 'scatter' as const,
+                      type: 'scattergl' as const,
                       mode: 'lines' as const,
                       yaxis: 'y2' as const,
                       line: { color: '#f97316', width: 1.2 },
@@ -297,7 +297,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                     {
                       x: bearingTrace.dispX,
                       y: bearingTrace.forceX,
-                      type: 'scatter' as const,
+                      type: 'scattergl' as const,
                       mode: 'lines' as const,
                       line: { color: '#10b981', width: 1.2 },
                       name: 'Loop',
@@ -305,7 +305,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                     {
                       x: [bearingTrace.dispX[stepIndex] ?? 0],
                       y: [bearingTrace.forceX[stepIndex] ?? 0],
-                      type: 'scatter' as const,
+                      type: 'scattergl' as const,
                       mode: 'markers' as const,
                       marker: { color: '#f43f5e', size: 7 },
                       name: 'Current',
@@ -363,7 +363,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                   {
                     x: times,
                     y: elementTrace.shear,
-                    type: 'scatter' as const,
+                    type: 'scattergl' as const,
                     mode: 'lines' as const,
                     line: { color: '#60a5fa', width: 1.2 },
                     name: 'Shear',
@@ -371,7 +371,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                   {
                     x: times,
                     y: elementTrace.moment,
-                    type: 'scatter' as const,
+                    type: 'scattergl' as const,
                     mode: 'lines' as const,
                     line: { color: '#f59e0b', width: 1.2 },
                     name: 'Moment',

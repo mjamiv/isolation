@@ -23,6 +23,7 @@ export function StatusBar() {
   const status = useAnalysisStore((state) => state.status);
   const progress = useAnalysisStore((state) => state.progress);
   const currentTimeStep = useAnalysisStore((state) => state.currentTimeStep);
+  const analysisType = useAnalysisStore((state) => state.analysisType);
   const error = useAnalysisStore((state) => state.error);
 
   const nodeCount = nodes.size;
@@ -64,8 +65,10 @@ export function StatusBar() {
         {status === 'error' && error && <span className="text-red-400">{error}</span>}
       </div>
 
-      {/* Center: Time step (if analysis is complete) */}
-      {status === 'complete' && <div className="text-gray-400">Time Step: {currentTimeStep}</div>}
+      {/* Center: Time step (only for time-history analysis) */}
+      {status === 'complete' && analysisType === 'time_history' && (
+        <div className="text-gray-400">Time Step: {currentTimeStep}</div>
+      )}
 
       {/* Right: Model info */}
       <div className="flex items-center gap-3 text-gray-500">

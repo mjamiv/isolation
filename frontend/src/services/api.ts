@@ -116,7 +116,8 @@ function normalizeStatus(status: string): AnalysisResults['status'] {
   return 'running';
 }
 
-type RawMap = Record<string, unknown>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RawMap = Record<string, any>;
 
 function normalizeStaticResults(raw: RawMap): StaticResults {
   const nodeDisplacements: Record<number, [number, number, number, number, number, number]> = {};
@@ -408,9 +409,9 @@ export async function getResultsSummary(
  */
 export async function getAnalysisStatus(
   analysisId: string,
-): Promise<{ status: string; progress: number }> {
+): Promise<{ status: string; progress: number; error?: string }> {
   const response = await fetch(`${API_BASE}/analysis/${analysisId}/status`);
-  return handleResponse<{ status: string; progress: number }>(response);
+  return handleResponse<{ status: string; progress: number; error?: string }>(response);
 }
 
 /**

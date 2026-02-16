@@ -138,7 +138,11 @@ export function Toolbar() {
         </button>
 
         <button
-          onClick={clearModel}
+          onClick={() => {
+            if (window.confirm('Reset the model? All unsaved changes will be lost.')) {
+              clearModel();
+            }
+          }}
           className="rounded bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-600"
         >
           Reset

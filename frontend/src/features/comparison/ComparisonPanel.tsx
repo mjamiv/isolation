@@ -89,7 +89,7 @@ export function ComparisonPanel() {
     {
       x: isolated.pushoverResults.capacityCurve.map((pt) => pt.roofDisplacement),
       y: isolated.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
-      type: 'scatter' as const,
+      type: 'scattergl' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 2 },
       name: 'Isolated (Nominal)',
@@ -97,7 +97,7 @@ export function ComparisonPanel() {
     {
       x: fixedBase.pushoverResults.capacityCurve.map((pt) => pt.roofDisplacement),
       y: fixedBase.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
-      type: 'scatter' as const,
+      type: 'scattergl' as const,
       mode: 'lines' as const,
       line: { color: '#FACC15', width: 2 },
       name: 'Fixed-Base',
@@ -108,7 +108,7 @@ export function ComparisonPanel() {
     capacityTraces.push({
       x: isolatedUpper.pushoverResults.capacityCurve.map((pt) => pt.roofDisplacement),
       y: isolatedUpper.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
-      type: 'scatter' as const,
+      type: 'scattergl' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 1.5, dash: 'dash' },
       name: `Upper (${lambdaFactors?.max ?? 1.8})`,
@@ -119,7 +119,7 @@ export function ComparisonPanel() {
     capacityTraces.push({
       x: isolatedLower.pushoverResults.capacityCurve.map((pt) => pt.roofDisplacement),
       y: isolatedLower.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
-      type: 'scatter' as const,
+      type: 'scattergl' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 1.5, dash: 'dot' },
       name: `Lower (${lambdaFactors?.min ?? 0.85})`,

@@ -1,11 +1,6 @@
 import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import {
-  OrbitControls,
-  GizmoHelper,
-  GizmoViewport,
-  Grid,
-} from '@react-three/drei';
+import { OrbitControls, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
 import { useDisplayStore } from '../../stores/displayStore';
 import { StructuralModel3D } from './StructuralModel3D';
 
@@ -32,10 +27,7 @@ function SceneContent() {
 
       {/* Orientation gizmo */}
       <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
-        <GizmoViewport
-          axisColors={['#ef4444', '#22c55e', '#3b82f6']}
-          labelColor="white"
-        />
+        <GizmoViewport axisColors={['#ef4444', '#22c55e', '#3b82f6']} labelColor="white" />
       </GizmoHelper>
 
       {/* Ground grid */}
@@ -68,10 +60,10 @@ export function Viewer3D() {
   return (
     <div className="h-full w-full">
       <Canvas
+        frameloop="demand"
         gl={{
           antialias: true,
           alpha: true,
-          preserveDrawingBuffer: true,
           powerPreference: 'high-performance',
         }}
         camera={{
