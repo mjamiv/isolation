@@ -111,7 +111,12 @@ def _run_gravity_preload(model_data: dict, num_steps: int = 10) -> int:
 
     ops.constraints("Transformation")
     ops.numberer("RCM")
-    ops.system("BandGeneral")
+    # Use UmfPack for bearing models (sparse, handles non-banded 3D systems)
+    num_bearings = len(model_data.get("bearings", []))
+    if num_bearings > 4:
+        ops.system("UmfPack")
+    else:
+        ops.system("BandGeneral")
     ops.test("NormDispIncr", 1.0e-4, 200)
     ops.algorithm("Newton")
 
@@ -497,8 +502,14 @@ def run_time_history(
         # --- Analysis configuration ---
         ops.constraints("Transformation")
         ops.numberer("RCM")
-        ops.system("BandGeneral")
-        ops.test("NormDispIncr", 1.0e-5, 50)
+        num_bearings = len(model_data.get("bearings", []))
+        if num_bearings > 4:
+            # Sparse solver for large 3D bearing models
+            ops.system("UmfPack")
+            ops.test("NormDispIncr", 1.0e-4, 100)
+        else:
+            ops.system("BandGeneral")
+            ops.test("NormDispIncr", 1.0e-5, 50)
         ops.algorithm("Newton")
         ops.integrator("Newmark", 0.5, 0.25)
         ops.analysis("Transient")
@@ -564,17 +575,32 @@ def run_time_history(
             return r
 
         # --- Integration loop ---
+        # For models with many bearings (>4), use more aggressive sub-stepping
+        many_bearings = num_bearings > 4
         current_time = 0.0
         for step in range(num_steps):
             result = _analyze_step(dt, use_extended_fallback=has_bearings)
             if result != 0 and has_bearings:
-                sub_dt = dt / 5.0
+                # Level 1 sub-stepping: dt/10 with Krylov fallback
+                n_sub1 = 10 if many_bearings else 5
+                sub_dt = dt / n_sub1
                 sub_ok = True
-                for _sub in range(5):
-                    r = _analyze_step(sub_dt, use_extended_fallback=False)
+                for _sub in range(n_sub1):
+                    r = _analyze_step(sub_dt, use_extended_fallback=many_bearings)
                     if r != 0:
                         sub_ok = False
                         break
+                # Level 2 sub-stepping for large bearing models: dt/50
+                if not sub_ok and many_bearings:
+                    sub_dt2 = dt / 50.0
+                    remaining = n_sub1 - _sub  # noqa: F821
+                    n_sub2 = remaining * 5  # each remaining L1 step → 5 L2 steps
+                    sub_ok = True
+                    for _sub2 in range(n_sub2):
+                        r = _analyze_step(sub_dt2, use_extended_fallback=True)
+                        if r != 0:
+                            sub_ok = False
+                            break
                 if not sub_ok:
                     logger.warning("Analysis failed at step %d / %d", step, num_steps)
                     break

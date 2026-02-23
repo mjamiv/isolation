@@ -45,9 +45,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -61,9 +61,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -77,9 +77,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -93,9 +93,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -109,9 +109,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -125,9 +125,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -141,9 +141,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -157,9 +157,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -173,9 +173,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -189,9 +189,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -205,9 +205,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -221,9 +221,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -237,9 +237,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -253,9 +253,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -269,9 +269,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -285,9 +285,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -301,9 +301,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -317,9 +317,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -333,9 +333,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -349,9 +349,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -365,9 +365,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -381,9 +381,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -397,9 +397,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -413,9 +413,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -429,9 +429,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -445,9 +445,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -461,9 +461,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -477,9 +477,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -493,9 +493,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -509,9 +509,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -525,9 +525,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -541,9 +541,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -557,9 +557,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -573,9 +573,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -589,9 +589,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -605,9 +605,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -621,9 +621,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -637,9 +637,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -653,9 +653,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
@@ -669,9 +669,9 @@
       "restraint": [
         false,
         false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false
       ],
       "mass": 15.0,
