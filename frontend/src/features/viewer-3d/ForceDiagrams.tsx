@@ -102,6 +102,22 @@ function inferUnits(forceType: ForceType, unitsRaw: string | undefined): string 
   return '';
 }
 
+/** Compute the diagram normal for a member axis. Uses in-plane normal for 2D frames. */
+function computeNormal(pI: THREE.Vector3, pJ: THREE.Vector3): THREE.Vector3 {
+  const axis = new THREE.Vector3().subVectors(pJ, pI).normalize();
+
+  // Detect 2D frame (both nodes have Z near 0) — use in-plane normal
+  if (Math.abs(pI.z) < 1e-3 && Math.abs(pJ.z) < 1e-3) {
+    return new THREE.Vector3(-axis.y, axis.x, 0).normalize();
+  }
+
+  let up = new THREE.Vector3(0, 1, 0);
+  if (Math.abs(axis.dot(up)) > 0.9) {
+    up = new THREE.Vector3(1, 0, 0);
+  }
+  return new THREE.Vector3().crossVectors(axis, up).normalize();
+}
+
 export function ForceDiagrams() {
   const model = useModelStore((s) => s.model);
   const nodes = useModelStore((s) => s.nodes);
@@ -163,15 +179,101 @@ export function ForceDiagrams() {
     return {} as Record<number, number[]>;
   }, [results, forceType, currentTimeStep]);
 
+  const discretizationData = useMemo(() => {
+    if (!results?.results) return null;
+    const r = results.results as StaticResults | PushoverResults | TimeHistoryResults;
+    if ('discretizationMap' in r && r.discretizationMap && r.internalNodeCoords) {
+      return {
+        map: r.discretizationMap,
+        internalCoords: r.internalNodeCoords,
+      };
+    }
+    return null;
+  }, [results]);
+
   const diagramItems = useMemo(() => {
     if (forceType === 'none') return [] as DiagramItem[];
 
-    const endValuesByElement: Array<{ id: number; i: number; j: number }> = [];
-    for (const [rawId, vec] of Object.entries(forceByElement)) {
-      const id = Number(rawId);
-      const values = Array.isArray(vec) ? vec : [];
-      const [vI, vJ] = getEndValues(values, forceType);
-      endValuesByElement.push({ id, i: vI, j: vJ });
+    const endValuesByElement: Array<{
+      id: number;
+      i: number;
+      j: number;
+      pI: THREE.Vector3;
+      pJ: THREE.Vector3;
+    }> = [];
+
+    if (discretizationData) {
+      const handledSubIds = new Set<number>();
+      const { map: discMap, internalCoords } = discretizationData;
+
+      // Helper to get a node position from store or internalCoords
+      const getNodePos = (nodeId: number): THREE.Vector3 | null => {
+        const storeNode = nodes.get(nodeId);
+        if (storeNode) return new THREE.Vector3(storeNode.x, storeNode.y, storeNode.z);
+        const ic = internalCoords[nodeId] ?? internalCoords[String(nodeId) as unknown as number];
+        if (ic && ic.length >= 3) return new THREE.Vector3(ic[0]!, ic[1]!, ic[2]!);
+        if (ic && ic.length >= 2) return new THREE.Vector3(ic[0]!, ic[1]!, 0);
+        return null;
+      };
+
+      // Process discretized elements
+      for (const [origIdStr, entry] of Object.entries(discMap)) {
+        const origId = Number(origIdStr);
+        const { nodeChain, subElementIds } = entry;
+
+        for (let s = 0; s < subElementIds.length; s++) {
+          const subId = subElementIds[s]!;
+          handledSubIds.add(subId);
+
+          const vec = forceByElement[subId];
+          if (!vec) continue;
+
+          const nodeIId = nodeChain[s]!;
+          const nodeJId = nodeChain[s + 1]!;
+          const pI = getNodePos(nodeIId);
+          const pJ = getNodePos(nodeJId);
+          if (!pI || !pJ) continue;
+
+          const values = Array.isArray(vec) ? vec : [];
+          const [vI, vJ] = getEndValues(values, forceType);
+          // Use origId so selection highlighting works on original element
+          endValuesByElement.push({ id: origId, i: vI, j: vJ, pI, pJ });
+        }
+      }
+
+      // Process non-discretized elements (bearings, etc.)
+      for (const [rawId, vec] of Object.entries(forceByElement)) {
+        const id = Number(rawId);
+        if (handledSubIds.has(id)) continue;
+
+        const el = elements.get(id);
+        if (!el) continue;
+        const nI = nodes.get(el.nodeI);
+        const nJ = nodes.get(el.nodeJ);
+        if (!nI || !nJ) continue;
+
+        const pI = new THREE.Vector3(nI.x, nI.y, nI.z);
+        const pJ = new THREE.Vector3(nJ.x, nJ.y, nJ.z);
+        const values = Array.isArray(vec) ? vec : [];
+        const [vI, vJ] = getEndValues(values, forceType);
+        endValuesByElement.push({ id, i: vI, j: vJ, pI, pJ });
+      }
+    } else {
+      // No discretization — original logic
+      for (const [rawId, vec] of Object.entries(forceByElement)) {
+        const id = Number(rawId);
+        const el = elements.get(id);
+        if (!el) continue;
+        const nI = nodes.get(el.nodeI);
+        const nJ = nodes.get(el.nodeJ);
+        if (!nI || !nJ) continue;
+
+        const pI = new THREE.Vector3(nI.x, nI.y, nI.z);
+        const pJ = new THREE.Vector3(nJ.x, nJ.y, nJ.z);
+        const values = Array.isArray(vec) ? vec : [];
+        const [vI, vJ] = getEndValues(values, forceType);
+        endValuesByElement.push({ id, i: vI, j: vJ, pI, pJ });
+      }
     }
 
     let maxAbs = 0;
@@ -186,24 +288,11 @@ export function ForceDiagrams() {
     const out: DiagramItem[] = [];
 
     for (const ev of endValuesByElement) {
-      const el = elements.get(ev.id);
-      if (!el) continue;
-      const nI = nodes.get(el.nodeI);
-      const nJ = nodes.get(el.nodeJ);
-      if (!nI || !nJ) continue;
-
-      const pI = new THREE.Vector3(nI.x, nI.y, nI.z);
-      const pJ = new THREE.Vector3(nJ.x, nJ.y, nJ.z);
-      const axis = new THREE.Vector3().subVectors(pJ, pI);
-      const len = axis.length();
+      const { pI, pJ } = ev;
+      const len = pI.distanceTo(pJ);
       if (len < 1e-9) continue;
-      axis.normalize();
 
-      let up = new THREE.Vector3(0, 1, 0);
-      if (Math.abs(axis.dot(up)) > 0.9) {
-        up = new THREE.Vector3(1, 0, 0);
-      }
-      const normal = new THREE.Vector3().crossVectors(axis, up).normalize();
+      const normal = computeNormal(pI, pJ);
 
       const offI = normal.clone().multiplyScalar(ev.i * scale);
       const offJ = normal.clone().multiplyScalar(ev.j * scale);
@@ -227,7 +316,15 @@ export function ForceDiagrams() {
     }
 
     return out;
-  }, [nodes, elements, forceByElement, forceType, forceScale, sceneMetrics.modelSize]);
+  }, [
+    nodes,
+    elements,
+    forceByElement,
+    forceType,
+    forceScale,
+    sceneMetrics.modelSize,
+    discretizationData,
+  ]);
 
   if (diagramItems.length === 0) return null;
 
@@ -256,7 +353,7 @@ export function ForceDiagrams() {
         </div>
       </Html>
 
-      {diagramItems.map((item) => {
+      {diagramItems.map((item, idx) => {
         if (showOnlySelected && !selectedElementIds.has(item.elementId)) return null;
 
         const [q0, q1, q2, q3] = item.quad;
@@ -276,7 +373,7 @@ export function ForceDiagrams() {
         ]);
 
         return (
-          <group key={`force-${item.elementId}`}>
+          <group key={`force-${item.elementId}-${idx}`}>
             <mesh renderOrder={2}>
               <bufferGeometry>
                 <bufferAttribute attach="attributes-position" args={[positions, 3]} />

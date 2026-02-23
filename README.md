@@ -95,6 +95,13 @@ Phases 1 through 5 are complete. The app provides:
 - **Time-history robustness** — `wipeAnalysis()` between gravity (Static) and transient phases, sub-stepping for failed time steps, relaxed tolerance (1e-5)
 - **Per-element vecxz vectors** — 3D elements compute geometric transformation vectors from element direction (vertical→(1,0,0), horizontal→(0,0,1)) to avoid singularities
 
+### Member Discretization & Force Diagram Improvements
+- **5:1 member discretization** — backend `_discretize_elements()` splits each `elasticBeamColumn` into 5 sub-elements with 4 internal nodes for improved analytical accuracy across all 4 analysis types
+- **In-plane force diagrams** — 2D planar frames (X-Y plane) now project force diagrams in-plane using rotated normals instead of cross-product Z-direction normals
+- **Curved deformed shapes** — `DeformedShape` renders polylines through internal discretization nodes, showing member curvature under load
+- **Sub-element force resolution** — `ForceDiagrams` iterates discretization sub-elements for detailed force distributions along members
+- **Discretization data pipeline** — backend returns `discretization_map` and `internal_node_coords` through API normalizers to frontend result types (`StaticResults`, `PushoverResults`, `TimeHistoryResults`)
+
 ### Bug Fixes & Polish
 - **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
@@ -215,13 +222,13 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (204 tests across 19 suites)
+# Frontend tests (207 tests across 19 suites)
 cd frontend && npm test
 
 # Frontend lint
 cd frontend && npm run lint
 
-# Backend unit tests (69 tests with mocked OpenSeesPy)
+# Backend unit tests (105 tests with mocked OpenSeesPy)
 cd backend && pytest
 
 # Integration tests (23 tests, requires running backend)

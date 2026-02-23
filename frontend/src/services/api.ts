@@ -134,6 +134,8 @@ function normalizeStaticResults(raw: RawMap): StaticResults {
     nodeDisplacements,
     elementForces: raw?.elementForces ?? {},
     reactions,
+    discretizationMap: raw?.discretizationMap,
+    internalNodeCoords: raw?.internalNodeCoords,
   };
 }
 
@@ -259,6 +261,8 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
       maxBaseShear: { value: maxBaseShear, step: maxBaseShearStep },
       maxBearingDisp: { value: maxBearingDisp, bearingId: maxBearingId, step: maxBearingStep },
     },
+    discretizationMap: raw?.discretizationMap,
+    internalNodeCoords: raw?.internalNodeCoords,
   };
 }
 
@@ -281,6 +285,8 @@ function normalizePushoverResults(raw: RawMap): PushoverResults {
     nodeDisplacements,
     elementForces: raw?.elementForces ?? {},
     reactions,
+    discretizationMap: raw?.discretizationMap,
+    internalNodeCoords: raw?.internalNodeCoords,
   };
 }
 

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { AnalysisParams, AnalysisResults } from '@/types/analysis';
 import { useAnalysisStore } from '@/stores/analysisStore';
+import { useDisplayStore } from '@/stores/displayStore';
 import { useToastStore } from '@/stores/toastStore';
 import { runAnalysis, getAnalysisStatus, getResults } from '@/services/api';
 import { useRunAsync } from './useRunAsync';
@@ -57,6 +58,24 @@ export function useRunAnalysis() {
       onStart: () => startAnalysis(),
       onResult: (result: AnalysisResults) => {
         setResults(result);
+
+        // Auto-enable visualizations based on analysis type
+        const display = useDisplayStore.getState();
+        if (
+          result.type === 'static' ||
+          result.type === 'pushover' ||
+          result.type === 'time_history'
+        ) {
+          display.setShowDeformed(true);
+          display.setShowForces(true);
+          if (display.forceType === 'none') {
+            display.setForceType('moment');
+          }
+        }
+        if (result.type === 'modal') {
+          useAnalysisStore.getState().setSelectedModeNumber(1);
+        }
+
         useToastStore.getState().addToast('success', 'Analysis completed successfully.');
       },
       onError: (message: string) => {

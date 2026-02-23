@@ -27,7 +27,7 @@ describe('modelStore — ground motion generators', () => {
     expect(gm.dt).toBe(0.02);
     expect(gm.acceleration).toHaveLength(750);
     expect(gm.direction).toBe(1);
-    expect(gm.scaleFactor).toBe(1.0);
+    expect(gm.scaleFactor).toBe(386.4);
   });
 
   it('El Centro peak acceleration is ~0.35g', () => {

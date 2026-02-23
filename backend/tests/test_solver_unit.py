@@ -375,8 +375,12 @@ class TestRunStaticAnalysis:
         _mock_ops.eleResponse.side_effect = Exception("Element not found")
 
         result = run_static_analysis(minimal_2d_model)
-        # Should still return results with empty force list
-        assert result["element_forces"]["1"] == []
+        # After discretization, original element 1 is split into sub-elements.
+        # All sub-elements should still return empty force lists on exception.
+        disc_map = result["discretization_map"]
+        assert 1 in disc_map
+        for sub_id in disc_map[1]["sub_element_ids"]:
+            assert result["element_forces"][str(sub_id)] == []
 
     def test_applies_nodal_loads(self, minimal_2d_model):
         _mock_ops.analyze.return_value = 0

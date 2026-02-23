@@ -13,6 +13,7 @@ Usage::
 
 from __future__ import annotations
 
+import copy
 import logging
 import math
 from typing import Any
@@ -84,6 +85,128 @@ def _to_float_list(values: Any) -> list[float]:
         return [_to_float(v, 0.0) for v in values]
     except Exception:
         return []
+
+
+# ---------------------------------------------------------------------------
+# Member discretization helper
+# ---------------------------------------------------------------------------
+
+
+def _discretize_elements(
+    model_data: dict, ratio: int = 5
+) -> tuple[dict, dict[int, dict], dict[int, list[float]]]:
+    """Split each elasticBeamColumn element into *ratio* sub-elements.
+
+    Only ``elasticBeamColumn`` elements are discretized; truss, zeroLength,
+    and other element types are left unchanged.
+
+    For each qualifying element, ``ratio - 1`` internal nodes are created
+    via linear interpolation between nodeI and nodeJ.  The original element
+    is then replaced by *ratio* sub-elements that share the same section_id
+    and geometric-transform name.
+
+    Args:
+        model_data: Model definition dict (will be deep-copied, NOT mutated).
+        ratio: Number of sub-elements per original element (default 5).
+
+    Returns:
+        A tuple of:
+        - modified model_data (deep copy)
+        - discretization_map: ``{ orig_elem_id: { "node_chain": [nodeI, ..., nodeJ],
+          "sub_element_ids": [id1, ...] } }``
+        - internal_node_coords: new node id -> coordinate list
+    """
+    if ratio < 2:
+        return model_data, {}, {}
+
+    data = copy.deepcopy(model_data)
+    ndf = data.get("model_info", {}).get("ndf", 3)
+
+    # Build node coord lookup
+    node_lookup: dict[int, list[float]] = {}
+    for node in data.get("nodes", []):
+        node_lookup[node["id"]] = list(node["coords"])
+
+    # Compute starting IDs for new nodes and elements
+    all_node_ids = [n["id"] for n in data.get("nodes", [])]
+    next_node_id = max(all_node_ids) + 1 if all_node_ids else 1
+
+    all_elem_ids = [e["id"] for e in data.get("elements", [])]
+    # Also account for bearing element tags (offset by 10000)
+    bearing_tags = [10000 + b["id"] for b in data.get("bearings", [])]
+    max_elem_id = max(all_elem_ids + bearing_tags) if (all_elem_ids or bearing_tags) else 0
+    next_elem_id = max_elem_id + 1
+
+    discretization_map: dict[int, dict] = {}
+    internal_node_coords: dict[int, list[float]] = {}
+
+    new_elements: list[dict] = []
+    new_nodes: list[dict] = []
+
+    for elem in data.get("elements", []):
+        if elem["type"] != "elasticBeamColumn":
+            new_elements.append(elem)
+            continue
+
+        eid = elem["id"]
+        node_i_id = elem["nodes"][0]
+        node_j_id = elem["nodes"][1]
+        coords_i = node_lookup.get(node_i_id, [0.0, 0.0, 0.0])
+        coords_j = node_lookup.get(node_j_id, [0.0, 0.0, 0.0])
+        ndm = len(coords_i)
+
+        # Create internal nodes via linear interpolation
+        chain_node_ids: list[int] = [node_i_id]
+        for k in range(1, ratio):
+            frac = k / ratio
+            interp_coords = [
+                coords_i[d] + frac * (coords_j[d] - coords_i[d])
+                for d in range(ndm)
+            ]
+            nid = next_node_id
+            next_node_id += 1
+            new_nodes.append({
+                "id": nid,
+                "coords": interp_coords,
+                "fixity": [0] * ndf,
+            })
+            node_lookup[nid] = interp_coords
+            internal_node_coords[nid] = interp_coords
+            chain_node_ids.append(nid)
+        chain_node_ids.append(node_j_id)
+
+        # Create sub-elements
+        sub_ids: list[int] = []
+        for k in range(ratio):
+            sub_eid = next_elem_id
+            next_elem_id += 1
+            sub_ids.append(sub_eid)
+            new_elements.append({
+                "id": sub_eid,
+                "type": "elasticBeamColumn",
+                "nodes": [chain_node_ids[k], chain_node_ids[k + 1]],
+                "section_id": elem.get("section_id", 0),
+                "transform": elem.get("transform", "Linear"),
+            })
+
+        discretization_map[eid] = {
+            "node_chain": chain_node_ids,
+            "sub_element_ids": sub_ids,
+        }
+
+    # Append internal nodes to model
+    data["nodes"] = data.get("nodes", []) + new_nodes
+    data["elements"] = new_elements
+
+    logger.info(
+        "Discretized %d elements (ratio=%d): %d internal nodes, %d sub-elements",
+        len(discretization_map),
+        ratio,
+        len(internal_node_coords),
+        sum(len(v) for v in discretization_map.values()),
+    )
+
+    return data, discretization_map, internal_node_coords
 
 
 # ---------------------------------------------------------------------------
@@ -249,6 +372,7 @@ def run_static_analysis(model_data: dict) -> dict:
     """
     ops.wipe()
     try:
+        model_data, disc_map, int_coords = _discretize_elements(model_data)
         build_model(model_data)
 
         has_bearings = bool(model_data.get("bearings"))
@@ -308,6 +432,8 @@ def run_static_analysis(model_data: dict) -> dict:
             "element_forces": element_forces,
             "reactions": reactions,
             "deformed_shape": deformed_shape,
+            "discretization_map": disc_map,
+            "internal_node_coords": {str(k): v for k, v in int_coords.items()},
         }
 
     finally:
@@ -332,6 +458,7 @@ def run_modal_analysis(model_data: dict, num_modes: int = 3) -> dict:
     """
     ops.wipe()
     try:
+        model_data, disc_map, int_coords = _discretize_elements(model_data)
         build_model(model_data)
 
         # Need mass -- assign from loads or explicit mass
@@ -424,6 +551,8 @@ def run_modal_analysis(model_data: dict, num_modes: int = 3) -> dict:
             "frequencies": frequencies,
             "mode_shapes": mode_shapes,
             "mass_participation": mass_participation,
+            "discretization_map": disc_map,
+            "internal_node_coords": {str(k): v for k, v in int_coords.items()},
         }
 
     finally:
@@ -460,6 +589,7 @@ def run_time_history(
     """
     ops.wipe()
     try:
+        model_data, disc_map, int_coords = _discretize_elements(model_data)
         build_model(model_data)
         _assign_mass(model_data)
 
@@ -672,6 +802,8 @@ def run_time_history(
             "node_displacements": node_disp_history,
             "element_forces": element_force_history,
             "bearing_responses": bearing_resp_history,
+            "discretization_map": disc_map,
+            "internal_node_coords": {str(k): v for k, v in int_coords.items()},
         }
 
     finally:
@@ -711,6 +843,7 @@ def run_pushover_analysis(
     """
     ops.wipe()
     try:
+        model_data, disc_map, int_coords = _discretize_elements(model_data)
         build_model(model_data)
         _assign_mass(model_data)
 
@@ -906,6 +1039,8 @@ def run_pushover_analysis(
             "element_forces": element_forces,
             "reactions": reactions,
             "deformed_shape": deformed_shape,
+            "discretization_map": disc_map,
+            "internal_node_coords": {str(k): v for k, v in int_coords.items()},
         }
 
     finally:
@@ -1359,8 +1494,6 @@ def generate_fixed_base_variant(model_data: dict) -> dict:
     Returns:
         A modified copy with bearings removed and base nodes fixed.
     """
-    import copy
-
     variant = copy.deepcopy(model_data)
 
     # Preserve Z-up convention flag so mass/height logic still works
@@ -1412,8 +1545,6 @@ def apply_lambda_factor(model_data: dict, factor: float) -> dict:
     Returns:
         A modified copy with scaled friction coefficients.
     """
-    import copy
-
     variant = copy.deepcopy(model_data)
 
     for bearing in variant.get("bearings", []):

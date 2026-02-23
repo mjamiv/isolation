@@ -95,6 +95,60 @@ export function DeformedShape() {
     [nodes, displacements, scaleFactor],
   );
 
+  // Extract discretization data from current results
+  const discretizationData = useMemo(() => {
+    if (!results?.results) return null;
+    const r = results.results as StaticResults | PushoverResults | TimeHistoryResults;
+    if ('discretizationMap' in r && r.discretizationMap && r.internalNodeCoords) {
+      return {
+        map: r.discretizationMap,
+        internalCoords: r.internalNodeCoords,
+      };
+    }
+    return null;
+  }, [results]);
+
+  // Extended displaced node map: includes internal discretization nodes
+  const extendedDisplacedNodes = useMemo(() => {
+    if (!displacedNodes || !discretizationData || !displacements) return null;
+
+    const extended = new Map(displacedNodes);
+    const { internalCoords } = discretizationData;
+
+    for (const [nodeIdStr, coords] of Object.entries(internalCoords)) {
+      const nodeId = Number(nodeIdStr);
+      if (extended.has(nodeId)) continue;
+      if (!coords || coords.length < 2) continue;
+
+      const baseX = coords[0]!;
+      const baseY = coords[1]!;
+      const baseZ = coords.length >= 3 ? coords[2]! : 0;
+
+      // Look up displacement for this internal node
+      const disp = displacements[nodeId] ?? displacements[String(nodeId) as unknown as number];
+      if (disp && disp.length >= 3) {
+        extended.set(
+          nodeId,
+          new THREE.Vector3(
+            baseX + disp[0]! * scaleFactor,
+            baseY + disp[1]! * scaleFactor,
+            baseZ + disp[2]! * scaleFactor,
+          ),
+        );
+      } else if (disp && disp.length >= 2) {
+        extended.set(
+          nodeId,
+          new THREE.Vector3(baseX + disp[0]! * scaleFactor, baseY + disp[1]! * scaleFactor, baseZ),
+        );
+      } else {
+        // No displacement data for internal node — use base position
+        extended.set(nodeId, new THREE.Vector3(baseX, baseY, baseZ));
+      }
+    }
+
+    return extended;
+  }, [displacedNodes, discretizationData, displacements, scaleFactor]);
+
   // Overlay displacements (fixed-base variant)
   const overlayDisplacedNodes = useMemo(() => {
     if (!showComparisonOverlay || !comparisonFixedBase) return null;
@@ -125,6 +179,12 @@ export function DeformedShape() {
 
   const elementArray = useMemo(() => Array.from(elements.values()), [elements]);
 
+  // Set of element IDs that have discretization data
+  const discretizedElementIds = useMemo(() => {
+    if (!discretizationData) return new Set<number>();
+    return new Set(Object.keys(discretizationData.map).map(Number));
+  }, [discretizationData]);
+
   const nodePositions = useMemo(() => {
     if (!displacedNodes) return [];
     return Array.from(displacedNodes.values());
@@ -137,10 +197,38 @@ export function DeformedShape() {
 
   if (!showDeformed || !displacedNodes) return null;
 
+  // Choose the node map for primary rendering (extended if discretization available)
+  const primaryNodeMap = extendedDisplacedNodes ?? displacedNodes;
+
   return (
     <group>
       {/* Primary deformed members (gold - isolated / main) */}
       {elementArray.map((element) => {
+        // If this element has discretization data, render polyline through node chain
+        if (discretizationData && discretizedElementIds.has(element.id)) {
+          const entry = discretizationData.map[element.id];
+          if (!entry) return null;
+          const { nodeChain } = entry;
+          const points: THREE.Vector3[] = [];
+          for (const nid of nodeChain) {
+            const pos = primaryNodeMap.get(nid);
+            if (pos) points.push(pos);
+          }
+          if (points.length < 2) return null;
+
+          return (
+            <Line
+              key={element.id}
+              points={points}
+              color={DEFORMED_COLOR}
+              lineWidth={2}
+              transparent
+              opacity={DEFORMED_OPACITY}
+            />
+          );
+        }
+
+        // Non-discretized element: single line
         const posI = displacedNodes.get(element.nodeI);
         const posJ = displacedNodes.get(element.nodeJ);
         if (!posI || !posJ) return null;
@@ -157,7 +245,7 @@ export function DeformedShape() {
         );
       })}
 
-      {/* Primary deformed node points */}
+      {/* Primary deformed node points (only store nodes, not internal) */}
       {nodePositions.map((pos, i) => (
         <mesh key={i} position={pos}>
           <sphereGeometry args={[NODE_RADIUS, NODE_SEGMENTS, NODE_SEGMENTS]} />

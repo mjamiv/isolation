@@ -86,7 +86,7 @@ function generateElCentro(): GroundMotionRecord {
     dt,
     acceleration: acc.map((a) => a * scale),
     direction: 1,
-    scaleFactor: 1.0,
+    scaleFactor: 386.4, // g → in/s² for kip-in units
   };
 }
 
@@ -112,7 +112,7 @@ function generateNearFaultPulse(): GroundMotionRecord {
     dt,
     acceleration: acc.map((a) => a * scale),
     direction: 1,
-    scaleFactor: 1.0,
+    scaleFactor: 386.4, // g → in/s² for kip-in units
   };
 }
 
@@ -143,7 +143,7 @@ function generateHarmonicSweep(): GroundMotionRecord {
     dt,
     acceleration: acc.map((a) => a * scale),
     direction: 1,
-    scaleFactor: 1.0,
+    scaleFactor: 386.4, // g → in/s² for kip-in units
   };
 }
 
@@ -175,7 +175,7 @@ function generateLongDurationSubduction(): GroundMotionRecord {
     dt,
     acceleration: acc.map((a) => a * scale),
     direction: 1,
-    scaleFactor: 1.0,
+    scaleFactor: 386.4, // g → in/s² for kip-in units
   };
 }
 

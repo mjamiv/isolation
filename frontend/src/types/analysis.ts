@@ -68,6 +68,10 @@ export interface StaticResults {
   elementForces: Record<number, number[]>;
   /** Fixed nodeId -> [Fx, Fy, Fz, Mx, My, Mz] */
   reactions: Record<number, [number, number, number, number, number, number]>;
+  /** Maps original element ID to its discretized node chain and sub-element IDs. */
+  discretizationMap?: Record<number, { nodeChain: number[]; subElementIds: number[] }>;
+  /** Maps internal (discretization) node ID to its [x, y, z] coordinates. */
+  internalNodeCoords?: Record<number, number[]>;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +125,10 @@ export interface TimeHistoryResults {
   dt: number;
   totalTime: number;
   peakValues: PeakValues;
+  /** Maps original element ID to its discretized node chain and sub-element IDs. */
+  discretizationMap?: Record<number, { nodeChain: number[]; subElementIds: number[] }>;
+  /** Maps internal (discretization) node ID to its [x, y, z] coordinates. */
+  internalNodeCoords?: Record<number, number[]>;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,6 +143,10 @@ export interface PushoverResults {
   nodeDisplacements?: Record<number, [number, number, number, number, number, number]>;
   elementForces?: Record<number, number[]>;
   reactions?: Record<number, [number, number, number, number, number, number]>;
+  /** Maps original element ID to its discretized node chain and sub-element IDs. */
+  discretizationMap?: Record<number, { nodeChain: number[]; subElementIds: number[] }>;
+  /** Maps internal (discretization) node ID to its [x, y, z] coordinates. */
+  internalNodeCoords?: Record<number, number[]>;
 }
 
 // ---------------------------------------------------------------------------
