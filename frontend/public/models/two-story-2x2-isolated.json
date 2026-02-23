@@ -1,0 +1,1609 @@
+{
+  "modelInfo": {
+    "name": "2-Story 2x2-Bay Steel Frame (TFP Isolated)",
+    "description": "Simple 3D steel moment frame with 2 floors over a 2x2 bay plan (20 ft bays). Triple Friction Pendulum bearings at all 9 base columns.",
+    "units": "kip-in"
+  },
+  "nodes": [
+    {
+      "id": 1,
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base A1"
+    },
+    {
+      "id": 2,
+      "x": 240.0,
+      "y": 0.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base B1"
+    },
+    {
+      "id": 3,
+      "x": 480.0,
+      "y": 0.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base C1"
+    },
+    {
+      "id": 4,
+      "x": 0.0,
+      "y": 0.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base A2"
+    },
+    {
+      "id": 5,
+      "x": 240.0,
+      "y": 0.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base B2"
+    },
+    {
+      "id": 6,
+      "x": 480.0,
+      "y": 0.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base C2"
+    },
+    {
+      "id": 7,
+      "x": 0.0,
+      "y": 0.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base A3"
+    },
+    {
+      "id": 8,
+      "x": 240.0,
+      "y": 0.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base B3"
+    },
+    {
+      "id": 9,
+      "x": 480.0,
+      "y": 0.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "Base C3"
+    },
+    {
+      "id": 10,
+      "x": 0.0,
+      "y": 180.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 A1"
+    },
+    {
+      "id": 11,
+      "x": 240.0,
+      "y": 180.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 B1"
+    },
+    {
+      "id": 12,
+      "x": 480.0,
+      "y": 180.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 C1"
+    },
+    {
+      "id": 13,
+      "x": 0.0,
+      "y": 180.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 A2"
+    },
+    {
+      "id": 14,
+      "x": 240.0,
+      "y": 180.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 B2"
+    },
+    {
+      "id": 15,
+      "x": 480.0,
+      "y": 180.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 C2"
+    },
+    {
+      "id": 16,
+      "x": 0.0,
+      "y": 180.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 A3"
+    },
+    {
+      "id": 17,
+      "x": 240.0,
+      "y": 180.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 B3"
+    },
+    {
+      "id": 18,
+      "x": 480.0,
+      "y": 180.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L1 C3"
+    },
+    {
+      "id": 19,
+      "x": 0.0,
+      "y": 336.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 A1"
+    },
+    {
+      "id": 20,
+      "x": 240.0,
+      "y": 336.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 B1"
+    },
+    {
+      "id": 21,
+      "x": 480.0,
+      "y": 336.0,
+      "z": 0.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 C1"
+    },
+    {
+      "id": 22,
+      "x": 0.0,
+      "y": 336.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 A2"
+    },
+    {
+      "id": 23,
+      "x": 240.0,
+      "y": 336.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 B2"
+    },
+    {
+      "id": 24,
+      "x": 480.0,
+      "y": 336.0,
+      "z": 240.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 C2"
+    },
+    {
+      "id": 25,
+      "x": 0.0,
+      "y": 336.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 A3"
+    },
+    {
+      "id": 26,
+      "x": 240.0,
+      "y": 336.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 B3"
+    },
+    {
+      "id": 27,
+      "x": 480.0,
+      "y": 336.0,
+      "z": 480.0,
+      "restraint": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "mass": 0,
+      "label": "L2 C3"
+    },
+    {
+      "id": 201,
+      "x": 0.0,
+      "y": -1.0,
+      "z": 0.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base A1"
+    },
+    {
+      "id": 202,
+      "x": 240.0,
+      "y": -1.0,
+      "z": 0.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base B1"
+    },
+    {
+      "id": 203,
+      "x": 480.0,
+      "y": -1.0,
+      "z": 0.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base C1"
+    },
+    {
+      "id": 204,
+      "x": 0.0,
+      "y": -1.0,
+      "z": 240.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base A2"
+    },
+    {
+      "id": 205,
+      "x": 240.0,
+      "y": -1.0,
+      "z": 240.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base B2"
+    },
+    {
+      "id": 206,
+      "x": 480.0,
+      "y": -1.0,
+      "z": 240.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base C2"
+    },
+    {
+      "id": 207,
+      "x": 0.0,
+      "y": -1.0,
+      "z": 480.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base A3"
+    },
+    {
+      "id": 208,
+      "x": 240.0,
+      "y": -1.0,
+      "z": 480.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base B3"
+    },
+    {
+      "id": 209,
+      "x": 480.0,
+      "y": -1.0,
+      "z": 480.0,
+      "restraint": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "mass": 0,
+      "label": "Ground Base C3"
+    }
+  ],
+  "elements": [
+    {
+      "id": 1,
+      "type": "column",
+      "nodeI": 1,
+      "nodeJ": 10,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col A1 Story 1"
+    },
+    {
+      "id": 2,
+      "type": "column",
+      "nodeI": 2,
+      "nodeJ": 11,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col B1 Story 1"
+    },
+    {
+      "id": 3,
+      "type": "column",
+      "nodeI": 3,
+      "nodeJ": 12,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col C1 Story 1"
+    },
+    {
+      "id": 4,
+      "type": "column",
+      "nodeI": 4,
+      "nodeJ": 13,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col A2 Story 1"
+    },
+    {
+      "id": 5,
+      "type": "column",
+      "nodeI": 5,
+      "nodeJ": 14,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col B2 Story 1"
+    },
+    {
+      "id": 6,
+      "type": "column",
+      "nodeI": 6,
+      "nodeJ": 15,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col C2 Story 1"
+    },
+    {
+      "id": 7,
+      "type": "column",
+      "nodeI": 7,
+      "nodeJ": 16,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col A3 Story 1"
+    },
+    {
+      "id": 8,
+      "type": "column",
+      "nodeI": 8,
+      "nodeJ": 17,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col B3 Story 1"
+    },
+    {
+      "id": 9,
+      "type": "column",
+      "nodeI": 9,
+      "nodeJ": 18,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col C3 Story 1"
+    },
+    {
+      "id": 10,
+      "type": "column",
+      "nodeI": 10,
+      "nodeJ": 19,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col A1 Story 2"
+    },
+    {
+      "id": 11,
+      "type": "column",
+      "nodeI": 11,
+      "nodeJ": 20,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col B1 Story 2"
+    },
+    {
+      "id": 12,
+      "type": "column",
+      "nodeI": 12,
+      "nodeJ": 21,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col C1 Story 2"
+    },
+    {
+      "id": 13,
+      "type": "column",
+      "nodeI": 13,
+      "nodeJ": 22,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col A2 Story 2"
+    },
+    {
+      "id": 14,
+      "type": "column",
+      "nodeI": 14,
+      "nodeJ": 23,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col B2 Story 2"
+    },
+    {
+      "id": 15,
+      "type": "column",
+      "nodeI": 15,
+      "nodeJ": 24,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col C2 Story 2"
+    },
+    {
+      "id": 16,
+      "type": "column",
+      "nodeI": 16,
+      "nodeJ": 25,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col A3 Story 2"
+    },
+    {
+      "id": 17,
+      "type": "column",
+      "nodeI": 17,
+      "nodeJ": 26,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col B3 Story 2"
+    },
+    {
+      "id": 18,
+      "type": "column",
+      "nodeI": 18,
+      "nodeJ": 27,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col C3 Story 2"
+    },
+    {
+      "id": 19,
+      "type": "beam",
+      "nodeI": 10,
+      "nodeJ": 11,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Row 1 Bay 1"
+    },
+    {
+      "id": 20,
+      "type": "beam",
+      "nodeI": 11,
+      "nodeJ": 12,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Row 1 Bay 2"
+    },
+    {
+      "id": 21,
+      "type": "beam",
+      "nodeI": 13,
+      "nodeJ": 14,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Row 2 Bay 1"
+    },
+    {
+      "id": 22,
+      "type": "beam",
+      "nodeI": 14,
+      "nodeJ": 15,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Row 2 Bay 2"
+    },
+    {
+      "id": 23,
+      "type": "beam",
+      "nodeI": 16,
+      "nodeJ": 17,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Row 3 Bay 1"
+    },
+    {
+      "id": 24,
+      "type": "beam",
+      "nodeI": 17,
+      "nodeJ": 18,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Row 3 Bay 2"
+    },
+    {
+      "id": 25,
+      "type": "beam",
+      "nodeI": 10,
+      "nodeJ": 13,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Col 1 Bay 1"
+    },
+    {
+      "id": 26,
+      "type": "beam",
+      "nodeI": 13,
+      "nodeJ": 16,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Col 1 Bay 2"
+    },
+    {
+      "id": 27,
+      "type": "beam",
+      "nodeI": 11,
+      "nodeJ": 14,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Col 2 Bay 1"
+    },
+    {
+      "id": 28,
+      "type": "beam",
+      "nodeI": 14,
+      "nodeJ": 17,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Col 2 Bay 2"
+    },
+    {
+      "id": 29,
+      "type": "beam",
+      "nodeI": 12,
+      "nodeJ": 15,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Col 3 Bay 1"
+    },
+    {
+      "id": 30,
+      "type": "beam",
+      "nodeI": 15,
+      "nodeJ": 18,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L1 Col 3 Bay 2"
+    },
+    {
+      "id": 31,
+      "type": "beam",
+      "nodeI": 19,
+      "nodeJ": 20,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Row 1 Bay 1"
+    },
+    {
+      "id": 32,
+      "type": "beam",
+      "nodeI": 20,
+      "nodeJ": 21,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Row 1 Bay 2"
+    },
+    {
+      "id": 33,
+      "type": "beam",
+      "nodeI": 22,
+      "nodeJ": 23,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Row 2 Bay 1"
+    },
+    {
+      "id": 34,
+      "type": "beam",
+      "nodeI": 23,
+      "nodeJ": 24,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Row 2 Bay 2"
+    },
+    {
+      "id": 35,
+      "type": "beam",
+      "nodeI": 25,
+      "nodeJ": 26,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Row 3 Bay 1"
+    },
+    {
+      "id": 36,
+      "type": "beam",
+      "nodeI": 26,
+      "nodeJ": 27,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Row 3 Bay 2"
+    },
+    {
+      "id": 37,
+      "type": "beam",
+      "nodeI": 19,
+      "nodeJ": 22,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Col 1 Bay 1"
+    },
+    {
+      "id": 38,
+      "type": "beam",
+      "nodeI": 22,
+      "nodeJ": 25,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Col 1 Bay 2"
+    },
+    {
+      "id": 39,
+      "type": "beam",
+      "nodeI": 20,
+      "nodeJ": 23,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Col 2 Bay 1"
+    },
+    {
+      "id": 40,
+      "type": "beam",
+      "nodeI": 23,
+      "nodeJ": 26,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Col 2 Bay 2"
+    },
+    {
+      "id": 41,
+      "type": "beam",
+      "nodeI": 21,
+      "nodeJ": 24,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Col 3 Bay 1"
+    },
+    {
+      "id": 42,
+      "type": "beam",
+      "nodeI": 24,
+      "nodeJ": 27,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Beam L2 Col 3 Bay 2"
+    }
+  ],
+  "sections": [
+    {
+      "id": 1,
+      "name": "W14x90 (Columns)",
+      "area": 26.5,
+      "Ix": 999.0,
+      "Iy": 362.0,
+      "Zx": 136.0,
+      "d": 14.02,
+      "bf": 14.74,
+      "tw": 0.44,
+      "tf": 0.71
+    },
+    {
+      "id": 2,
+      "name": "W18x50 (Beams)",
+      "area": 14.7,
+      "Ix": 800.0,
+      "Iy": 85.0,
+      "Zx": 89.0,
+      "d": 18.2,
+      "bf": 7.5,
+      "tw": 0.36,
+      "tf": 0.57
+    }
+  ],
+  "materials": [
+    {
+      "id": 1,
+      "name": "A992 Gr50 Steel",
+      "E": 29000.0,
+      "Fy": 50.0,
+      "density": 0.000284,
+      "nu": 0.3
+    }
+  ],
+  "bearings": [
+    {
+      "id": 1,
+      "nodeI": 201,
+      "nodeJ": 1,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 20.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base A1"
+    },
+    {
+      "id": 2,
+      "nodeI": 202,
+      "nodeJ": 2,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 40.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base B1"
+    },
+    {
+      "id": 3,
+      "nodeI": 203,
+      "nodeJ": 3,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 20.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base C1"
+    },
+    {
+      "id": 4,
+      "nodeI": 204,
+      "nodeJ": 4,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 40.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base A2"
+    },
+    {
+      "id": 5,
+      "nodeI": 205,
+      "nodeJ": 5,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 80.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base B2"
+    },
+    {
+      "id": 6,
+      "nodeI": 206,
+      "nodeJ": 6,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 40.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base C2"
+    },
+    {
+      "id": 7,
+      "nodeI": 207,
+      "nodeJ": 7,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 20.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base A3"
+    },
+    {
+      "id": 8,
+      "nodeI": 208,
+      "nodeJ": 8,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 40.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base B3"
+    },
+    {
+      "id": 9,
+      "nodeI": 209,
+      "nodeJ": 9,
+      "surfaces": [
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.06,
+          "muFast": 0.12,
+          "transRate": 25
+        },
+        {
+          "type": "VelDependent",
+          "muSlow": 0.015,
+          "muFast": 0.03,
+          "transRate": 25
+        }
+      ],
+      "radii": [
+        20.0,
+        140.0,
+        20.0
+      ],
+      "dispCapacities": [
+        3.0,
+        18.0,
+        3.0
+      ],
+      "weight": 20.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 9000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Base C3"
+    }
+  ],
+  "loads": [
+    {
+      "id": 1,
+      "nodeId": 10,
+      "fx": 0,
+      "fy": -7.5,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 2,
+      "nodeId": 11,
+      "fx": 0,
+      "fy": -15.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 3,
+      "nodeId": 12,
+      "fx": 0,
+      "fy": -7.5,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 4,
+      "nodeId": 13,
+      "fx": 0,
+      "fy": -15.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 5,
+      "nodeId": 14,
+      "fx": 0,
+      "fy": -30.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 6,
+      "nodeId": 15,
+      "fx": 0,
+      "fy": -15.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 7,
+      "nodeId": 16,
+      "fx": 0,
+      "fy": -7.5,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 8,
+      "nodeId": 17,
+      "fx": 0,
+      "fy": -15.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 9,
+      "nodeId": 18,
+      "fx": 0,
+      "fy": -7.5,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 10,
+      "nodeId": 19,
+      "fx": 0,
+      "fy": -7.5,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 11,
+      "nodeId": 20,
+      "fx": 0,
+      "fy": -15.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 12,
+      "nodeId": 21,
+      "fx": 0,
+      "fy": -7.5,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 13,
+      "nodeId": 22,
+      "fx": 0,
+      "fy": -15.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 14,
+      "nodeId": 23,
+      "fx": 0,
+      "fy": -30.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 15,
+      "nodeId": 24,
+      "fx": 0,
+      "fy": -15.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 16,
+      "nodeId": 25,
+      "fx": 0,
+      "fy": -7.5,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 17,
+      "nodeId": 26,
+      "fx": 0,
+      "fy": -15.0,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    },
+    {
+      "id": 18,
+      "nodeId": 27,
+      "fx": 0,
+      "fy": -7.5,
+      "fz": 0,
+      "mx": 0,
+      "my": 0,
+      "mz": 0
+    }
+  ],
+  "groundMotions": []
+}

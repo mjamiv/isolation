@@ -16,6 +16,11 @@ const NODE_SEGMENTS = 8;
 /** Number of interpolation segments per member for smooth curves. */
 const CURVE_SEGMENTS = 12;
 
+interface DiscretizationData {
+  map: Record<number, { nodeChain: number[]; subElementIds: number[] }>;
+  internalCoords: Record<number, number[]>;
+}
+
 // ---------------------------------------------------------------------------
 // Hermite beam shape functions
 // ---------------------------------------------------------------------------
@@ -122,21 +127,43 @@ function buildDisplacedNodeMap(
   disps: Record<number | string, number[]> | null,
   scaleFactor: number,
   is2DFrame: boolean,
+  internalNodeCoords: Record<number, number[]> | null = null,
+  includeInternalNodes = false,
+  zUpData = false,
 ): Map<number, THREE.Vector3> | null {
   if (!disps) return null;
   const map = new Map<number, THREE.Vector3>();
-  for (const [nodeId, node] of nodes) {
+
+  const displacedPoint = (x: number, y: number, z: number, nodeId: number): THREE.Vector3 => {
     const disp = disps[nodeId] ?? disps[String(nodeId)];
     if (disp && disp.length >= 2) {
       const dx = (disp[0] ?? 0) * scaleFactor;
-      const dy = (disp[1] ?? 0) * scaleFactor;
-      // For 2D frames, disp[2] is rz (rotation) — don't add to Z position
-      const dz = !is2DFrame && disp.length >= 3 ? (disp[2] ?? 0) * scaleFactor : 0;
-      map.set(nodeId, new THREE.Vector3(node.x + dx, node.y + dy, node.z + dz));
-    } else {
-      map.set(nodeId, new THREE.Vector3(node.x, node.y, node.z));
+      // Convert solver Z-up translational components back to viewer Y-up.
+      const dyRaw = zUpData ? (disp[2] ?? 0) : (disp[1] ?? 0);
+      const dzRaw = zUpData ? (disp[1] ?? 0) : (disp[2] ?? 0);
+      const dy = dyRaw * scaleFactor;
+      // For 2D frames, disp[2] is rz (rotation) — don't add to Z position.
+      const dz = !is2DFrame && disp.length >= 3 ? dzRaw * scaleFactor : 0;
+      return new THREE.Vector3(x + dx, y + dy, z + dz);
+    }
+    return new THREE.Vector3(x, y, z);
+  };
+
+  for (const [nodeId, node] of nodes) {
+    map.set(nodeId, displacedPoint(node.x, node.y, node.z, nodeId));
+  }
+
+  if (includeInternalNodes && internalNodeCoords) {
+    for (const [rawNodeId, coords] of Object.entries(internalNodeCoords)) {
+      const nodeId = Number(rawNodeId);
+      if (!Number.isFinite(nodeId) || map.has(nodeId) || coords.length < 2) continue;
+      const x = coords[0] ?? 0;
+      const y = zUpData ? (coords[2] ?? 0) : (coords[1] ?? 0);
+      const z = zUpData ? (coords[1] ?? 0) : (coords[2] ?? 0);
+      map.set(nodeId, displacedPoint(x, y, z, nodeId));
     }
   }
+
   return map;
 }
 
@@ -155,6 +182,30 @@ export function DeformedShape() {
   const comparisonFixedBase = useComparisonStore((s) => s.fixedBase);
   const comparisonIsolated = useComparisonStore((s) => s.isolated);
   const comparisonType = useComparisonStore((s) => s.comparisonType);
+  const hasBearings = useModelStore((s) => s.bearings.size > 0);
+
+  const primaryDiscretization = useMemo((): DiscretizationData | null => {
+    if (comparisonType === 'time_history' && comparisonIsolated?.timeHistoryResults) {
+      const r = comparisonIsolated.timeHistoryResults;
+      if (r.discretizationMap && r.internalNodeCoords) {
+        return { map: r.discretizationMap, internalCoords: r.internalNodeCoords };
+      }
+      return null;
+    }
+
+    if (!results?.results) return null;
+    if (
+      results.type === 'static' ||
+      results.type === 'pushover' ||
+      results.type === 'time_history'
+    ) {
+      const r = results.results as StaticResults | PushoverResults | TimeHistoryResults;
+      if (r.discretizationMap && r.internalNodeCoords) {
+        return { map: r.discretizationMap, internalCoords: r.internalNodeCoords };
+      }
+    }
+    return null;
+  }, [results, comparisonType, comparisonIsolated]);
 
   // Detect 2D frame: all nodes have Z ≈ 0
   const is2D = useMemo(() => {
@@ -199,8 +250,21 @@ export function DeformedShape() {
   }, [results, currentTimeStep, comparisonType, comparisonIsolated]);
 
   const displacedNodes = useMemo(
-    () => buildDisplacedNodeMap(nodes, displacements, scaleFactor, is2D),
-    [nodes, displacements, scaleFactor, is2D],
+    () => buildDisplacedNodeMap(nodes, displacements, scaleFactor, is2D, null, false, hasBearings),
+    [nodes, displacements, scaleFactor, is2D, hasBearings],
+  );
+  const displacedNodesForLines = useMemo(
+    () =>
+      buildDisplacedNodeMap(
+        nodes,
+        displacements,
+        scaleFactor,
+        is2D,
+        primaryDiscretization?.internalCoords ?? null,
+        true,
+        hasBearings,
+      ),
+    [nodes, displacements, scaleFactor, is2D, primaryDiscretization, hasBearings],
   );
 
   // Overlay displacements (fixed-base variant)
@@ -211,7 +275,15 @@ export function DeformedShape() {
     if (comparisonType === 'time_history' && comparisonFixedBase.timeHistoryResults) {
       const thResults = comparisonFixedBase.timeHistoryResults;
       const step = thResults.timeSteps[currentTimeStep];
-      return buildDisplacedNodeMap(nodes, step?.nodeDisplacements ?? null, scaleFactor, is2D);
+      return buildDisplacedNodeMap(
+        nodes,
+        step?.nodeDisplacements ?? null,
+        scaleFactor,
+        is2D,
+        null,
+        false,
+        hasBearings,
+      );
     }
 
     // Pushover comparison: use static pushover displacements
@@ -221,7 +293,15 @@ export function DeformedShape() {
       }
     ).nodeDisplacements;
 
-    return buildDisplacedNodeMap(nodes, fbDisps ?? null, scaleFactor, is2D);
+    return buildDisplacedNodeMap(
+      nodes,
+      fbDisps ?? null,
+      scaleFactor,
+      is2D,
+      null,
+      false,
+      hasBearings,
+    );
   }, [
     nodes,
     showComparisonOverlay,
@@ -230,7 +310,23 @@ export function DeformedShape() {
     currentTimeStep,
     scaleFactor,
     is2D,
+    hasBearings,
   ]);
+  const overlayDiscretization = useMemo((): DiscretizationData | null => {
+    if (!showComparisonOverlay || !comparisonFixedBase) return null;
+    if (comparisonType === 'time_history' && comparisonFixedBase.timeHistoryResults) {
+      const r = comparisonFixedBase.timeHistoryResults;
+      if (r.discretizationMap && r.internalNodeCoords) {
+        return { map: r.discretizationMap, internalCoords: r.internalNodeCoords };
+      }
+      return null;
+    }
+    const r = comparisonFixedBase.pushoverResults;
+    if (r.discretizationMap && r.internalNodeCoords) {
+      return { map: r.discretizationMap, internalCoords: r.internalNodeCoords };
+    }
+    return null;
+  }, [showComparisonOverlay, comparisonFixedBase, comparisonType]);
 
   // Overlay displacements raw record (for rotation DOFs)
   const overlayDisplacements = useMemo(() => {
@@ -247,6 +343,19 @@ export function DeformedShape() {
     ).nodeDisplacements;
     return fbDisps ?? null;
   }, [showComparisonOverlay, comparisonFixedBase, comparisonType, currentTimeStep]);
+  const overlayDisplacedNodesForLines = useMemo(
+    () =>
+      buildDisplacedNodeMap(
+        nodes,
+        overlayDisplacements,
+        scaleFactor,
+        is2D,
+        overlayDiscretization?.internalCoords ?? null,
+        true,
+        hasBearings,
+      ),
+    [nodes, overlayDisplacements, scaleFactor, is2D, overlayDiscretization, hasBearings],
+  );
 
   const elementArray = useMemo(() => Array.from(elements.values()), [elements]);
 
@@ -284,8 +393,9 @@ export function DeformedShape() {
     <group>
       {/* Primary deformed members — smooth cubic Hermite curves (gold) */}
       {elementArray.map((element) => {
-        const posI = displacedNodes.get(element.nodeI);
-        const posJ = displacedNodes.get(element.nodeJ);
+        const lineNodes = displacedNodesForLines ?? displacedNodes;
+        const posI = lineNodes?.get(element.nodeI);
+        const posJ = lineNodes?.get(element.nodeJ);
         if (!posI || !posJ) return null;
 
         const origI = nodes.get(element.nodeI);
@@ -298,16 +408,14 @@ export function DeformedShape() {
         const pIOrig = new THREE.Vector3(origI.x, origI.y, origI.z);
         const pJOrig = new THREE.Vector3(origJ.x, origJ.y, origJ.z);
 
-        const points = memberCurve(
-          posI,
-          posJ,
-          pIOrig,
-          pJOrig,
-          rotI,
-          rotJ,
-          scaleFactor,
-          CURVE_SEGMENTS,
-        );
+        const discEntry = primaryDiscretization?.map[element.id];
+        const points =
+          discEntry && discEntry.nodeChain.length >= 2 && lineNodes
+            ? discEntry.nodeChain
+                .map((nodeId) => lineNodes.get(nodeId))
+                .filter((p): p is THREE.Vector3 => Boolean(p))
+            : memberCurve(posI, posJ, pIOrig, pJOrig, rotI, rotJ, scaleFactor, CURVE_SEGMENTS);
+        if (points.length < 2) return null;
 
         return (
           <Line
@@ -332,8 +440,9 @@ export function DeformedShape() {
       {/* Overlay deformed members — smooth cubic Hermite curves (yellow) */}
       {overlayDisplacedNodes &&
         elementArray.map((element) => {
-          const posI = overlayDisplacedNodes.get(element.nodeI);
-          const posJ = overlayDisplacedNodes.get(element.nodeJ);
+          const lineNodes = overlayDisplacedNodesForLines ?? overlayDisplacedNodes;
+          const posI = lineNodes?.get(element.nodeI);
+          const posJ = lineNodes?.get(element.nodeJ);
           if (!posI || !posJ) return null;
 
           const origI = nodes.get(element.nodeI);
@@ -346,16 +455,14 @@ export function DeformedShape() {
           const pIOrig = new THREE.Vector3(origI.x, origI.y, origI.z);
           const pJOrig = new THREE.Vector3(origJ.x, origJ.y, origJ.z);
 
-          const points = memberCurve(
-            posI,
-            posJ,
-            pIOrig,
-            pJOrig,
-            rotI,
-            rotJ,
-            scaleFactor,
-            CURVE_SEGMENTS,
-          );
+          const discEntry = overlayDiscretization?.map[element.id];
+          const points =
+            discEntry && discEntry.nodeChain.length >= 2 && lineNodes
+              ? discEntry.nodeChain
+                  .map((nodeId) => lineNodes.get(nodeId))
+                  .filter((p): p is THREE.Vector3 => Boolean(p))
+              : memberCurve(posI, posJ, pIOrig, pJOrig, rotI, rotJ, scaleFactor, CURVE_SEGMENTS);
+          if (points.length < 2) return null;
 
           return (
             <Line

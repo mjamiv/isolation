@@ -207,6 +207,43 @@ class TestComputeHingeStates:
 
 
 class TestBuildModel:
+    @staticmethod
+    def _minimal_3d_model(*, z_up: bool) -> dict:
+        model_info: dict[str, object] = {"name": "3D Test", "ndm": 3, "ndf": 6}
+        if z_up:
+            model_info["z_up"] = True
+
+        return {
+            "model_info": model_info,
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0, 0.0], "fixity": [1, 1, 1, 1, 1, 1]},
+                {"id": 2, "coords": [10.0, 0.0, 0.0], "fixity": [0, 0, 0, 0, 0, 0]},
+            ],
+            "materials": [
+                {"id": 1, "type": "Elastic", "name": "Steel", "params": {"E": 29000.0}},
+            ],
+            "sections": [
+                {
+                    "id": 1,
+                    "type": "Elastic",
+                    "name": "Rect",
+                    "properties": {"A": 20.0, "Iz": 722.0, "Iy": 121.0, "G": 11154.0, "J": 50.0},
+                    "material_id": 1,
+                },
+            ],
+            "elements": [
+                {
+                    "id": 1,
+                    "type": "elasticBeamColumn",
+                    "nodes": [1, 2],
+                    "section_id": 1,
+                    "transform": "Linear",
+                },
+            ],
+            "bearings": [],
+            "loads": [],
+        }
+
     def test_calls_ops_model_with_ndm_ndf(self, minimal_2d_model):
         build_model(minimal_2d_model)
         _mock_ops.model.assert_called_once_with("basic", "-ndm", 2, "-ndf", 3)
@@ -304,6 +341,27 @@ class TestBuildModel:
         # Should create 12 friction models (4 per bearing)
         friction_calls = _mock_ops.frictionModel.call_args_list
         assert len(friction_calls) == 12
+
+    def test_3d_y_up_keeps_section_axes_and_uses_y_up_reference(self):
+        model = self._minimal_3d_model(z_up=False)
+        build_model(model)
+
+        _mock_ops.geomTransf.assert_called_once_with("Linear", 1, 0.0, 1.0, 0.0)
+        elem_args = _mock_ops.element.call_args_list[0][0]
+        # elasticBeamColumn(..., A, E, G, J, Iy, Iz, transfTag)
+        assert elem_args[0] == "elasticBeamColumn"
+        assert elem_args[8] == pytest.approx(121.0)  # Iy unchanged for Y-up
+        assert elem_args[9] == pytest.approx(722.0)  # Iz unchanged for Y-up
+
+    def test_3d_z_up_swaps_section_axes_and_uses_z_up_reference(self):
+        model = self._minimal_3d_model(z_up=True)
+        build_model(model)
+
+        _mock_ops.geomTransf.assert_called_once_with("Linear", 1, 0.0, 0.0, 1.0)
+        elem_args = _mock_ops.element.call_args_list[0][0]
+        assert elem_args[0] == "elasticBeamColumn"
+        assert elem_args[8] == pytest.approx(722.0)  # Iy <- Iz for Z-up
+        assert elem_args[9] == pytest.approx(121.0)  # Iz <- Iy for Z-up
 
 
 # ---------------------------------------------------------------------------

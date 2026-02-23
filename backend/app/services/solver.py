@@ -633,8 +633,9 @@ def run_time_history(
         ops.constraints("Transformation")
         ops.numberer("RCM")
         num_bearings = len(model_data.get("bearings", []))
-        if num_bearings > 4:
-            # Sparse solver for large 3D bearing models
+        if has_bearings:
+            # Bearing systems are strongly nonlinear; a sparse solver and a
+            # slightly looser convergence test improve robustness.
             ops.system("UmfPack")
             ops.test("NormDispIncr", 1.0e-4, 100)
         else:
@@ -711,26 +712,31 @@ def run_time_history(
         for step in range(num_steps):
             result = _analyze_step(dt, use_extended_fallback=has_bearings)
             if result != 0 and has_bearings:
-                # Level 1 sub-stepping: dt/10 with Krylov fallback
-                n_sub1 = 10 if many_bearings else 5
+                # Level 1 sub-stepping: dt/10 with full fallback chain.
+                n_sub1 = 20 if many_bearings else 10
                 sub_dt = dt / n_sub1
                 sub_ok = True
-                for _sub in range(n_sub1):
-                    r = _analyze_step(sub_dt, use_extended_fallback=many_bearings)
+                failed_sub = n_sub1
+                for i in range(n_sub1):
+                    r = _analyze_step(sub_dt, use_extended_fallback=True)
                     if r != 0:
                         sub_ok = False
+                        failed_sub = i
                         break
-                # Level 2 sub-stepping for large bearing models: dt/50
-                if not sub_ok and many_bearings:
-                    sub_dt2 = dt / 50.0
-                    remaining = n_sub1 - _sub  # noqa: F821
-                    n_sub2 = remaining * 5  # each remaining L1 step → 5 L2 steps
+
+                # Level 2 sub-stepping: refine remaining increment to dt/50.
+                if not sub_ok:
+                    sub_factor = 5
+                    sub_dt2 = sub_dt / sub_factor
+                    remaining = n_sub1 - failed_sub
+                    n_sub2 = max(1, remaining * sub_factor)
                     sub_ok = True
                     for _sub2 in range(n_sub2):
                         r = _analyze_step(sub_dt2, use_extended_fallback=True)
                         if r != 0:
                             sub_ok = False
                             break
+
                 if not sub_ok:
                     logger.warning("Analysis failed at step %d / %d", step, num_steps)
                     break
@@ -1103,12 +1109,13 @@ def _build_3d_elements(
     * Horizontal beams (along X) use vecxz = (0, 0, 1)
     * Diagonal elements use whichever avoids singularity
 
-    In Z-up convention the strong-axis section property (``Iz`` in the
-    JSON) maps to the element's ``Iy`` parameter (bending producing
-    in-plane deflection), and the weak-axis property (``Iy`` in JSON)
-    maps to the element's ``Iz`` parameter.
+    For Z-up models, the frontend's section-axis convention is swapped
+    relative to OpenSees local y/z, so ``Iz``/``Iy`` are mapped to
+    ``Iy``/``Iz`` respectively. For Y-up models, section properties are
+    passed through without swapping.
     """
     _next_transform = 1
+    z_up = bool(model_data.get("model_info", {}).get("z_up", False))
 
     for elem in model_data.get("elements", []):
         eid = elem["id"]
@@ -1119,7 +1126,7 @@ def _build_3d_elements(
             sec = _find_section(model_data, elem.get("section_id", 0))
             A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
             E = _get_material_E(model_data, sec.get("material_id")) if sec else 1.0
-            # Section "Iz" = strong axis (in-plane in 2D) → element Iy in 3D Z-up
+            # Section properties (frontend convention)
             Iz_section = sec.get("properties", {}).get("Iz", 1.0) if sec else 1.0
             Iy_section = sec.get("properties", {}).get("Iy", Iz_section) if sec else Iz_section
             J = sec.get("properties", {}).get("J", 1.0) if sec else 1.0
@@ -1140,22 +1147,29 @@ def _build_3d_elements(
                 lx = dx / length
                 ly = dy / length
                 lz = dz / length
-                # Choose vecxz that is NOT parallel to local_x
-                # For mostly-vertical elements (large |lz|): use (1, 0, 0)
-                # Otherwise: use (0, 0, 1)
-                if abs(lz) > 0.9:
+                # Choose vecxz that is NOT parallel to local_x.
+                # Vertical axis is Z for z_up models, Y otherwise.
+                vertical_component = lz if z_up else ly
+                if abs(vertical_component) > 0.9:
+                    # Vertical member: use global X reference.
                     vecxz = (1.0, 0.0, 0.0)
                 else:
-                    vecxz = (0.0, 0.0, 1.0)
+                    # Horizontal/diagonal member: use vertical-axis reference.
+                    vecxz = (0.0, 0.0, 1.0) if z_up else (0.0, 1.0, 0.0)
 
             tname = elem.get("transform", "Linear")
             ops.geomTransf(tname, _next_transform, *vecxz)
             transf_tag = _next_transform
             _next_transform += 1
 
-            # In Z-up convention: section Iz (strong) → element Iy (in-plane)
-            Iy_elem = Iz_section
-            Iz_elem = Iy_section
+            if z_up:
+                # Z-up convention: section Iz (strong) maps to element Iy.
+                Iy_elem = Iz_section
+                Iz_elem = Iy_section
+            else:
+                # Y-up convention: keep Iy/Iz as provided.
+                Iy_elem = Iy_section
+                Iz_elem = Iz_section
             ops.element(
                 "elasticBeamColumn", eid, *enodes,
                 A, E, G, J, Iy_elem, Iz_elem, transf_tag,

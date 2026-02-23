@@ -14,6 +14,7 @@ import {
   getAnalysisStatus,
   ApiError,
 } from '@/services/api';
+import type { StructuralModel } from '@/types/model';
 
 // ---------------------------------------------------------------------------
 // Mock fetch
@@ -57,8 +58,13 @@ function jsonResponse(body: unknown, status = 200, statusText = 'OK'): Response 
 
 describe('api -- submitModel', () => {
   it('sends POST with correct body and snake_case conversion', async () => {
-    const modelData = {
-      modelInfo: { name: 'Test', units: { force: 'kip', length: 'in', time: 'sec' }, ndm: 3, ndf: 6 },
+    const modelData: StructuralModel = {
+      modelInfo: {
+        name: 'Test',
+        units: { force: 'kip', length: 'in', time: 'sec' },
+        ndm: 3,
+        ndf: 6,
+      },
       nodes: [],
       materials: [],
       sections: [],
@@ -69,7 +75,7 @@ describe('api -- submitModel', () => {
     };
     mockFetch.mockResolvedValue(jsonResponse({ model_id: 'abc-123' }));
 
-    const result = await submitModel(modelData as any);
+    const result = await submitModel(modelData);
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, options] = mockFetch.mock.calls[0]!;
@@ -130,9 +136,7 @@ describe('api -- deleteModel', () => {
 describe('api -- runAnalysis', () => {
   it('sends correct params to /analysis/run', async () => {
     const params = { type: 'static' as const };
-    mockFetch.mockResolvedValue(
-      jsonResponse({ analysis_id: 'run-001' }),
-    );
+    mockFetch.mockResolvedValue(jsonResponse({ analysis_id: 'run-001' }));
 
     const result = await runAnalysis('abc-123', params);
 
@@ -157,9 +161,7 @@ describe('api -- runAnalysis', () => {
 
 describe('api -- getAnalysisStatus', () => {
   it('fetches the correct status URL', async () => {
-    mockFetch.mockResolvedValue(
-      jsonResponse({ status: 'completed', progress: 1.0 }),
-    );
+    mockFetch.mockResolvedValue(jsonResponse({ status: 'completed', progress: 1.0 }));
 
     const result = await getAnalysisStatus('run-001');
 
@@ -175,9 +177,7 @@ describe('api -- getAnalysisStatus', () => {
 
 describe('api -- error handling', () => {
   it('handles 404 responses gracefully', async () => {
-    mockFetch.mockResolvedValue(
-      jsonResponse({ detail: 'Model not found' }, 404, 'Not Found'),
-    );
+    mockFetch.mockResolvedValue(jsonResponse({ detail: 'Model not found' }, 404, 'Not Found'));
 
     await expect(getModel('nonexistent')).rejects.toThrow(ApiError);
     await expect(getModel('nonexistent')).rejects.toThrow(/404/);
@@ -193,7 +193,7 @@ describe('api -- error handling', () => {
     );
 
     try {
-      await submitModel({} as any);
+      await submitModel({} as unknown as StructuralModel);
       expect.unreachable('should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(ApiError);

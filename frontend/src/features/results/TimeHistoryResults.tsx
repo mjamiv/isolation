@@ -100,18 +100,71 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
   }, [data.timeSteps, selectedBearing]);
 
   const elementTrace = useMemo(() => {
-    const shear: number[] = [];
-    const moment: number[] = [];
+    const shearI: number[] = [];
+    const shearJ: number[] = [];
+    const momentI: number[] = [];
+    const momentJ: number[] = [];
 
-    for (const step of data.timeSteps) {
-      const f = step.elementForces[selectedElement] ?? [];
-      const v = f[1] ?? f[4] ?? 0;
-      const m = f[2] ?? f[5] ?? 0;
-      shear.push(v);
-      moment.push(m);
+    const vectors = data.timeSteps.map((step) => step.elementForces[selectedElement] ?? []);
+    const has3DForces = vectors.some((f) => f.length >= 12);
+
+    let shearIIdx = 1;
+    let momentIIdx = 2;
+    let shearLabel = 'V';
+    let momentLabel = 'M';
+
+    if (has3DForces) {
+      let maxFy = 0;
+      let maxFz = 0;
+      let maxMy = 0;
+      let maxMz = 0;
+      for (const f of vectors) {
+        if (f.length < 12) continue;
+        const half = Math.max(1, Math.floor(f.length / 2));
+        const fyI = f[1] ?? 0;
+        const fzI = f[2] ?? 0;
+        const myI = f[4] ?? 0;
+        const mzI = f[5] ?? 0;
+        const fyJ = f[half + 1] ?? 0;
+        const fzJ = f[half + 2] ?? 0;
+        const myJ = f[half + 4] ?? 0;
+        const mzJ = f[half + 5] ?? 0;
+        maxFy = Math.max(maxFy, Math.abs(fyI), Math.abs(fyJ));
+        maxFz = Math.max(maxFz, Math.abs(fzI), Math.abs(fzJ));
+        maxMy = Math.max(maxMy, Math.abs(myI), Math.abs(myJ));
+        maxMz = Math.max(maxMz, Math.abs(mzI), Math.abs(mzJ));
+      }
+      const useYShear = maxFy >= maxFz;
+      const useYMoment = maxMy >= maxMz;
+      shearIIdx = useYShear ? 1 : 2;
+      momentIIdx = useYMoment ? 4 : 5;
+      shearLabel = useYShear ? 'Fy' : 'Fz';
+      momentLabel = useYMoment ? 'My' : 'Mz';
     }
 
-    return { shear, moment };
+    for (const f of vectors) {
+      if (f.length >= 12) {
+        const half = Math.max(1, Math.floor(f.length / 2));
+        const shearJIdx = half + shearIIdx;
+        const momentJIdx = half + momentIIdx;
+        shearI.push(f[shearIIdx] ?? 0);
+        shearJ.push(f[shearJIdx] ?? 0);
+        momentI.push(f[momentIIdx] ?? 0);
+        momentJ.push(f[momentJIdx] ?? 0);
+      } else if (f.length >= 6) {
+        shearI.push(f[1] ?? 0);
+        shearJ.push(f[4] ?? 0);
+        momentI.push(f[2] ?? 0);
+        momentJ.push(f[5] ?? 0);
+      } else {
+        shearI.push(0);
+        shearJ.push(0);
+        momentI.push(0);
+        momentJ.push(0);
+      }
+    }
+
+    return { shearI, shearJ, momentI, momentJ, shearLabel, momentLabel };
   }, [data.timeSteps, selectedElement]);
 
   const peak = data.peakValues;
@@ -362,19 +415,35 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                 data={[
                   {
                     x: times,
-                    y: elementTrace.shear,
+                    y: elementTrace.shearI,
                     type: 'scattergl' as const,
                     mode: 'lines' as const,
                     line: { color: '#60a5fa', width: 1.2 },
-                    name: 'Shear',
+                    name: `${elementTrace.shearLabel} (i)`,
                   },
                   {
                     x: times,
-                    y: elementTrace.moment,
+                    y: elementTrace.shearJ,
+                    type: 'scattergl' as const,
+                    mode: 'lines' as const,
+                    line: { color: '#38bdf8', width: 1.1, dash: 'dot' as const },
+                    name: `${elementTrace.shearLabel} (j)`,
+                  },
+                  {
+                    x: times,
+                    y: elementTrace.momentI,
                     type: 'scattergl' as const,
                     mode: 'lines' as const,
                     line: { color: '#f59e0b', width: 1.2 },
-                    name: 'Moment',
+                    name: `${elementTrace.momentLabel} (i)`,
+                  },
+                  {
+                    x: times,
+                    y: elementTrace.momentJ,
+                    type: 'scattergl' as const,
+                    mode: 'lines' as const,
+                    line: { color: '#fb7185', width: 1.1, dash: 'dot' as const },
+                    name: `${elementTrace.momentLabel} (j)`,
                   },
                 ]}
                 layout={{

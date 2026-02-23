@@ -36,6 +36,8 @@ export const PRESET_MODELS: PresetModel[] = [
   { label: 'IBR Alt A: Ductile Bridge', url: '/models/alt-a-ductile.json' },
   { label: 'IBR Alt B: TFP Isolated', url: '/models/alt-b-isolated.json' },
   { label: 'IBR Alt C: Extradosed + TFP', url: '/models/alt-c-extradosed.json' },
+  { label: '2-Story 2x2-Bay (Fixed)', url: '/models/two-story-2x2-fixed.json' },
+  { label: '2-Story 2x2-Bay (Isolated)', url: '/models/two-story-2x2-isolated.json' },
   { label: '5-Story Office (Fixed)', url: '/models/five-story-office-fixed.json' },
   { label: '5-Story Office (Isolated)', url: '/models/five-story-office-isolated.json' },
 ];

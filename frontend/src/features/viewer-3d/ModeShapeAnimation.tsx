@@ -21,6 +21,7 @@ export function ModeShapeAnimation() {
   const scaleFactor = useDisplayStore((s) => s.scaleFactor);
   const results = useAnalysisStore((s) => s.results);
   const selectedModeNumber = useAnalysisStore((s) => s.selectedModeNumber);
+  const hasBearings = useModelStore((s) => s.bearings.size > 0);
 
   const stateRef = useRef<AnimatedState>({ positions: new Map() });
   const groupRef = useRef<THREE.Group>(null);
@@ -64,11 +65,10 @@ export function ModeShapeAnimation() {
       if (!pos) continue;
 
       if (shape) {
-        pos.set(
-          node.x + shape[0] * amplitude,
-          node.y + shape[1] * amplitude,
-          node.z + shape[2] * amplitude,
-        );
+        const dx = shape[0] ?? 0;
+        const dy = hasBearings ? (shape[2] ?? 0) : (shape[1] ?? 0);
+        const dz = hasBearings ? (shape[1] ?? 0) : (shape[2] ?? 0);
+        pos.set(node.x + dx * amplitude, node.y + dy * amplitude, node.z + dz * amplitude);
       } else {
         pos.set(node.x, node.y, node.z);
       }
@@ -96,11 +96,7 @@ export function ModeShapeAnimation() {
 
       {/* Animated nodes */}
       {nodeArray.map(([nodeId]) => (
-        <AnimatedNode
-          key={nodeId}
-          nodeId={nodeId}
-          stateRef={stateRef}
-        />
+        <AnimatedNode key={nodeId} nodeId={nodeId} stateRef={stateRef} />
       ))}
     </group>
   );
@@ -156,11 +152,7 @@ function AnimatedNode({ nodeId, stateRef }: AnimatedNodeProps) {
   return (
     <mesh ref={meshRef}>
       <sphereGeometry args={[NODE_RADIUS, NODE_SEGMENTS, NODE_SEGMENTS]} />
-      <meshStandardMaterial
-        color={MODE_COLOR}
-        transparent
-        opacity={MODE_OPACITY}
-      />
+      <meshStandardMaterial color={MODE_COLOR} transparent opacity={MODE_OPACITY} />
     </mesh>
   );
 }

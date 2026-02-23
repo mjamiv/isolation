@@ -28,7 +28,35 @@ export function StaticResults({ data }: StaticResultsProps) {
 
   const selectedForceVector = useMemo(() => {
     const raw = data.elementForces[selectedElement] ?? [];
-    return [raw[0] ?? 0, raw[1] ?? 0, raw[2] ?? 0, raw[3] ?? 0, raw[4] ?? 0, raw[5] ?? 0];
+    if (raw.length >= 12) {
+      return {
+        labels: [
+          'Fx(i)',
+          'Fy(i)',
+          'Fz(i)',
+          'Mx(i)',
+          'My(i)',
+          'Mz(i)',
+          'Fx(j)',
+          'Fy(j)',
+          'Fz(j)',
+          'Mx(j)',
+          'My(j)',
+          'Mz(j)',
+        ],
+        values: raw.slice(0, 12).map((v) => v ?? 0),
+      };
+    }
+    if (raw.length >= 6) {
+      return {
+        labels: ['N(i)', 'V(i)', 'M(i)', 'N(j)', 'V(j)', 'M(j)'],
+        values: raw.slice(0, 6).map((v) => v ?? 0),
+      };
+    }
+    return {
+      labels: raw.map((_, i) => `F${i + 1}`),
+      values: raw.map((v) => v ?? 0),
+    };
   }, [data.elementForces, selectedElement]);
 
   return (
@@ -125,11 +153,13 @@ export function StaticResults({ data }: StaticResultsProps) {
               <Plot
                 data={[
                   {
-                    x: ['N(i)', 'V(i)', 'M(i)', 'N(j)', 'V(j)', 'M(j)'],
-                    y: selectedForceVector,
+                    x: selectedForceVector.labels,
+                    y: selectedForceVector.values,
                     type: 'bar' as const,
                     marker: {
-                      color: selectedForceVector.map((v) => (v >= 0 ? '#22c55e' : '#ef4444')),
+                      color: selectedForceVector.values.map((v) =>
+                        v >= 0 ? '#22c55e' : '#ef4444',
+                      ),
                     },
                   },
                 ]}

@@ -79,8 +79,8 @@ Phases 1 through 5 are complete. The app provides:
 - **Supporting documents**: `analysis_calculations.md` (984 lines of step-by-step calculations), `aashto_compliance.md` (1,029 lines of detailed code compliance review)
 
 ### Model Import & IBR Bridge Models
-- **Load Model dropdown** — toolbar dropdown with 5 presets and a "Import JSON File..." option
-- **Preset models**: 3-Story Hospital Frame (built-in), 20-Story Steel Tower, IBR Alt A: Ductile Bridge, IBR Alt B: TFP Isolated, IBR Alt C: Extradosed + TFP
+- **Load Model dropdown** — toolbar dropdown with 9 presets and an "Import JSON File..." option
+- **Preset models**: 3-Story Hospital Frame (built-in), 20-Story Steel Tower, IBR Alt A: Ductile Bridge, IBR Alt B: TFP Isolated, IBR Alt C: Extradosed + TFP, 2-Story 2x2-Bay (Fixed), 2-Story 2x2-Bay (Isolated), 5-Story Office (Fixed), 5-Story Office (Isolated)
 - **20-story steel tower** — 1-bay 20'x20' moment frame, 3 column tiers (W14x500/370/257), 3 beam tiers (W36x300/W30x211/W24x146), T1=1.41s, fully verified with all 4 analysis types
 - **Auto-generated ground motions** — models imported without ground motion records automatically get 4 synthetic records (El Centro, Near-Fault, Harmonic, Subduction), enabling immediate time-history analysis
 - **JSON file import** — load any arbitrary model JSON via file picker with validation and toast notifications
@@ -99,7 +99,8 @@ Phases 1 through 5 are complete. The app provides:
 - **5:1 member discretization** — backend `_discretize_elements()` splits each `elasticBeamColumn` into 5 sub-elements with 4 internal nodes for improved analytical accuracy across all 4 analysis types
 - **In-plane force diagrams** — 2D planar frames (X-Y plane) now project force diagrams in-plane using rotated normals instead of cross-product Z-direction normals
 - **Curved deformed shapes** — `DeformedShape` renders polylines through internal discretization nodes, showing member curvature under load
-- **Sub-element force resolution** — `ForceDiagrams` iterates discretization sub-elements for detailed force distributions along members
+- **Station-based force diagrams** — `ForceDiagrams` assembles values at each member station from discretized sub-element end forces (`i`/`j`) and renders contiguous strips along the full member chain
+- **Solver-aligned 3D orientation** — force/moment diagram normals now mirror backend local-axis (`vecxz`) conventions, including z-up isolated-model mapping
 - **Discretization data pipeline** — backend returns `discretization_map` and `internal_node_coords` through API normalizers to frontend result types (`StaticResults`, `PushoverResults`, `TimeHistoryResults`)
 
 ### Bug Fixes & Polish
