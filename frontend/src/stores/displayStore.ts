@@ -5,8 +5,12 @@ import { create } from 'zustand';
 export type DisplayMode = 'wireframe' | 'extruded' | 'solid';
 export type ForceType = 'moment' | 'shear' | 'axial' | 'none';
 export type ColorMapType = 'none' | 'demandCapacity' | 'displacement' | 'stress';
+export type EnvironmentPreset = 'studio' | 'outdoor' | 'dark' | 'blueprint';
 
 interface DisplayState {
+  // Scene environment
+  environment: EnvironmentPreset;
+
   // Rendering
   displayMode: DisplayMode;
   showDeformed: boolean;
@@ -25,6 +29,9 @@ interface DisplayState {
   // Color mapping
   colorMap: ColorMapType;
 
+  // Results overlays
+  showBearingDisplacement: boolean;
+
   // Comparison overlay
   showComparisonOverlay: boolean;
 
@@ -37,6 +44,7 @@ interface DisplayState {
   hoveredBearingId: number | null;
 
   // Setters
+  setEnvironment: (preset: EnvironmentPreset) => void;
   setDisplayMode: (mode: DisplayMode) => void;
   setShowDeformed: (show: boolean) => void;
   setScaleFactor: (factor: number) => void;
@@ -49,6 +57,7 @@ interface DisplayState {
   setForceType: (type: ForceType) => void;
   setForceScale: (scale: number) => void;
   setColorMap: (map: ColorMapType) => void;
+  setShowBearingDisplacement: (show: boolean) => void;
   setShowComparisonOverlay: (show: boolean) => void;
 
   // Selection actions
@@ -64,6 +73,9 @@ interface DisplayState {
 // ── Store implementation ──────────────────────────────────────────────
 
 export const useDisplayStore = create<DisplayState>((set) => ({
+  // Default scene state
+  environment: 'studio',
+
   // Default display state
   displayMode: 'wireframe',
   showDeformed: false,
@@ -78,6 +90,9 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   forceScale: 1,
   colorMap: 'none',
 
+  // Default results overlay state
+  showBearingDisplacement: false,
+
   // Default comparison state
   showComparisonOverlay: false,
 
@@ -88,6 +103,9 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   hoveredElementId: null,
   hoveredNodeId: null,
   hoveredBearingId: null,
+
+  // ── Scene setters ─────────────────────────────────
+  setEnvironment: (preset) => set({ environment: preset }),
 
   // ── Display setters ──────────────────────────────
   setDisplayMode: (mode) => set({ displayMode: mode }),
@@ -102,6 +120,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   setForceType: (type) => set({ forceType: type }),
   setForceScale: (scale) => set({ forceScale: scale }),
   setColorMap: (map) => set({ colorMap: map }),
+  setShowBearingDisplacement: (show) => set({ showBearingDisplacement: show }),
   setShowComparisonOverlay: (show) => set({ showComparisonOverlay: show }),
 
   // ── Selection actions ────────────────────────────

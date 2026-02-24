@@ -3,17 +3,18 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
 import { useDisplayStore } from '../../stores/displayStore';
 import { StructuralModel3D } from './StructuralModel3D';
+import { BearingDisplacementView } from './BearingDisplacementView';
+import { SceneEnvironment } from './SceneEnvironment';
 
 function SceneContent() {
   const showGrid = useDisplayStore((state) => state.showGrid);
   const showAxes = useDisplayStore((state) => state.showAxes);
+  const environment = useDisplayStore((state) => state.environment);
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[500, 800, 500]} intensity={1} castShadow />
-      <directionalLight position={[-300, 400, -300]} intensity={0.3} />
+      {/* Environment preset — provides background, lighting, ground treatment */}
+      <SceneEnvironment environment={environment} />
 
       {/* Camera controls */}
       <OrbitControls
@@ -30,8 +31,9 @@ function SceneContent() {
         <GizmoViewport axisColors={['#ef4444', '#22c55e', '#3b82f6']} labelColor="white" />
       </GizmoHelper>
 
-      {/* Ground grid */}
-      {showGrid && (
+      {/* User-toggled grid overlay (supplements environment ground treatment) */}
+      {/* Blueprint environment provides its own grid, so skip this one there */}
+      {showGrid && environment !== 'blueprint' && (
         <Grid
           args={[2000, 2000]}
           cellSize={48}
@@ -58,9 +60,10 @@ function SceneContent() {
 
 export function Viewer3D() {
   return (
-    <div className="h-full w-full">
+    <div className="relative h-full w-full">
       <Canvas
         frameloop="demand"
+        shadows
         gl={{
           antialias: true,
           alpha: true,
@@ -81,6 +84,9 @@ export function Viewer3D() {
           <SceneContent />
         </Suspense>
       </Canvas>
+
+      {/* Bearing displacement orbit overlay (plan view) */}
+      <BearingDisplacementView />
     </div>
   );
 }

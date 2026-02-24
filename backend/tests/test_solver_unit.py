@@ -936,11 +936,11 @@ class TestEleResponseUsesLocalForce:
             )
 
     def test_bearing_still_uses_basic_force(self, three_story_frame_model):
-        """Bearings should still use 'basicForce' / 'basicDisplacement', not 'localForce'."""
+        """Bearings should use 'basicForce'/'basicDisplacement' (plus 'globalForce'), not 'localForce'."""
         _mock_ops.analyze.return_value = 0
         _mock_ops.eigen.return_value = [100.0]
         _mock_ops.nodeDisp.return_value = 0.0
-        _mock_ops.eleResponse.return_value = [0.0] * 6
+        _mock_ops.eleResponse.return_value = [0.0] * 12
 
         run_time_history(
             three_story_frame_model, [0.1], dt=0.01, num_steps=1
@@ -953,9 +953,10 @@ class TestEleResponseUsesLocalForce:
             c for c in ele_resp_calls if c[0][0] in bearing_tags
         ]
         assert len(bearing_calls) > 0
+        allowed = ("basicForce", "basicDisplacement", "globalForce")
         for c in bearing_calls:
-            assert c[0][1] in ("basicForce", "basicDisplacement"), (
-                f"Bearing eleResponse should use 'basicForce'/'basicDisplacement', got '{c[0][1]}'"
+            assert c[0][1] in allowed, (
+                f"Bearing eleResponse should use {allowed}, got '{c[0][1]}'"
             )
 
 

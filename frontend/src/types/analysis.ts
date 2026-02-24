@@ -94,12 +94,17 @@ export interface ModalResults {
 // ---------------------------------------------------------------------------
 
 export interface BearingResponse {
-  /** Lateral displacement [x, y]. */
+  /** Lateral displacement in element basic system [x, y]. */
   displacement: [number, number];
-  /** Lateral force [x, y]. */
+  /** Lateral force in element basic system [x, y]. */
   force: [number, number];
   /** Vertical (axial) force. */
   axialForce: number;
+  /** Global shear forces at J-node [Fx, Fy, Fz] in backend Z-up frame. */
+  globalForce: [number, number, number];
+  /** Bearing node IDs for computing relative global displacements. */
+  nodeI: number;
+  nodeJ: number;
 }
 
 export interface TimeStep {

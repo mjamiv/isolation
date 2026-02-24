@@ -74,29 +74,55 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
 
   const bearingTrace = useMemo(() => {
     const dispX: number[] = [];
-    const dispY: number[] = [];
+    const dispZ: number[] = [];
     const forceX: number[] = [];
-    const forceY: number[] = [];
+    const forceZ: number[] = [];
     const axial: number[] = [];
+
+    // Resolve bearing node IDs from first step that has this bearing
+    let nodeI = 0;
+    let nodeJ = 0;
+    for (const step of data.timeSteps) {
+      const br = step.bearingResponses[selectedBearing];
+      if (br && (br.nodeI || br.nodeJ)) {
+        nodeI = br.nodeI;
+        nodeJ = br.nodeJ;
+        break;
+      }
+    }
 
     for (const step of data.timeSteps) {
       const br = step.bearingResponses[selectedBearing];
-      if (br) {
+
+      // Use global node displacements (nodeJ - nodeI) for displacement
+      // DOF 1 = Global X (frontend X), DOF 2 = Global Y (frontend Z)
+      if (nodeJ) {
+        const dJ = step.nodeDisplacements[nodeJ];
+        const dI = step.nodeDisplacements[nodeI];
+        dispX.push((dJ?.[0] ?? 0) - (dI?.[0] ?? 0));
+        dispZ.push((dJ?.[1] ?? 0) - (dI?.[1] ?? 0));
+      } else if (br) {
         dispX.push(br.displacement[0] ?? 0);
-        dispY.push(br.displacement[1] ?? 0);
-        forceX.push(br.force[0] ?? 0);
-        forceY.push(br.force[1] ?? 0);
-        axial.push(br.axialForce ?? 0);
+        dispZ.push(br.displacement[1] ?? 0);
       } else {
         dispX.push(0);
-        dispY.push(0);
+        dispZ.push(0);
+      }
+
+      // Use global forces when available, fall back to basic forces
+      if (br) {
+        const hasGlobal = br.globalForce && (br.globalForce[0] !== 0 || br.globalForce[1] !== 0);
+        forceX.push(hasGlobal ? br.globalForce[0] : (br.force[0] ?? 0));
+        forceZ.push(hasGlobal ? br.globalForce[1] : (br.force[1] ?? 0));
+        axial.push(br.axialForce ?? 0);
+      } else {
         forceX.push(0);
-        forceY.push(0);
+        forceZ.push(0);
         axial.push(0);
       }
     }
 
-    return { dispX, dispY, forceX, forceY, axial };
+    return { dispX, dispZ, forceX, forceZ, axial };
   }, [data.timeSteps, selectedBearing]);
 
   const elementTrace = useMemo(() => {
@@ -305,6 +331,14 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                     },
                     {
                       x: times,
+                      y: bearingTrace.dispZ,
+                      type: 'scattergl' as const,
+                      mode: 'lines' as const,
+                      line: { color: '#22d3ee', width: 1.1 },
+                      name: 'Disp Z',
+                    },
+                    {
+                      x: times,
                       y: bearingTrace.forceX,
                       type: 'scattergl' as const,
                       mode: 'lines' as const,
@@ -353,7 +387,15 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                       type: 'scattergl' as const,
                       mode: 'lines' as const,
                       line: { color: '#10b981', width: 1.2 },
-                      name: 'Loop',
+                      name: 'X dir',
+                    },
+                    {
+                      x: bearingTrace.dispZ,
+                      y: bearingTrace.forceZ,
+                      type: 'scattergl' as const,
+                      mode: 'lines' as const,
+                      line: { color: '#22d3ee', width: 1.1 },
+                      name: 'Z dir',
                     },
                     {
                       x: [bearingTrace.dispX[stepIndex] ?? 0],
@@ -374,7 +416,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
                       gridcolor: '#374151',
                     },
                     yaxis: { title: { text: 'Force', font: { size: 9 } }, gridcolor: '#374151' },
-                    showlegend: false,
+                    legend: { orientation: 'h', y: 1.2, font: { size: 9 } },
                   }}
                   config={{ displayModeBar: false, responsive: true }}
                   style={{ width: '100%', height: '100%' }}

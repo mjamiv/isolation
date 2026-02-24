@@ -700,6 +700,11 @@ def run_time_history(
                 "force_x": [],
                 "force_y": [],
                 "axial_force": [],
+                "global_force_x": [],
+                "global_force_y": [],
+                "global_force_z": [],
+                "node_i": bearing["nodes"][0],
+                "node_j": bearing["nodes"][1],
             }
 
         # Initialise per-element force containers
@@ -822,6 +827,17 @@ def run_time_history(
                     bearing_resp_history[bkey]["force_x"].append(fx)
                     bearing_resp_history[bkey]["force_y"].append(fy)
                     bearing_resp_history[bkey]["axial_force"].append(axial)
+
+                    # Global forces at the J-node end (indices 6..11 of 12-component vector)
+                    try:
+                        gf = _to_float_list(ops.eleResponse(ele_tag, "globalForce"))
+                        bearing_resp_history[bkey]["global_force_x"].append(gf[6] if len(gf) > 6 else 0.0)
+                        bearing_resp_history[bkey]["global_force_y"].append(gf[7] if len(gf) > 7 else 0.0)
+                        bearing_resp_history[bkey]["global_force_z"].append(gf[8] if len(gf) > 8 else 0.0)
+                    except Exception:
+                        bearing_resp_history[bkey]["global_force_x"].append(0.0)
+                        bearing_resp_history[bkey]["global_force_y"].append(0.0)
+                        bearing_resp_history[bkey]["global_force_z"].append(0.0)
                 except Exception:
                     bearing_resp_history[bkey]["displacement_x"].append(0.0)
                     bearing_resp_history[bkey]["displacement_y"].append(0.0)
@@ -829,6 +845,9 @@ def run_time_history(
                     bearing_resp_history[bkey]["force_x"].append(0.0)
                     bearing_resp_history[bkey]["force_y"].append(0.0)
                     bearing_resp_history[bkey]["axial_force"].append(0.0)
+                    bearing_resp_history[bkey]["global_force_x"].append(0.0)
+                    bearing_resp_history[bkey]["global_force_y"].append(0.0)
+                    bearing_resp_history[bkey]["global_force_z"].append(0.0)
 
         return {
             "time": time_vals,

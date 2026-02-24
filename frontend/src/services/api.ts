@@ -212,12 +212,18 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
 
     let baseShearAtStep = 0;
     for (const [bid, resp] of Object.entries(bearingHist)) {
-      const r = (resp ?? {}) as Record<string, number[]>;
-      const dx = r.displacementX?.[i] ?? r.displacement?.[i] ?? 0;
-      const dy = r.displacementY?.[i] ?? 0;
-      const fx = r.forceX?.[i] ?? r.force?.[i] ?? 0;
-      const fy = r.forceY?.[i] ?? 0;
-      const axial = r.axialForce?.[i] ?? 0;
+      const r = (resp ?? {}) as Record<string, unknown>;
+      const ra = r as Record<string, number[]>;
+      const dx = ra.displacementX?.[i] ?? ra.displacement?.[i] ?? 0;
+      const dy = ra.displacementY?.[i] ?? 0;
+      const fx = ra.forceX?.[i] ?? ra.force?.[i] ?? 0;
+      const fy = ra.forceY?.[i] ?? 0;
+      const axial = ra.axialForce?.[i] ?? 0;
+      const gfx = ra.globalForceX?.[i] ?? 0;
+      const gfy = ra.globalForceY?.[i] ?? 0;
+      const gfz = ra.globalForceZ?.[i] ?? 0;
+      const nodeI = Number(r.nodeI ?? 0);
+      const nodeJ = Number(r.nodeJ ?? 0);
 
       const dispMag = Math.hypot(dx, dy);
       if (dispMag > maxBearingDisp) {
@@ -231,6 +237,9 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
         displacement: [dx, dy],
         force: [fx, fy],
         axialForce: axial,
+        globalForce: [gfx, gfy, gfz],
+        nodeI,
+        nodeJ,
       };
     }
 

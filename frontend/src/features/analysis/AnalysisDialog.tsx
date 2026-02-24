@@ -28,7 +28,11 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const [pushDirection, setPushDirection] = useState<PushDirection>('X');
   const [loadPattern, setLoadPattern] = useState<LoadPattern>('linear');
   const [displacementIncrement, setDisplacementIncrement] = useState('0.1');
-  const [selectedDirections, setSelectedDirections] = useState<Set<1 | 2 | 3>>(new Set([1]));
+  const [directionScales, setDirectionScales] = useState<Record<1 | 2 | 3, number>>({
+    1: 100,
+    2: 0,
+    3: 0,
+  });
 
   // Comparison options
   const [runComparisonMode, setRunComparisonMode] = useState(false);
@@ -72,7 +76,10 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     if (analysisType === 'time_history' && !selectedGmId) {
       return 'Please select a ground motion record.';
     }
-    if (analysisType === 'time_history' && selectedDirections.size === 0) {
+    if (
+      analysisType === 'time_history' &&
+      !([1, 2, 3] as const).some((d) => directionScales[d] > 0)
+    ) {
       return 'Please select at least one excitation direction.';
     }
     if (analysisType === 'pushover' && loads.size === 0) {
@@ -107,12 +114,14 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
         const zUp = bearings.size > 0;
         const mapDir = (d: 1 | 2 | 3): 1 | 2 | 3 => (zUp ? (d === 2 ? 3 : d === 3 ? 2 : d) : d);
 
-        params.groundMotions = Array.from(selectedDirections).map((dir) => ({
-          dt: selectedGm.dt,
-          acceleration: selectedGm.acceleration,
-          direction: mapDir(dir),
-          scaleFactor: selectedGm.scaleFactor,
-        }));
+        params.groundMotions = ([1, 2, 3] as const)
+          .filter((dir) => directionScales[dir] > 0)
+          .map((dir) => ({
+            dt: selectedGm.dt,
+            acceleration: selectedGm.acceleration,
+            direction: mapDir(dir),
+            scaleFactor: selectedGm.scaleFactor * (directionScales[dir] / 100),
+          }));
       }
       params.dt = Number(dt) || 0.01;
       params.numSteps = Number(numSteps) || 1000;
@@ -223,24 +232,38 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                 <div>
                   <label className="text-xs font-medium text-gray-400">Excitation Directions</label>
                   <div className="mt-1 flex gap-3">
-                    {([1, 2, 3] as const).map((dir) => (
-                      <label key={dir} className="flex items-center gap-1.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedDirections.has(dir)}
-                          onChange={(e) => {
-                            const next = new Set(selectedDirections);
-                            if (e.target.checked) next.add(dir);
-                            else next.delete(dir);
-                            if (next.size > 0) setSelectedDirections(next);
-                          }}
-                          className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
-                        />
-                        <span className="text-xs text-gray-300">
-                          {dir === 1 ? 'X' : dir === 2 ? 'Y' : 'Z'}
-                        </span>
-                      </label>
-                    ))}
+                    {([1, 2, 3] as const).map((dir) => {
+                      const label = dir === 1 ? 'X' : dir === 2 ? 'Y' : 'Z';
+                      const enabled = directionScales[dir] > 0;
+                      return (
+                        <label key={dir} className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={enabled}
+                            onChange={(e) => {
+                              setDirectionScales((prev) => ({
+                                ...prev,
+                                [dir]: e.target.checked ? 100 : 0,
+                              }));
+                            }}
+                            className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+                          />
+                          <span className="text-xs text-gray-300">{label}</span>
+                          <input
+                            type="number"
+                            value={directionScales[dir]}
+                            onChange={(e) => {
+                              const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                              setDirectionScales((prev) => ({ ...prev, [dir]: val }));
+                            }}
+                            min={0}
+                            max={100}
+                            className="w-12 rounded bg-gray-800 px-1.5 py-0.5 text-xs text-gray-200 text-center outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                          />
+                          <span className="text-[10px] text-gray-500">%</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">

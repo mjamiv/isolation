@@ -88,7 +88,7 @@ Phases 1 through 5 are complete. The app provides:
 
 ### Multi-Directional Time History & Element Property Labels
 - **Simultaneous XYZ excitation** — time-history analysis supports multiple concurrent ground motion directions; backend creates separate `UniformExcitation` patterns per direction with unique tags
-- **Direction checkboxes** — AnalysisDialog shows X/Y/Z checkboxes for time-history; each checked direction replicates the selected ground motion record
+- **Per-direction scaling** — AnalysisDialog shows X/Y/Z direction inputs with percentage scaling (e.g., 100% X + 30% Z) for realistic multi-directional excitation
 - **Y-Z direction swap** — for isolated (bearing) models, the frontend automatically maps Y↔Z directions to match the backend Z-up convention required by TFP elements
 - **Element mass labels** — toggle "Show Mass" in Viewer Controls to display tributary mass at element midpoints, derived from gravity loads (`|Fy|/g`) with unit-aware formatting (kip-in, kN-m, etc.)
 - **Element stiffness labels** — toggle "Show Stiffness" to display EI/L (flexural) or EA/L (axial) stiffness at element midpoints
@@ -109,6 +109,12 @@ Phases 1 through 5 are complete. The app provides:
 - **Station-based force diagrams** — `ForceDiagrams` assembles values at each member station from discretized sub-element end forces (`i`/`j`) and renders contiguous strips along the full member chain
 - **Solver-aligned 3D orientation** — force/moment diagram normals now mirror backend local-axis (`vecxz`) conventions, including z-up isolated-model mapping
 - **Discretization data pipeline** — backend returns `discretization_map` and `internal_node_coords` through API normalizers to frontend result types (`StaticResults`, `PushoverResults`, `TimeHistoryResults`)
+
+### 3D Viewer Enhancements
+- **Scene environments** — 4 selectable environment presets (Studio, Outdoor, Dark, Blueprint) with procedural lighting, backgrounds, and ground treatments; no external HDR files
+- **Node visibility** — nodes render with bright gold color and emissive glow, clearly visible against all backgrounds
+- **Bearing orbit overlay** — collapsible plan-view panel showing real-time isolation bearing displacement orbits during time-history playback with amplification presets (1x-50x), prev/next navigation, and capacity circles
+- **Global bearing hysteresis** — hysteresis loop charts use global node displacements and global element forces (not element-local `basicDisplacement`/`basicForce`), producing correct nonlinear loops for multi-directional excitation
 
 ### Bug Fixes & Polish
 - **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
@@ -168,7 +174,7 @@ isolation/
       components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
       features/
         layout/      # AppLayout, Toolbar, StatusBar
-        viewer-3d/   # 3D canvas, NodePoints, MemberLines (wireframe/extruded/solid), SupportSymbols, BearingSymbols, Labels, ElementPropertyLabels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver
+        viewer-3d/   # 3D canvas, NodePoints, MemberLines (wireframe/extruded/solid), SupportSymbols, BearingSymbols, Labels, ElementPropertyLabels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver, BearingDisplacementView, SceneEnvironment
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
@@ -239,7 +245,7 @@ cd frontend && npm test
 # Frontend lint
 cd frontend && npm run lint
 
-# Backend unit tests (116 tests with mocked OpenSeesPy)
+# Backend unit tests (80 tests with mocked OpenSeesPy)
 cd backend && pytest
 
 # Integration tests (23 tests, requires running backend)

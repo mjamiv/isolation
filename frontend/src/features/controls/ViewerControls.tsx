@@ -1,9 +1,17 @@
 import {
   useDisplayStore,
   type DisplayMode,
+  type EnvironmentPreset,
   type ForceType,
   type ColorMapType,
 } from '../../stores/displayStore';
+
+const ENVIRONMENT_OPTIONS: { value: EnvironmentPreset; label: string }[] = [
+  { value: 'studio', label: 'Studio' },
+  { value: 'outdoor', label: 'Outdoor' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'blueprint', label: 'Blueprint' },
+];
 
 const DISPLAY_MODE_OPTIONS: { value: DisplayMode; label: string }[] = [
   { value: 'wireframe', label: 'Wireframe' },
@@ -32,6 +40,10 @@ function ControlSection({ title, children }: { title: string; children: React.Re
       {children}
     </div>
   );
+}
+
+function Divider() {
+  return <div className="border-t border-gray-700/60" />;
 }
 
 function Toggle({
@@ -93,35 +105,96 @@ function SelectControl<T extends string>({
   );
 }
 
+function SliderControl({
+  label,
+  min,
+  max,
+  step,
+  value,
+  onChange,
+  formatValue,
+}: {
+  label: string;
+  min: number;
+  max: number;
+  step?: number;
+  value: number;
+  onChange: (value: number) => void;
+  formatValue?: (v: number) => string;
+}) {
+  return (
+    <label className="flex items-center justify-between">
+      <span className="text-xs text-gray-400">{label}</span>
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="h-1 w-20 cursor-pointer accent-yellow-500"
+        />
+        <span className="w-10 text-right text-xs text-gray-500">
+          {formatValue ? formatValue(value) : String(value)}
+        </span>
+      </div>
+    </label>
+  );
+}
+
 export function ViewerControls() {
+  const environment = useDisplayStore((state) => state.environment);
+  const setEnvironment = useDisplayStore((state) => state.setEnvironment);
+
   const displayMode = useDisplayStore((state) => state.displayMode);
-  const showDeformed = useDisplayStore((state) => state.showDeformed);
-  const scaleFactor = useDisplayStore((state) => state.scaleFactor);
-  const showLabels = useDisplayStore((state) => state.showLabels);
   const showGrid = useDisplayStore((state) => state.showGrid);
   const showAxes = useDisplayStore((state) => state.showAxes);
+  const showLabels = useDisplayStore((state) => state.showLabels);
+  const showMassLabels = useDisplayStore((state) => state.showMassLabels);
+  const showStiffnessLabels = useDisplayStore((state) => state.showStiffnessLabels);
+
+  const setDisplayMode = useDisplayStore((state) => state.setDisplayMode);
+  const setShowGrid = useDisplayStore((state) => state.setShowGrid);
+  const setShowAxes = useDisplayStore((state) => state.setShowAxes);
+  const setShowLabels = useDisplayStore((state) => state.setShowLabels);
+  const setShowMassLabels = useDisplayStore((state) => state.setShowMassLabels);
+  const setShowStiffnessLabels = useDisplayStore((state) => state.setShowStiffnessLabels);
+
+  const showDeformed = useDisplayStore((state) => state.showDeformed);
+  const scaleFactor = useDisplayStore((state) => state.scaleFactor);
+  const setShowDeformed = useDisplayStore((state) => state.setShowDeformed);
+  const setScaleFactor = useDisplayStore((state) => state.setScaleFactor);
+
   const showForces = useDisplayStore((state) => state.showForces);
   const forceType = useDisplayStore((state) => state.forceType);
   const forceScale = useDisplayStore((state) => state.forceScale);
   const colorMap = useDisplayStore((state) => state.colorMap);
+  const showBearingDisplacement = useDisplayStore((state) => state.showBearingDisplacement);
+  const showComparisonOverlay = useDisplayStore((state) => state.showComparisonOverlay);
 
-  const setDisplayMode = useDisplayStore((state) => state.setDisplayMode);
-  const setShowDeformed = useDisplayStore((state) => state.setShowDeformed);
-  const setScaleFactor = useDisplayStore((state) => state.setScaleFactor);
-  const setShowLabels = useDisplayStore((state) => state.setShowLabels);
-  const setShowGrid = useDisplayStore((state) => state.setShowGrid);
-  const setShowAxes = useDisplayStore((state) => state.setShowAxes);
   const setShowForces = useDisplayStore((state) => state.setShowForces);
   const setForceType = useDisplayStore((state) => state.setForceType);
   const setForceScale = useDisplayStore((state) => state.setForceScale);
-  const showMassLabels = useDisplayStore((state) => state.showMassLabels);
-  const showStiffnessLabels = useDisplayStore((state) => state.showStiffnessLabels);
-  const setShowMassLabels = useDisplayStore((state) => state.setShowMassLabels);
-  const setShowStiffnessLabels = useDisplayStore((state) => state.setShowStiffnessLabels);
   const setColorMap = useDisplayStore((state) => state.setColorMap);
+  const setShowBearingDisplacement = useDisplayStore((state) => state.setShowBearingDisplacement);
+  const setShowComparisonOverlay = useDisplayStore((state) => state.setShowComparisonOverlay);
 
   return (
     <div className="space-y-3">
+      {/* Scene: environment is the outermost context — comes first */}
+      <ControlSection title="Scene">
+        <SelectControl
+          label="Environment"
+          value={environment}
+          options={ENVIRONMENT_OPTIONS}
+          onChange={setEnvironment}
+        />
+      </ControlSection>
+
+      <Divider />
+
+      {/* Display: geometry representation + viewport helpers */}
       <ControlSection title="Display">
         <SelectControl
           label="Mode"
@@ -129,66 +202,73 @@ export function ViewerControls() {
           options={DISPLAY_MODE_OPTIONS}
           onChange={setDisplayMode}
         />
-        <Toggle label="Show Grid" checked={showGrid} onChange={setShowGrid} />
-        <Toggle label="Show Axes" checked={showAxes} onChange={setShowAxes} />
-        <Toggle label="Show Labels" checked={showLabels} onChange={setShowLabels} />
+        <Toggle label="Grid" checked={showGrid} onChange={setShowGrid} />
+        <Toggle label="Axes" checked={showAxes} onChange={setShowAxes} />
+        <Toggle label="Node / Element Labels" checked={showLabels} onChange={setShowLabels} />
       </ControlSection>
 
+      <Divider />
+
+      {/* Element Properties: annotation overlays tied to the undeformed model */}
+      <ControlSection title="Element Properties">
+        <Toggle label="Mass Labels" checked={showMassLabels} onChange={setShowMassLabels} />
+        <Toggle
+          label="Stiffness Labels"
+          checked={showStiffnessLabels}
+          onChange={setShowStiffnessLabels}
+        />
+      </ControlSection>
+
+      <Divider />
+
+      {/* Deformation: result-dependent — deformed shape + scale */}
       <ControlSection title="Deformation">
-        <Toggle label="Show Deformed" checked={showDeformed} onChange={setShowDeformed} />
-        <label className="flex items-center justify-between">
-          <span className="text-xs text-gray-400">Scale Factor</span>
-          <div className="flex items-center gap-2">
-            <input
-              type="range"
-              min={1}
-              max={1000}
-              value={scaleFactor}
-              onChange={(e) => setScaleFactor(Number(e.target.value))}
-              className="h-1 w-20 cursor-pointer accent-yellow-500"
-            />
-            <span className="w-8 text-right text-xs text-gray-500">{scaleFactor}</span>
-          </div>
-        </label>
+        <Toggle label="Show Deformed Shape" checked={showDeformed} onChange={setShowDeformed} />
+        <SliderControl
+          label="Scale Factor"
+          min={1}
+          max={1000}
+          value={scaleFactor}
+          onChange={setScaleFactor}
+          formatValue={(v) => String(v)}
+        />
       </ControlSection>
 
+      <Divider />
+
+      {/* Results: all post-processing overlays grouped together */}
       <ControlSection title="Results">
-        <Toggle label="Show Force Diagrams" checked={showForces} onChange={setShowForces} />
+        <Toggle label="Force Diagrams" checked={showForces} onChange={setShowForces} />
         <SelectControl
-          label="Forces"
+          label="Force Type"
           value={forceType}
           options={FORCE_TYPE_OPTIONS}
           onChange={setForceType}
         />
-        <label className="flex items-center justify-between">
-          <span className="text-xs text-gray-400">Force Scale</span>
-          <div className="flex items-center gap-2">
-            <input
-              type="range"
-              min={0.1}
-              max={4}
-              step={0.1}
-              value={forceScale}
-              onChange={(e) => setForceScale(Number(e.target.value))}
-              className="h-1 w-20 cursor-pointer accent-yellow-500"
-            />
-            <span className="w-8 text-right text-xs text-gray-500">{forceScale.toFixed(1)}x</span>
-          </div>
-        </label>
+        <SliderControl
+          label="Force Scale"
+          min={0.1}
+          max={4}
+          step={0.1}
+          value={forceScale}
+          onChange={setForceScale}
+          formatValue={(v) => `${v.toFixed(1)}x`}
+        />
         <SelectControl
           label="Color Map"
           value={colorMap}
           options={COLOR_MAP_OPTIONS}
           onChange={setColorMap}
         />
-      </ControlSection>
-
-      <ControlSection title="Element Properties">
-        <Toggle label="Show Mass" checked={showMassLabels} onChange={setShowMassLabels} />
         <Toggle
-          label="Show Stiffness"
-          checked={showStiffnessLabels}
-          onChange={setShowStiffnessLabels}
+          label="Bearing Displacement"
+          checked={showBearingDisplacement}
+          onChange={setShowBearingDisplacement}
+        />
+        <Toggle
+          label="Comparison Overlay"
+          checked={showComparisonOverlay}
+          onChange={setShowComparisonOverlay}
         />
       </ControlSection>
     </div>
