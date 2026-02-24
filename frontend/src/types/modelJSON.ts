@@ -36,4 +36,6 @@ export const PRESET_MODELS: PresetModel[] = [
   { label: '20-Story Tower (Isolated)', url: '/models/twenty-story-isolated.json' },
   { label: '2-Story 2x2 (Fixed)', url: '/models/two-story-2x2-fixed.json' },
   { label: '2-Story 2x2 (Isolated)', url: '/models/two-story-2x2-isolated.json' },
+  { label: '3-Span Bridge (Fixed)', url: '/models/three-span-bridge-fixed.json' },
+  { label: '3-Span Bridge (Isolated)', url: '/models/three-span-bridge-isolated.json' },
 ];

@@ -14,7 +14,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Property Inspector** (right panel) showing read-only details for selected nodes and elements
 - **3D labels** on nodes and elements, visible on hover, selection, or global toggle
 - **Viewer controls** for display mode, grid, axes, labels, deformation scale, force diagrams, and color maps
-- **Model import** — "Load Model" dropdown with 4 presets (20-Story Tower fixed/isolated, 2-Story 2x2 fixed/isolated) and JSON file import
+- **Model import** — "Load Model" dropdown with 6 presets (20-Story Tower, 2-Story 2x2, 3-Span Bridge — each fixed/isolated) and JSON file import
 - **Sample model** — 3-story 2-bay steel moment frame auto-loaded on startup
 
 ### Phase 2 — Load Editing, Analysis Runner & Results
@@ -79,9 +79,10 @@ Phases 1 through 5 are complete. The app provides:
 - **Supporting documents**: `analysis_calculations.md` (984 lines of step-by-step calculations), `aashto_compliance.md` (1,029 lines of detailed code compliance review)
 
 ### Model Import & Session Persistence
-- **Load Model dropdown** — toolbar dropdown with 4 focused presets and an "Import JSON File..." option
-- **Preset models**: 20-Story Tower (Fixed), 20-Story Tower (Isolated), 2-Story 2x2 (Fixed), 2-Story 2x2 (Isolated)
+- **Load Model dropdown** — toolbar dropdown with 6 focused presets and an "Import JSON File..." option
+- **Preset models**: 20-Story Tower (Fixed/Isolated), 2-Story 2x2 (Fixed/Isolated), 3-Span Bridge (Fixed/Isolated)
 - **20-story steel tower** — 1-bay 20'x20' moment frame, 3 column tiers (W14x500/370/257), 3 beam tiers (W36x300/W30x211/W24x146), T1=1.41s, fully verified with all 4 analysis types
+- **3-span girder bridge** — 80'-100'-80' continuous steel girder bridge with 6 W36x150 girders at 8'-0" spacing, W24x84 cross-beams, 2-column W14x132 portal frame piers, rigid diaphragms at all support lines, and 120 psf composite concrete deck dead load. Isolated variant has 24 TFP bearings at all girder support points with pier cap beams below the isolation plane
 - **Auto-generated ground motions** — models imported without ground motion records automatically get 4 synthetic records (El Centro, Near-Fault, Harmonic, Subduction), enabling immediate time-history analysis
 - **JSON file import** — load any arbitrary model JSON via file picker with validation and toast notifications
 - **Session result caching** — analysis results are cached per model name; switching between presets preserves results within a dev session without re-running analyses

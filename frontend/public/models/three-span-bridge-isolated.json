@@ -1,0 +1,205 @@
+{
+  "modelInfo": {
+    "name": "3-Span Girder Bridge (TFP Isolated)",
+    "description": "3-span continuous steel girder bridge with composite concrete deck. 6 girders at 8'-0\" spacing with 3'-6\" overhangs. Spans: 80'-100'-80' (960\"-1200\"-960\"). 2-column portal frame piers. Rigid diaphragms at all support lines. Triple Friction Pendulum bearings at all 24 girder support points (abutments and piers).",
+    "units": "kip-in"
+  },
+  "nodes": [
+    { "id": 1,  "x": 0,    "y": 240, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt1 G1" },
+    { "id": 2,  "x": 0,    "y": 240, "z": 96,  "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt1 G2" },
+    { "id": 3,  "x": 0,    "y": 240, "z": 192, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt1 G3" },
+    { "id": 4,  "x": 0,    "y": 240, "z": 288, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt1 G4" },
+    { "id": 5,  "x": 0,    "y": 240, "z": 384, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt1 G5" },
+    { "id": 6,  "x": 0,    "y": 240, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt1 G6" },
+
+    { "id": 7,  "x": 960,  "y": 240, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 G1" },
+    { "id": 8,  "x": 960,  "y": 240, "z": 96,  "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 G2" },
+    { "id": 9,  "x": 960,  "y": 240, "z": 192, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 G3" },
+    { "id": 10, "x": 960,  "y": 240, "z": 288, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 G4" },
+    { "id": 11, "x": 960,  "y": 240, "z": 384, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 G5" },
+    { "id": 12, "x": 960,  "y": 240, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 G6" },
+
+    { "id": 13, "x": 2160, "y": 240, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 G1" },
+    { "id": 14, "x": 2160, "y": 240, "z": 96,  "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 G2" },
+    { "id": 15, "x": 2160, "y": 240, "z": 192, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 G3" },
+    { "id": 16, "x": 2160, "y": 240, "z": 288, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 G4" },
+    { "id": 17, "x": 2160, "y": 240, "z": 384, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 G5" },
+    { "id": 18, "x": 2160, "y": 240, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 G6" },
+
+    { "id": 19, "x": 3120, "y": 240, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt2 G1" },
+    { "id": 20, "x": 3120, "y": 240, "z": 96,  "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt2 G2" },
+    { "id": 21, "x": 3120, "y": 240, "z": 192, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt2 G3" },
+    { "id": 22, "x": 3120, "y": 240, "z": 288, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt2 G4" },
+    { "id": 23, "x": 3120, "y": 240, "z": 384, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt2 G5" },
+    { "id": 24, "x": 3120, "y": 240, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Abt2 G6" },
+
+    { "id": 25, "x": 960,  "y": 0,   "z": 0,   "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Pier1 Col1 Base" },
+    { "id": 26, "x": 960,  "y": 0,   "z": 480, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Pier1 Col2 Base" },
+    { "id": 27, "x": 2160, "y": 0,   "z": 0,   "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Pier2 Col1 Base" },
+    { "id": 28, "x": 2160, "y": 0,   "z": 480, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Pier2 Col2 Base" },
+
+    { "id": 101, "x": 0,    "y": 239, "z": 0,   "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt1 Seat G1" },
+    { "id": 102, "x": 0,    "y": 239, "z": 96,  "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt1 Seat G2" },
+    { "id": 103, "x": 0,    "y": 239, "z": 192, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt1 Seat G3" },
+    { "id": 104, "x": 0,    "y": 239, "z": 288, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt1 Seat G4" },
+    { "id": 105, "x": 0,    "y": 239, "z": 384, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt1 Seat G5" },
+    { "id": 106, "x": 0,    "y": 239, "z": 480, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt1 Seat G6" },
+
+    { "id": 107, "x": 960,  "y": 239, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Cap G1" },
+    { "id": 108, "x": 960,  "y": 239, "z": 96,  "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Cap G2" },
+    { "id": 109, "x": 960,  "y": 239, "z": 192, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Cap G3" },
+    { "id": 110, "x": 960,  "y": 239, "z": 288, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Cap G4" },
+    { "id": 111, "x": 960,  "y": 239, "z": 384, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Cap G5" },
+    { "id": 112, "x": 960,  "y": 239, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Cap G6" },
+
+    { "id": 113, "x": 2160, "y": 239, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Cap G1" },
+    { "id": 114, "x": 2160, "y": 239, "z": 96,  "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Cap G2" },
+    { "id": 115, "x": 2160, "y": 239, "z": 192, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Cap G3" },
+    { "id": 116, "x": 2160, "y": 239, "z": 288, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Cap G4" },
+    { "id": 117, "x": 2160, "y": 239, "z": 384, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Cap G5" },
+    { "id": 118, "x": 2160, "y": 239, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Cap G6" },
+
+    { "id": 119, "x": 3120, "y": 239, "z": 0,   "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G1" },
+    { "id": 120, "x": 3120, "y": 239, "z": 96,  "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G2" },
+    { "id": 121, "x": 3120, "y": 239, "z": 192, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G3" },
+    { "id": 122, "x": 3120, "y": 239, "z": 288, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G4" },
+    { "id": 123, "x": 3120, "y": 239, "z": 384, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G5" },
+    { "id": 124, "x": 3120, "y": 239, "z": 480, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G6" }
+  ],
+  "elements": [
+    { "id": 1,  "type": "beam", "nodeI": 1,  "nodeJ": 7,  "sectionId": 1, "materialId": 1, "label": "Girder 1 Span 1" },
+    { "id": 2,  "type": "beam", "nodeI": 2,  "nodeJ": 8,  "sectionId": 1, "materialId": 1, "label": "Girder 2 Span 1" },
+    { "id": 3,  "type": "beam", "nodeI": 3,  "nodeJ": 9,  "sectionId": 1, "materialId": 1, "label": "Girder 3 Span 1" },
+    { "id": 4,  "type": "beam", "nodeI": 4,  "nodeJ": 10, "sectionId": 1, "materialId": 1, "label": "Girder 4 Span 1" },
+    { "id": 5,  "type": "beam", "nodeI": 5,  "nodeJ": 11, "sectionId": 1, "materialId": 1, "label": "Girder 5 Span 1" },
+    { "id": 6,  "type": "beam", "nodeI": 6,  "nodeJ": 12, "sectionId": 1, "materialId": 1, "label": "Girder 6 Span 1" },
+
+    { "id": 7,  "type": "beam", "nodeI": 7,  "nodeJ": 13, "sectionId": 1, "materialId": 1, "label": "Girder 1 Span 2" },
+    { "id": 8,  "type": "beam", "nodeI": 8,  "nodeJ": 14, "sectionId": 1, "materialId": 1, "label": "Girder 2 Span 2" },
+    { "id": 9,  "type": "beam", "nodeI": 9,  "nodeJ": 15, "sectionId": 1, "materialId": 1, "label": "Girder 3 Span 2" },
+    { "id": 10, "type": "beam", "nodeI": 10, "nodeJ": 16, "sectionId": 1, "materialId": 1, "label": "Girder 4 Span 2" },
+    { "id": 11, "type": "beam", "nodeI": 11, "nodeJ": 17, "sectionId": 1, "materialId": 1, "label": "Girder 5 Span 2" },
+    { "id": 12, "type": "beam", "nodeI": 12, "nodeJ": 18, "sectionId": 1, "materialId": 1, "label": "Girder 6 Span 2" },
+
+    { "id": 13, "type": "beam", "nodeI": 13, "nodeJ": 19, "sectionId": 1, "materialId": 1, "label": "Girder 1 Span 3" },
+    { "id": 14, "type": "beam", "nodeI": 14, "nodeJ": 20, "sectionId": 1, "materialId": 1, "label": "Girder 2 Span 3" },
+    { "id": 15, "type": "beam", "nodeI": 15, "nodeJ": 21, "sectionId": 1, "materialId": 1, "label": "Girder 3 Span 3" },
+    { "id": 16, "type": "beam", "nodeI": 16, "nodeJ": 22, "sectionId": 1, "materialId": 1, "label": "Girder 4 Span 3" },
+    { "id": 17, "type": "beam", "nodeI": 17, "nodeJ": 23, "sectionId": 1, "materialId": 1, "label": "Girder 5 Span 3" },
+    { "id": 18, "type": "beam", "nodeI": 18, "nodeJ": 24, "sectionId": 1, "materialId": 1, "label": "Girder 6 Span 3" },
+
+    { "id": 19, "type": "beam", "nodeI": 1,  "nodeJ": 2,  "sectionId": 2, "materialId": 1, "label": "XBeam Abt1 G1-G2" },
+    { "id": 20, "type": "beam", "nodeI": 2,  "nodeJ": 3,  "sectionId": 2, "materialId": 1, "label": "XBeam Abt1 G2-G3" },
+    { "id": 21, "type": "beam", "nodeI": 3,  "nodeJ": 4,  "sectionId": 2, "materialId": 1, "label": "XBeam Abt1 G3-G4" },
+    { "id": 22, "type": "beam", "nodeI": 4,  "nodeJ": 5,  "sectionId": 2, "materialId": 1, "label": "XBeam Abt1 G4-G5" },
+    { "id": 23, "type": "beam", "nodeI": 5,  "nodeJ": 6,  "sectionId": 2, "materialId": 1, "label": "XBeam Abt1 G5-G6" },
+
+    { "id": 24, "type": "beam", "nodeI": 7,  "nodeJ": 8,  "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G1-G2" },
+    { "id": 25, "type": "beam", "nodeI": 8,  "nodeJ": 9,  "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G2-G3" },
+    { "id": 26, "type": "beam", "nodeI": 9,  "nodeJ": 10, "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G3-G4" },
+    { "id": 27, "type": "beam", "nodeI": 10, "nodeJ": 11, "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G4-G5" },
+    { "id": 28, "type": "beam", "nodeI": 11, "nodeJ": 12, "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G5-G6" },
+
+    { "id": 29, "type": "beam", "nodeI": 13, "nodeJ": 14, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G1-G2" },
+    { "id": 30, "type": "beam", "nodeI": 14, "nodeJ": 15, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G2-G3" },
+    { "id": 31, "type": "beam", "nodeI": 15, "nodeJ": 16, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G3-G4" },
+    { "id": 32, "type": "beam", "nodeI": 16, "nodeJ": 17, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G4-G5" },
+    { "id": 33, "type": "beam", "nodeI": 17, "nodeJ": 18, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G5-G6" },
+
+    { "id": 34, "type": "beam", "nodeI": 19, "nodeJ": 20, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G1-G2" },
+    { "id": 35, "type": "beam", "nodeI": 20, "nodeJ": 21, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G2-G3" },
+    { "id": 36, "type": "beam", "nodeI": 21, "nodeJ": 22, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G3-G4" },
+    { "id": 37, "type": "beam", "nodeI": 22, "nodeJ": 23, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G4-G5" },
+    { "id": 38, "type": "beam", "nodeI": 23, "nodeJ": 24, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G5-G6" },
+
+    { "id": 39, "type": "column", "nodeI": 25, "nodeJ": 107, "sectionId": 3, "materialId": 1, "label": "Pier1 Col1" },
+    { "id": 40, "type": "column", "nodeI": 26, "nodeJ": 112, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2" },
+    { "id": 41, "type": "column", "nodeI": 27, "nodeJ": 113, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1" },
+    { "id": 42, "type": "column", "nodeI": 28, "nodeJ": 118, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2" },
+
+    { "id": 43, "type": "beam", "nodeI": 107, "nodeJ": 108, "sectionId": 2, "materialId": 1, "label": "Cap Pier1 G1-G2" },
+    { "id": 44, "type": "beam", "nodeI": 108, "nodeJ": 109, "sectionId": 2, "materialId": 1, "label": "Cap Pier1 G2-G3" },
+    { "id": 45, "type": "beam", "nodeI": 109, "nodeJ": 110, "sectionId": 2, "materialId": 1, "label": "Cap Pier1 G3-G4" },
+    { "id": 46, "type": "beam", "nodeI": 110, "nodeJ": 111, "sectionId": 2, "materialId": 1, "label": "Cap Pier1 G4-G5" },
+    { "id": 47, "type": "beam", "nodeI": 111, "nodeJ": 112, "sectionId": 2, "materialId": 1, "label": "Cap Pier1 G5-G6" },
+
+    { "id": 48, "type": "beam", "nodeI": 113, "nodeJ": 114, "sectionId": 2, "materialId": 1, "label": "Cap Pier2 G1-G2" },
+    { "id": 49, "type": "beam", "nodeI": 114, "nodeJ": 115, "sectionId": 2, "materialId": 1, "label": "Cap Pier2 G2-G3" },
+    { "id": 50, "type": "beam", "nodeI": 115, "nodeJ": 116, "sectionId": 2, "materialId": 1, "label": "Cap Pier2 G3-G4" },
+    { "id": 51, "type": "beam", "nodeI": 116, "nodeJ": 117, "sectionId": 2, "materialId": 1, "label": "Cap Pier2 G4-G5" },
+    { "id": 52, "type": "beam", "nodeI": 117, "nodeJ": 118, "sectionId": 2, "materialId": 1, "label": "Cap Pier2 G5-G6" }
+  ],
+  "sections": [
+    { "id": 1, "name": "W36x150 (Girders)",      "area": 44.2, "Ix": 9040,  "Iy": 270,  "Zx": 504, "d": 35.85, "bf": 11.975, "tw": 0.625, "tf": 0.94 },
+    { "id": 2, "name": "W24x84 (Cross-Beams)",    "area": 24.7, "Ix": 2370,  "Iy": 94.4, "Zx": 196, "d": 24.10, "bf": 9.020,  "tw": 0.470, "tf": 0.77 },
+    { "id": 3, "name": "W14x132 (Pier Columns)",   "area": 38.8, "Ix": 1530,  "Iy": 548,  "Zx": 234, "d": 14.66, "bf": 14.725, "tw": 0.645, "tf": 1.03 }
+  ],
+  "materials": [
+    { "id": 1, "name": "A992 Gr50 Steel", "E": 29000, "Fy": 50, "density": 0.000284, "nu": 0.3 }
+  ],
+  "bearings": [
+    { "id": 1,  "nodeI": 101, "nodeJ": 1,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":36,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt1 G1" },
+    { "id": 2,  "nodeI": 102, "nodeJ": 2,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":38,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt1 G2" },
+    { "id": 3,  "nodeI": 103, "nodeJ": 3,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":38,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt1 G3" },
+    { "id": 4,  "nodeI": 104, "nodeJ": 4,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":38,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt1 G4" },
+    { "id": 5,  "nodeI": 105, "nodeJ": 5,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":38,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt1 G5" },
+    { "id": 6,  "nodeI": 106, "nodeJ": 6,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":36,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt1 G6" },
+
+    { "id": 7,  "nodeI": 107, "nodeJ": 7,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":81,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier1 G1" },
+    { "id": 8,  "nodeI": 108, "nodeJ": 8,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":86,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier1 G2" },
+    { "id": 9,  "nodeI": 109, "nodeJ": 9,  "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":86,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier1 G3" },
+    { "id": 10, "nodeI": 110, "nodeJ": 10, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":86,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier1 G4" },
+    { "id": 11, "nodeI": 111, "nodeJ": 11, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":86,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier1 G5" },
+    { "id": 12, "nodeI": 112, "nodeJ": 12, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":81,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier1 G6" },
+
+    { "id": 13, "nodeI": 113, "nodeJ": 13, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":81,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier2 G1" },
+    { "id": 14, "nodeI": 114, "nodeJ": 14, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":86,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier2 G2" },
+    { "id": 15, "nodeI": 115, "nodeJ": 15, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":86,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier2 G3" },
+    { "id": 16, "nodeI": 116, "nodeJ": 16, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":86,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier2 G4" },
+    { "id": 17, "nodeI": 117, "nodeJ": 17, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":86,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier2 G5" },
+    { "id": 18, "nodeI": 118, "nodeJ": 18, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":81,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Pier2 G6" },
+
+    { "id": 19, "nodeI": 119, "nodeJ": 19, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":36,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt2 G1" },
+    { "id": 20, "nodeI": 120, "nodeJ": 20, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":38,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt2 G2" },
+    { "id": 21, "nodeI": 121, "nodeJ": 21, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":38,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt2 G3" },
+    { "id": 22, "nodeI": 122, "nodeJ": 22, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":38,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt2 G4" },
+    { "id": 23, "nodeI": 123, "nodeJ": 23, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":38,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt2 G5" },
+    { "id": 24, "nodeI": 124, "nodeJ": 24, "surfaces": [{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.04,"muFast":0.08,"transRate":20},{"type":"VelDependent","muSlow":0.01,"muFast":0.02,"transRate":20}], "radii":[16,120,16], "dispCapacities":[2,15,2], "weight":36,  "yieldDisp":0.06, "vertStiffness":10000, "minVertForce":0.1, "tolerance":1e-8, "label":"TFP Abt2 G6" }
+  ],
+  "loads": [
+    { "id": 1,  "nodeId": 1,  "fx": 0, "fy": -36.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 2,  "nodeId": 2,  "fx": 0, "fy": -38.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 3,  "nodeId": 3,  "fx": 0, "fy": -38.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 4,  "nodeId": 4,  "fx": 0, "fy": -38.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 5,  "nodeId": 5,  "fx": 0, "fy": -38.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 6,  "nodeId": 6,  "fx": 0, "fy": -36.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+
+    { "id": 7,  "nodeId": 7,  "fx": 0, "fy": -81.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 8,  "nodeId": 8,  "fx": 0, "fy": -86.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 9,  "nodeId": 9,  "fx": 0, "fy": -86.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 10, "nodeId": 10, "fx": 0, "fy": -86.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 11, "nodeId": 11, "fx": 0, "fy": -86.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 12, "nodeId": 12, "fx": 0, "fy": -81.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+
+    { "id": 13, "nodeId": 13, "fx": 0, "fy": -81.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 14, "nodeId": 14, "fx": 0, "fy": -86.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 15, "nodeId": 15, "fx": 0, "fy": -86.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 16, "nodeId": 16, "fx": 0, "fy": -86.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 17, "nodeId": 17, "fx": 0, "fy": -86.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 18, "nodeId": 18, "fx": 0, "fy": -81.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+
+    { "id": 19, "nodeId": 19, "fx": 0, "fy": -36.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 20, "nodeId": 20, "fx": 0, "fy": -38.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 21, "nodeId": 21, "fx": 0, "fy": -38.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 22, "nodeId": 22, "fx": 0, "fy": -38.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 23, "nodeId": 23, "fx": 0, "fy": -38.4, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 24, "nodeId": 24, "fx": 0, "fy": -36.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 }
+  ],
+  "groundMotions": [],
+  "diaphragms": [
+    { "id": 1, "masterNodeId": 1,  "constrainedNodeIds": [2, 3, 4, 5, 6],          "perpDirection": 2, "label": "Abt 1 Deck" },
+    { "id": 2, "masterNodeId": 7,  "constrainedNodeIds": [8, 9, 10, 11, 12],        "perpDirection": 2, "label": "Pier 1 Deck" },
+    { "id": 3, "masterNodeId": 13, "constrainedNodeIds": [14, 15, 16, 17, 18],      "perpDirection": 2, "label": "Pier 2 Deck" },
+    { "id": 4, "masterNodeId": 19, "constrainedNodeIds": [20, 21, 22, 23, 24],      "perpDirection": 2, "label": "Abt 2 Deck" }
+  ]
+}

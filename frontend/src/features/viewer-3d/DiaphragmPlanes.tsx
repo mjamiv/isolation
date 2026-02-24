@@ -94,7 +94,7 @@ export function DiaphragmPlanes() {
 
         const geometry = new THREE.ShapeGeometry(shape);
         // ShapeGeometry creates in XY — rotate to XZ (horizontal plane)
-        geometry.rotateX(-Math.PI / 2);
+        geometry.rotateX(Math.PI / 2);
         geometry.translate(0, avgY, 0);
 
         // Edge geometry from hull vertices (no closing point — lineLoop auto-closes)
