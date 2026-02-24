@@ -110,6 +110,14 @@ Phases 1 through 5 are complete. The app provides:
 - **Solver-aligned 3D orientation** — force/moment diagram normals now mirror backend local-axis (`vecxz`) conventions, including z-up isolated-model mapping
 - **Discretization data pipeline** — backend returns `discretization_map` and `internal_node_coords` through API normalizers to frontend result types (`StaticResults`, `PushoverResults`, `TimeHistoryResults`)
 
+### Rigid Diaphragm Constraints
+- **Floor slab modeling** — rigid diaphragms constrain all nodes at a floor level to move together in-plane using OpenSeesPy `rigidDiaphragm`, modeling floor slabs and bridge decks
+- **Full-stack implementation** — `RigidDiaphragm` type with `masterNodeId`, `constrainedNodeIds`, and `perpDirection` (2=Y-perp, 3=Z-perp), stored in modelStore with full CRUD, serialized with Y/Z perpDirection swap for Z-up backend convention
+- **3D visualization** — semi-transparent gold floor planes rendered via convex hull (Graham scan) of floor node XZ positions, with gold edge outlines and display toggle in Viewer Controls
+- **Model editor** — DiaphragmList/DiaphragmRow accordion section (same pattern as bearings) with master node dropdown, comma-separated constrained nodes, perpDirection select, and label field
+- **Preset models** — both 2-Story 2x2 models (fixed + isolated) ship with 2 diaphragms: Floor 1 (nodes 10-18) and Roof (nodes 19-27)
+- **Backend schema validation** — `RigidDiaphragmSchema` Pydantic model with node reference validation in `validate_model_integrity`
+
 ### 3D Viewer Enhancements
 - **Scene environments** — 4 selectable environment presets (Studio, Outdoor, Dark, Blueprint) with procedural lighting, backgrounds, and ground treatments; no external HDR files
 - **Node visibility** — nodes render with bright gold color and emissive glow, clearly visible against all backgrounds
@@ -174,7 +182,7 @@ isolation/
       components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
       features/
         layout/      # AppLayout, Toolbar, StatusBar
-        viewer-3d/   # 3D canvas, NodePoints, MemberLines (wireframe/extruded/solid), SupportSymbols, BearingSymbols, Labels, ElementPropertyLabels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver, BearingDisplacementView, SceneEnvironment
+        viewer-3d/   # 3D canvas, NodePoints, MemberLines (wireframe/extruded/solid), SupportSymbols, BearingSymbols, DiaphragmPlanes, Labels, ElementPropertyLabels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver, BearingDisplacementView, SceneEnvironment
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
@@ -239,13 +247,13 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (207 tests across 19 suites)
+# Frontend tests (220 tests across 19 suites)
 cd frontend && npm test
 
 # Frontend lint
 cd frontend && npm run lint
 
-# Backend unit tests (80 tests with mocked OpenSeesPy)
+# Backend unit tests (85 tests with mocked OpenSeesPy)
 cd backend && pytest
 
 # Integration tests (23 tests, requires running backend)
