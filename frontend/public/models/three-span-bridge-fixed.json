@@ -5,12 +5,12 @@
     "units": "kip-in"
   },
   "nodes": [
-    { "id": 1,  "x": 0,    "y": 240, "z": 0,   "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt1 G1" },
-    { "id": 2,  "x": 0,    "y": 240, "z": 96,  "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt1 G2" },
-    { "id": 3,  "x": 0,    "y": 240, "z": 192, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt1 G3" },
-    { "id": 4,  "x": 0,    "y": 240, "z": 288, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt1 G4" },
-    { "id": 5,  "x": 0,    "y": 240, "z": 384, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt1 G5" },
-    { "id": 6,  "x": 0,    "y": 240, "z": 480, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt1 G6" },
+    { "id": 1,  "x": 0,    "y": 240, "z": 0,   "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt1 G1" },
+    { "id": 2,  "x": 0,    "y": 240, "z": 96,  "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt1 G2" },
+    { "id": 3,  "x": 0,    "y": 240, "z": 192, "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt1 G3" },
+    { "id": 4,  "x": 0,    "y": 240, "z": 288, "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt1 G4" },
+    { "id": 5,  "x": 0,    "y": 240, "z": 384, "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt1 G5" },
+    { "id": 6,  "x": 0,    "y": 240, "z": 480, "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt1 G6" },
 
     { "id": 7,  "x": 960,  "y": 240, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 G1" },
     { "id": 8,  "x": 960,  "y": 240, "z": 96,  "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 G2" },
@@ -26,12 +26,12 @@
     { "id": 17, "x": 2160, "y": 240, "z": 384, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 G5" },
     { "id": 18, "x": 2160, "y": 240, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 G6" },
 
-    { "id": 19, "x": 3120, "y": 240, "z": 0,   "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt2 G1" },
-    { "id": 20, "x": 3120, "y": 240, "z": 96,  "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt2 G2" },
-    { "id": 21, "x": 3120, "y": 240, "z": 192, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt2 G3" },
-    { "id": 22, "x": 3120, "y": 240, "z": 288, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt2 G4" },
-    { "id": 23, "x": 3120, "y": 240, "z": 384, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt2 G5" },
-    { "id": 24, "x": 3120, "y": 240, "z": 480, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Abt2 G6" },
+    { "id": 19, "x": 3120, "y": 240, "z": 0,   "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt2 G1" },
+    { "id": 20, "x": 3120, "y": 240, "z": 96,  "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt2 G2" },
+    { "id": 21, "x": 3120, "y": 240, "z": 192, "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt2 G3" },
+    { "id": 22, "x": 3120, "y": 240, "z": 288, "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt2 G4" },
+    { "id": 23, "x": 3120, "y": 240, "z": 384, "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt2 G5" },
+    { "id": 24, "x": 3120, "y": 240, "z": 480, "restraint": [false,true,true,false,false,false],   "mass": 0, "label": "Abt2 G6" },
 
     { "id": 25, "x": 960,  "y": 0,   "z": 0,   "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Pier1 Col1 Base" },
     { "id": 26, "x": 960,  "y": 0,   "z": 480, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Pier1 Col2 Base" },
@@ -66,17 +66,17 @@
     { "id": 22, "type": "beam", "nodeI": 4,  "nodeJ": 5,  "sectionId": 2, "materialId": 1, "label": "XBeam Abt1 G4-G5" },
     { "id": 23, "type": "beam", "nodeI": 5,  "nodeJ": 6,  "sectionId": 2, "materialId": 1, "label": "XBeam Abt1 G5-G6" },
 
-    { "id": 24, "type": "beam", "nodeI": 7,  "nodeJ": 8,  "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G1-G2" },
-    { "id": 25, "type": "beam", "nodeI": 8,  "nodeJ": 9,  "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G2-G3" },
-    { "id": 26, "type": "beam", "nodeI": 9,  "nodeJ": 10, "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G3-G4" },
-    { "id": 27, "type": "beam", "nodeI": 10, "nodeJ": 11, "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G4-G5" },
-    { "id": 28, "type": "beam", "nodeI": 11, "nodeJ": 12, "sectionId": 2, "materialId": 1, "label": "XBeam Pier1 G5-G6" },
+    { "id": 24, "type": "beam", "nodeI": 7,  "nodeJ": 8,  "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G1-G2" },
+    { "id": 25, "type": "beam", "nodeI": 8,  "nodeJ": 9,  "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G2-G3" },
+    { "id": 26, "type": "beam", "nodeI": 9,  "nodeJ": 10, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G3-G4" },
+    { "id": 27, "type": "beam", "nodeI": 10, "nodeJ": 11, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G4-G5" },
+    { "id": 28, "type": "beam", "nodeI": 11, "nodeJ": 12, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G5-G6" },
 
-    { "id": 29, "type": "beam", "nodeI": 13, "nodeJ": 14, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G1-G2" },
-    { "id": 30, "type": "beam", "nodeI": 14, "nodeJ": 15, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G2-G3" },
-    { "id": 31, "type": "beam", "nodeI": 15, "nodeJ": 16, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G3-G4" },
-    { "id": 32, "type": "beam", "nodeI": 16, "nodeJ": 17, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G4-G5" },
-    { "id": 33, "type": "beam", "nodeI": 17, "nodeJ": 18, "sectionId": 2, "materialId": 1, "label": "XBeam Pier2 G5-G6" },
+    { "id": 29, "type": "beam", "nodeI": 13, "nodeJ": 14, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G1-G2" },
+    { "id": 30, "type": "beam", "nodeI": 14, "nodeJ": 15, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G2-G3" },
+    { "id": 31, "type": "beam", "nodeI": 15, "nodeJ": 16, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G3-G4" },
+    { "id": 32, "type": "beam", "nodeI": 16, "nodeJ": 17, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G4-G5" },
+    { "id": 33, "type": "beam", "nodeI": 17, "nodeJ": 18, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G5-G6" },
 
     { "id": 34, "type": "beam", "nodeI": 19, "nodeJ": 20, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G1-G2" },
     { "id": 35, "type": "beam", "nodeI": 20, "nodeJ": 21, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G2-G3" },
@@ -92,10 +92,12 @@
   "sections": [
     { "id": 1, "name": "W36x150 (Girders)",      "area": 44.2, "Ix": 9040,  "Iy": 270,  "Zx": 504, "d": 35.85, "bf": 11.975, "tw": 0.625, "tf": 0.94 },
     { "id": 2, "name": "W24x84 (Cross-Beams)",    "area": 24.7, "Ix": 2370,  "Iy": 94.4, "Zx": 196, "d": 24.10, "bf": 9.020,  "tw": 0.470, "tf": 0.77 },
-    { "id": 3, "name": "W14x132 (Pier Columns)",   "area": 38.8, "Ix": 1530,  "Iy": 548,  "Zx": 234, "d": 14.66, "bf": 14.725, "tw": 0.645, "tf": 1.03 }
+    { "id": 3, "name": "W14x132 (Pier Columns)",   "area": 38.8, "Ix": 1530,  "Iy": 548,  "Zx": 234, "d": 14.66, "bf": 14.725, "tw": 0.645, "tf": 1.03 },
+    { "id": 4, "name": "RC Pier Cap (4'x5')",      "area": 2880, "Ix": 864000, "Iy": 552960, "Zx": 28800, "d": 60, "bf": 48, "tw": 48, "tf": 60 }
   ],
   "materials": [
-    { "id": 1, "name": "A992 Gr50 Steel", "E": 29000, "Fy": 50, "density": 0.000284, "nu": 0.3 }
+    { "id": 1, "name": "A992 Gr50 Steel", "E": 29000, "Fy": 50, "density": 0.000284, "nu": 0.3 },
+    { "id": 2, "name": "Concrete f'c=4ksi", "E": 3600, "Fy": 4, "density": 0.0000868, "nu": 0.2 }
   ],
   "bearings": [],
   "loads": [
