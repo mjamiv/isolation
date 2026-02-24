@@ -1168,3 +1168,84 @@ class TestDefineRigidDiaphragms:
         }
         build_model(model)
         _mock_ops.rigidDiaphragm.assert_called_once_with(3, 10, 11, 12)
+
+
+class TestDiscretizationDiaphragmAugmentation:
+    """Internal nodes from discretized floor beams should be added to diaphragm constraints."""
+
+    def test_internal_nodes_added_to_diaphragm(self):
+        """Discretizing a beam whose endpoints are in a diaphragm should
+        add the internal nodes to that diaphragm's constrained list."""
+        model = {
+            "model_info": {"ndm": 3, "ndf": 6},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0, 180.0], "fixity": [0, 0, 0, 0, 0, 0]},
+                {"id": 2, "coords": [240.0, 0.0, 180.0], "fixity": [0, 0, 0, 0, 0, 0]},
+            ],
+            "elements": [
+                {"id": 1, "type": "elasticBeamColumn", "nodes": [1, 2],
+                 "section_id": 1, "transform": "Linear"},
+            ],
+            "bearings": [],
+            "diaphragms": [
+                {"perp_direction": 3, "master_node_id": 1, "constrained_node_ids": [2]},
+            ],
+        }
+        data, disc_map, _ = _discretize_elements(model, ratio=3)
+        # With ratio=3: 2 internal nodes created on the beam between nodes 1 and 2
+        diaph = data["diaphragms"][0]
+        # Original constrained = [2], plus 2 internal nodes = 3 total
+        assert len(diaph["constrained_node_ids"]) == 3
+        # All internal nodes from the chain should be in the constrained list
+        chain = disc_map[1]["node_chain"]
+        for nid in chain[1:-1]:
+            assert nid in diaph["constrained_node_ids"]
+
+    def test_column_internal_nodes_not_added(self):
+        """Internal nodes from a column (one endpoint not in diaphragm)
+        should NOT be added to the diaphragm."""
+        model = {
+            "model_info": {"ndm": 3, "ndf": 6},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0, 0.0], "fixity": [1, 1, 1, 1, 1, 1]},
+                {"id": 2, "coords": [0.0, 0.0, 180.0], "fixity": [0, 0, 0, 0, 0, 0]},
+                {"id": 3, "coords": [240.0, 0.0, 180.0], "fixity": [0, 0, 0, 0, 0, 0]},
+            ],
+            "elements": [
+                # Column: node 1 (ground) to node 2 (floor) — only node 2 is in diaphragm
+                {"id": 1, "type": "elasticBeamColumn", "nodes": [1, 2],
+                 "section_id": 1, "transform": "Linear"},
+                # Floor beam: both in diaphragm
+                {"id": 2, "type": "elasticBeamColumn", "nodes": [2, 3],
+                 "section_id": 1, "transform": "Linear"},
+            ],
+            "bearings": [],
+            "diaphragms": [
+                {"perp_direction": 3, "master_node_id": 2, "constrained_node_ids": [3]},
+            ],
+        }
+        data, disc_map, _ = _discretize_elements(model, ratio=3)
+        diaph = data["diaphragms"][0]
+        # Only 2 internal nodes from the floor beam should be added (not from column)
+        assert len(diaph["constrained_node_ids"]) == 3  # original [3] + 2 from beam
+        # Column internal nodes should NOT be in the list
+        column_chain = disc_map[1]["node_chain"]
+        for nid in column_chain[1:-1]:
+            assert nid not in diaph["constrained_node_ids"]
+
+    def test_no_diaphragms_no_error(self):
+        """Discretization with no diaphragms should not error."""
+        model = {
+            "model_info": {"ndm": 3, "ndf": 6},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0, 0.0], "fixity": [0, 0, 0, 0, 0, 0]},
+                {"id": 2, "coords": [0.0, 0.0, 100.0], "fixity": [0, 0, 0, 0, 0, 0]},
+            ],
+            "elements": [
+                {"id": 1, "type": "elasticBeamColumn", "nodes": [1, 2],
+                 "section_id": 1, "transform": "Linear"},
+            ],
+            "bearings": [],
+        }
+        data, _, _ = _discretize_elements(model, ratio=3)
+        assert "diaphragms" not in data

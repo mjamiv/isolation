@@ -218,6 +218,32 @@ def _discretize_elements(
         sum(len(v) for v in discretization_map.values()),
     )
 
+    # --- Augment diaphragm constraints with internal nodes ---
+    # Floor beams whose both endpoints belong to the same diaphragm should
+    # have their internal (interpolated) nodes added to the constraint list
+    # so that the rigid-diaphragm in-plane constraint covers the full beam.
+    for diaph in data.get("diaphragms", []):
+        diaph_nodes = set(diaph["constrained_node_ids"])
+        diaph_nodes.add(diaph["master_node_id"])
+        added: list[int] = []
+        for _eid, info in discretization_map.items():
+            chain = info["node_chain"]
+            node_i = chain[0]
+            node_j = chain[-1]
+            if node_i in diaph_nodes and node_j in diaph_nodes:
+                # Both endpoints on this diaphragm — add internal nodes
+                for nid in chain[1:-1]:
+                    if nid not in diaph_nodes:
+                        added.append(nid)
+                        diaph_nodes.add(nid)
+        if added:
+            diaph["constrained_node_ids"] = diaph["constrained_node_ids"] + added
+            logger.info(
+                "Diaphragm master=%d: added %d internal nodes to constraints",
+                diaph["master_node_id"],
+                len(added),
+            )
+
     return data, discretization_map, internal_node_coords
 
 
