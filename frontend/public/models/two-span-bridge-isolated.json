@@ -1,0 +1,225 @@
+{
+  "modelInfo": {
+    "name": "2-Span Steel Girder Bridge (Isolated)",
+    "units": "kip-in",
+    "description": "Two-span composite steel plate girder bridge with 4-girder grillage model. 2 \u00d7 150 ft spans, 64 ft deck width, two 5-ft diameter RC pier columns with TFP seismic isolation bearings at the pier foundations. Isolated design for comparison with fixed-base variant."
+  },
+  "nodes": [
+    { "id": 101, "x": 0, "y": 300, "z": 0, "restraint": [true, true, true, false, false, false], "mass": 0, "label": "Abut A G1" },
+    { "id": 102, "x": 450, "y": 300, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G1 Sta 1" },
+    { "id": 103, "x": 900, "y": 300, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G1 Sta 2" },
+    { "id": 104, "x": 1350, "y": 300, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G1 Sta 3" },
+    { "id": 105, "x": 1800, "y": 300, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G1 Pier" },
+    { "id": 106, "x": 2250, "y": 300, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G1 Sta 5" },
+    { "id": 107, "x": 2700, "y": 300, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G1 Sta 6" },
+    { "id": 108, "x": 3150, "y": 300, "z": 0, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G1 Sta 7" },
+    { "id": 109, "x": 3600, "y": 300, "z": 0, "restraint": [true, true, true, false, false, false], "mass": 0, "label": "Abut B G1" },
+
+    { "id": 201, "x": 0, "y": 300, "z": 192, "restraint": [true, true, true, false, false, false], "mass": 0, "label": "Abut A G2" },
+    { "id": 202, "x": 450, "y": 300, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G2 Sta 1" },
+    { "id": 203, "x": 900, "y": 300, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G2 Sta 2" },
+    { "id": 204, "x": 1350, "y": 300, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G2 Sta 3" },
+    { "id": 205, "x": 1800, "y": 300, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G2 Pier" },
+    { "id": 206, "x": 2250, "y": 300, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G2 Sta 5" },
+    { "id": 207, "x": 2700, "y": 300, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G2 Sta 6" },
+    { "id": 208, "x": 3150, "y": 300, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G2 Sta 7" },
+    { "id": 209, "x": 3600, "y": 300, "z": 192, "restraint": [true, true, true, false, false, false], "mass": 0, "label": "Abut B G2" },
+
+    { "id": 301, "x": 0, "y": 300, "z": 384, "restraint": [true, true, true, false, false, false], "mass": 0, "label": "Abut A G3" },
+    { "id": 302, "x": 450, "y": 300, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G3 Sta 1" },
+    { "id": 303, "x": 900, "y": 300, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G3 Sta 2" },
+    { "id": 304, "x": 1350, "y": 300, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G3 Sta 3" },
+    { "id": 305, "x": 1800, "y": 300, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G3 Pier" },
+    { "id": 306, "x": 2250, "y": 300, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G3 Sta 5" },
+    { "id": 307, "x": 2700, "y": 300, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G3 Sta 6" },
+    { "id": 308, "x": 3150, "y": 300, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G3 Sta 7" },
+    { "id": 309, "x": 3600, "y": 300, "z": 384, "restraint": [true, true, true, false, false, false], "mass": 0, "label": "Abut B G3" },
+
+    { "id": 401, "x": 0, "y": 300, "z": 576, "restraint": [true, true, true, false, false, false], "mass": 0, "label": "Abut A G4" },
+    { "id": 402, "x": 450, "y": 300, "z": 576, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G4 Sta 1" },
+    { "id": 403, "x": 900, "y": 300, "z": 576, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G4 Sta 2" },
+    { "id": 404, "x": 1350, "y": 300, "z": 576, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G4 Sta 3" },
+    { "id": 405, "x": 1800, "y": 300, "z": 576, "restraint": [false, false, false, false, false, false], "mass": 0.259, "label": "G4 Pier" },
+    { "id": 406, "x": 2250, "y": 300, "z": 576, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G4 Sta 5" },
+    { "id": 407, "x": 2700, "y": 300, "z": 576, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G4 Sta 6" },
+    { "id": 408, "x": 3150, "y": 300, "z": 576, "restraint": [false, false, false, false, false, false], "mass": 0.194, "label": "G4 Sta 7" },
+    { "id": 409, "x": 3600, "y": 300, "z": 576, "restraint": [true, true, true, false, false, false], "mass": 0, "label": "Abut B G4" },
+
+    { "id": 71, "x": 1800, "y": -1, "z": 192, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Bearing Base 1" },
+    { "id": 72, "x": 1800, "y": -1, "z": 384, "restraint": [true, true, true, true, true, true], "mass": 0, "label": "Bearing Base 2" },
+    { "id": 51, "x": 1800, "y": 0, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0, "label": "Pier Col 1 Base" },
+    { "id": 52, "x": 1800, "y": 150, "z": 192, "restraint": [false, false, false, false, false, false], "mass": 0.13, "label": "Pier Col 1 Mid" },
+    { "id": 61, "x": 1800, "y": 0, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0, "label": "Pier Col 2 Base" },
+    { "id": 62, "x": 1800, "y": 150, "z": 384, "restraint": [false, false, false, false, false, false], "mass": 0.13, "label": "Pier Col 2 Mid" }
+  ],
+  "elements": [
+    { "id": 1001, "type": "beam", "nodeI": 101, "nodeJ": 102, "sectionId": 1, "materialId": 1, "label": "G1 Seg 1" },
+    { "id": 1002, "type": "beam", "nodeI": 102, "nodeJ": 103, "sectionId": 1, "materialId": 1, "label": "G1 Seg 2" },
+    { "id": 1003, "type": "beam", "nodeI": 103, "nodeJ": 104, "sectionId": 1, "materialId": 1, "label": "G1 Seg 3" },
+    { "id": 1004, "type": "beam", "nodeI": 104, "nodeJ": 105, "sectionId": 1, "materialId": 1, "label": "G1 Seg 4" },
+    { "id": 1005, "type": "beam", "nodeI": 105, "nodeJ": 106, "sectionId": 1, "materialId": 1, "label": "G1 Seg 5" },
+    { "id": 1006, "type": "beam", "nodeI": 106, "nodeJ": 107, "sectionId": 1, "materialId": 1, "label": "G1 Seg 6" },
+    { "id": 1007, "type": "beam", "nodeI": 107, "nodeJ": 108, "sectionId": 1, "materialId": 1, "label": "G1 Seg 7" },
+    { "id": 1008, "type": "beam", "nodeI": 108, "nodeJ": 109, "sectionId": 1, "materialId": 1, "label": "G1 Seg 8" },
+
+    { "id": 2001, "type": "beam", "nodeI": 201, "nodeJ": 202, "sectionId": 1, "materialId": 1, "label": "G2 Seg 1" },
+    { "id": 2002, "type": "beam", "nodeI": 202, "nodeJ": 203, "sectionId": 1, "materialId": 1, "label": "G2 Seg 2" },
+    { "id": 2003, "type": "beam", "nodeI": 203, "nodeJ": 204, "sectionId": 1, "materialId": 1, "label": "G2 Seg 3" },
+    { "id": 2004, "type": "beam", "nodeI": 204, "nodeJ": 205, "sectionId": 1, "materialId": 1, "label": "G2 Seg 4" },
+    { "id": 2005, "type": "beam", "nodeI": 205, "nodeJ": 206, "sectionId": 1, "materialId": 1, "label": "G2 Seg 5" },
+    { "id": 2006, "type": "beam", "nodeI": 206, "nodeJ": 207, "sectionId": 1, "materialId": 1, "label": "G2 Seg 6" },
+    { "id": 2007, "type": "beam", "nodeI": 207, "nodeJ": 208, "sectionId": 1, "materialId": 1, "label": "G2 Seg 7" },
+    { "id": 2008, "type": "beam", "nodeI": 208, "nodeJ": 209, "sectionId": 1, "materialId": 1, "label": "G2 Seg 8" },
+
+    { "id": 3001, "type": "beam", "nodeI": 301, "nodeJ": 302, "sectionId": 1, "materialId": 1, "label": "G3 Seg 1" },
+    { "id": 3002, "type": "beam", "nodeI": 302, "nodeJ": 303, "sectionId": 1, "materialId": 1, "label": "G3 Seg 2" },
+    { "id": 3003, "type": "beam", "nodeI": 303, "nodeJ": 304, "sectionId": 1, "materialId": 1, "label": "G3 Seg 3" },
+    { "id": 3004, "type": "beam", "nodeI": 304, "nodeJ": 305, "sectionId": 1, "materialId": 1, "label": "G3 Seg 4" },
+    { "id": 3005, "type": "beam", "nodeI": 305, "nodeJ": 306, "sectionId": 1, "materialId": 1, "label": "G3 Seg 5" },
+    { "id": 3006, "type": "beam", "nodeI": 306, "nodeJ": 307, "sectionId": 1, "materialId": 1, "label": "G3 Seg 6" },
+    { "id": 3007, "type": "beam", "nodeI": 307, "nodeJ": 308, "sectionId": 1, "materialId": 1, "label": "G3 Seg 7" },
+    { "id": 3008, "type": "beam", "nodeI": 308, "nodeJ": 309, "sectionId": 1, "materialId": 1, "label": "G3 Seg 8" },
+
+    { "id": 4001, "type": "beam", "nodeI": 401, "nodeJ": 402, "sectionId": 1, "materialId": 1, "label": "G4 Seg 1" },
+    { "id": 4002, "type": "beam", "nodeI": 402, "nodeJ": 403, "sectionId": 1, "materialId": 1, "label": "G4 Seg 2" },
+    { "id": 4003, "type": "beam", "nodeI": 403, "nodeJ": 404, "sectionId": 1, "materialId": 1, "label": "G4 Seg 3" },
+    { "id": 4004, "type": "beam", "nodeI": 404, "nodeJ": 405, "sectionId": 1, "materialId": 1, "label": "G4 Seg 4" },
+    { "id": 4005, "type": "beam", "nodeI": 405, "nodeJ": 406, "sectionId": 1, "materialId": 1, "label": "G4 Seg 5" },
+    { "id": 4006, "type": "beam", "nodeI": 406, "nodeJ": 407, "sectionId": 1, "materialId": 1, "label": "G4 Seg 6" },
+    { "id": 4007, "type": "beam", "nodeI": 407, "nodeJ": 408, "sectionId": 1, "materialId": 1, "label": "G4 Seg 7" },
+    { "id": 4008, "type": "beam", "nodeI": 408, "nodeJ": 409, "sectionId": 1, "materialId": 1, "label": "G4 Seg 8" },
+
+    { "id": 5001, "type": "beam", "nodeI": 101, "nodeJ": 201, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta0 G1-G2" },
+    { "id": 5002, "type": "beam", "nodeI": 201, "nodeJ": 301, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta0 G2-G3" },
+    { "id": 5003, "type": "beam", "nodeI": 301, "nodeJ": 401, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta0 G3-G4" },
+
+    { "id": 5004, "type": "beam", "nodeI": 102, "nodeJ": 202, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta1 G1-G2" },
+    { "id": 5005, "type": "beam", "nodeI": 202, "nodeJ": 302, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta1 G2-G3" },
+    { "id": 5006, "type": "beam", "nodeI": 302, "nodeJ": 402, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta1 G3-G4" },
+
+    { "id": 5007, "type": "beam", "nodeI": 103, "nodeJ": 203, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta2 G1-G2" },
+    { "id": 5008, "type": "beam", "nodeI": 203, "nodeJ": 303, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta2 G2-G3" },
+    { "id": 5009, "type": "beam", "nodeI": 303, "nodeJ": 403, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta2 G3-G4" },
+
+    { "id": 5010, "type": "beam", "nodeI": 104, "nodeJ": 204, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta3 G1-G2" },
+    { "id": 5011, "type": "beam", "nodeI": 204, "nodeJ": 304, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta3 G2-G3" },
+    { "id": 5012, "type": "beam", "nodeI": 304, "nodeJ": 404, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta3 G3-G4" },
+
+    { "id": 5013, "type": "beam", "nodeI": 105, "nodeJ": 205, "sectionId": 3, "materialId": 2, "label": "Pier Cap G1-G2" },
+    { "id": 5014, "type": "beam", "nodeI": 205, "nodeJ": 305, "sectionId": 3, "materialId": 2, "label": "Pier Cap G2-G3" },
+    { "id": 5015, "type": "beam", "nodeI": 305, "nodeJ": 405, "sectionId": 3, "materialId": 2, "label": "Pier Cap G3-G4" },
+
+    { "id": 5016, "type": "beam", "nodeI": 106, "nodeJ": 206, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta5 G1-G2" },
+    { "id": 5017, "type": "beam", "nodeI": 206, "nodeJ": 306, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta5 G2-G3" },
+    { "id": 5018, "type": "beam", "nodeI": 306, "nodeJ": 406, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta5 G3-G4" },
+
+    { "id": 5019, "type": "beam", "nodeI": 107, "nodeJ": 207, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta6 G1-G2" },
+    { "id": 5020, "type": "beam", "nodeI": 207, "nodeJ": 307, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta6 G2-G3" },
+    { "id": 5021, "type": "beam", "nodeI": 307, "nodeJ": 407, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta6 G3-G4" },
+
+    { "id": 5022, "type": "beam", "nodeI": 108, "nodeJ": 208, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta7 G1-G2" },
+    { "id": 5023, "type": "beam", "nodeI": 208, "nodeJ": 308, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta7 G2-G3" },
+    { "id": 5024, "type": "beam", "nodeI": 308, "nodeJ": 408, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta7 G3-G4" },
+
+    { "id": 5025, "type": "beam", "nodeI": 109, "nodeJ": 209, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta8 G1-G2" },
+    { "id": 5026, "type": "beam", "nodeI": 209, "nodeJ": 309, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta8 G2-G3" },
+    { "id": 5027, "type": "beam", "nodeI": 309, "nodeJ": 409, "sectionId": 2, "materialId": 2, "label": "Xbeam Sta8 G3-G4" },
+
+    { "id": 6001, "type": "column", "nodeI": 51, "nodeJ": 52, "sectionId": 4, "materialId": 2, "label": "Pier Col 1 Lower" },
+    { "id": 6002, "type": "column", "nodeI": 52, "nodeJ": 205, "sectionId": 4, "materialId": 2, "label": "Pier Col 1 Upper" },
+    { "id": 6003, "type": "column", "nodeI": 61, "nodeJ": 62, "sectionId": 4, "materialId": 2, "label": "Pier Col 2 Lower" },
+    { "id": 6004, "type": "column", "nodeI": 62, "nodeJ": 305, "sectionId": 4, "materialId": 2, "label": "Pier Col 2 Upper" }
+  ],
+  "materials": [
+    { "id": 1, "name": "Steel A572 Gr50", "E": 29000, "Fy": 50, "density": 0.000734, "nu": 0.3 },
+    { "id": 2, "name": "Concrete 4 ksi", "E": 3605, "Fy": 4, "density": 0.000225, "nu": 0.2 }
+  ],
+  "sections": [
+    { "id": 1, "name": "Composite Plate Girder", "area": 180, "Ix": 300000, "Iy": 5000, "Zx": 8000, "d": 66, "bf": 22, "tw": 0.625, "tf": 1.75 },
+    { "id": 2, "name": "Deck Slab Strip", "area": 4050, "Ix": 27338, "Iy": 27338, "Zx": 6075, "d": 9, "bf": 450, "tw": 9, "tf": 9 },
+    { "id": 3, "name": "Pier Cap Beam", "area": 3456, "Ix": 663552, "Iy": 1492992, "Zx": 27648, "d": 48, "bf": 72, "tw": 24, "tf": 12 },
+    { "id": 4, "name": "RC Pier Column", "area": 2356, "Ix": 276000, "Iy": 276000, "Zx": 18850, "d": 60, "bf": 60, "tw": 30, "tf": 30 }
+  ],
+  "bearings": [
+    {
+      "id": 1,
+      "nodeI": 71,
+      "nodeJ": 51,
+      "surfaces": [
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 }
+      ],
+      "radii": [17.7, 157.5, 17.7],
+      "dispCapacities": [3.0, 23.6, 3.0],
+      "weight": 1500,
+      "yieldDisp": 0.01,
+      "vertStiffness": 50000,
+      "minVertForce": 0.1,
+      "tolerance": 1e-10,
+      "label": "TFP Bearing Pier Col 1"
+    },
+    {
+      "id": 2,
+      "nodeI": 72,
+      "nodeJ": 61,
+      "surfaces": [
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.08, "transRate": 50 },
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.02, "transRate": 50 }
+      ],
+      "radii": [17.7, 157.5, 17.7],
+      "dispCapacities": [3.0, 23.6, 3.0],
+      "weight": 1500,
+      "yieldDisp": 0.01,
+      "vertStiffness": 50000,
+      "minVertForce": 0.1,
+      "tolerance": 1e-10,
+      "label": "TFP Bearing Pier Col 2"
+    }
+  ],
+  "loads": [
+    { "id": 1, "nodeId": 101, "fx": 0, "fy": -50, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 2, "nodeId": 102, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 3, "nodeId": 103, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 4, "nodeId": 104, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 5, "nodeId": 105, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 6, "nodeId": 106, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 7, "nodeId": 107, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 8, "nodeId": 108, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 9, "nodeId": 109, "fx": 0, "fy": -50, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+
+    { "id": 10, "nodeId": 201, "fx": 0, "fy": -50, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 11, "nodeId": 202, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 12, "nodeId": 203, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 13, "nodeId": 204, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 14, "nodeId": 205, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 15, "nodeId": 206, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 16, "nodeId": 207, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 17, "nodeId": 208, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 18, "nodeId": 209, "fx": 0, "fy": -50, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+
+    { "id": 19, "nodeId": 301, "fx": 0, "fy": -50, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 20, "nodeId": 302, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 21, "nodeId": 303, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 22, "nodeId": 304, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 23, "nodeId": 305, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 24, "nodeId": 306, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 25, "nodeId": 307, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 26, "nodeId": 308, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 27, "nodeId": 309, "fx": 0, "fy": -50, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+
+    { "id": 28, "nodeId": 401, "fx": 0, "fy": -50, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 29, "nodeId": 402, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 30, "nodeId": 403, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 31, "nodeId": 404, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 32, "nodeId": 405, "fx": 0, "fy": -100, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 33, "nodeId": 406, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 34, "nodeId": 407, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 35, "nodeId": 408, "fx": 0, "fy": -75, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 36, "nodeId": 409, "fx": 0, "fy": -50, "fz": 0, "mx": 0, "my": 0, "mz": 0 }
+  ],
+  "groundMotions": []
+}

@@ -96,15 +96,20 @@ def _run_variant_time_history(
     if not params.ground_motions:
         raise ValueError("No ground motion records provided for time-history comparison")
 
-    gm = params.ground_motions[0]
-    accel = [a * gm.scale_factor for a in gm.acceleration]
+    gm_list = [
+        {
+            "acceleration": [a * gm.scale_factor for a in gm.acceleration],
+            "dt": gm.dt,
+            "direction": gm.direction,
+        }
+        for gm in params.ground_motions
+    ]
 
     results = run_time_history(
         model_data,
-        ground_motion=accel,
-        dt=params.dt or gm.dt,
-        num_steps=params.num_steps or len(accel),
-        direction=gm.direction,
+        ground_motions=gm_list,
+        dt=params.dt or gm_list[0]["dt"],
+        num_steps=params.num_steps or len(gm_list[0]["acceleration"]),
     )
 
     return {

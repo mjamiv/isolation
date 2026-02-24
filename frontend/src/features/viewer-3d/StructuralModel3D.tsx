@@ -7,6 +7,7 @@ import { MemberLines } from './MemberLines';
 import { SupportSymbols } from './SupportSymbols';
 import { BearingSymbols } from './BearingSymbols';
 import { NodeLabels, ElementLabels } from './Labels';
+import { ElementPropertyLabels } from './ElementPropertyLabels';
 import { DeformedShape } from './DeformedShape';
 import { ModeShapeAnimation } from './ModeShapeAnimation';
 import { PlasticHinges } from './PlasticHinges';
@@ -41,6 +42,7 @@ export function StructuralModel3D() {
       <BearingSymbols />
       <NodeLabels />
       <ElementLabels />
+      <ElementPropertyLabels />
       {showDeformed && <DeformedShape />}
       {showForces && forceType !== 'none' && hasForceResults && <ForceDiagrams />}
       {hasModalResults && <ModeShapeAnimation />}

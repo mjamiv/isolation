@@ -1,0 +1,1114 @@
+{
+  "modelInfo": {
+    "name": "20-Story Steel Tower (TFP Isolated)",
+    "description": "20-story 1-bay steel moment frame with TFP isolation at both base columns. 20ft span x 12ft story height. W14 columns with 3 tiers (500/370/257), W-section beams (36x300/30x211/24x146). Gravity: 30 kip/floor. A992 Gr50 steel. Triple friction pendulum bearings at each column base (~300 kip per bearing).",
+    "units": "kip-in"
+  },
+  "nodes": [
+    {
+      "id": 1,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 0,
+      "label": "Base Left"
+    },
+    {
+      "id": 2,
+      "x": 240.0,
+      "y": 0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 0,
+      "label": "Base Right"
+    },
+    {
+      "id": 3,
+      "x": 0,
+      "y": 144.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 1 Left"
+    },
+    {
+      "id": 4,
+      "x": 240.0,
+      "y": 144.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 1 Right"
+    },
+    {
+      "id": 5,
+      "x": 0,
+      "y": 288.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 2 Left"
+    },
+    {
+      "id": 6,
+      "x": 240.0,
+      "y": 288.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 2 Right"
+    },
+    {
+      "id": 7,
+      "x": 0,
+      "y": 432.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 3 Left"
+    },
+    {
+      "id": 8,
+      "x": 240.0,
+      "y": 432.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 3 Right"
+    },
+    {
+      "id": 9,
+      "x": 0,
+      "y": 576.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 4 Left"
+    },
+    {
+      "id": 10,
+      "x": 240.0,
+      "y": 576.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 4 Right"
+    },
+    {
+      "id": 11,
+      "x": 0,
+      "y": 720.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 5 Left"
+    },
+    {
+      "id": 12,
+      "x": 240.0,
+      "y": 720.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 5 Right"
+    },
+    {
+      "id": 13,
+      "x": 0,
+      "y": 864.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 6 Left"
+    },
+    {
+      "id": 14,
+      "x": 240.0,
+      "y": 864.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 6 Right"
+    },
+    {
+      "id": 15,
+      "x": 0,
+      "y": 1008.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 7 Left"
+    },
+    {
+      "id": 16,
+      "x": 240.0,
+      "y": 1008.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 7 Right"
+    },
+    {
+      "id": 17,
+      "x": 0,
+      "y": 1152.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 8 Left"
+    },
+    {
+      "id": 18,
+      "x": 240.0,
+      "y": 1152.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 8 Right"
+    },
+    {
+      "id": 19,
+      "x": 0,
+      "y": 1296.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 9 Left"
+    },
+    {
+      "id": 20,
+      "x": 240.0,
+      "y": 1296.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 9 Right"
+    },
+    {
+      "id": 21,
+      "x": 0,
+      "y": 1440.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 10 Left"
+    },
+    {
+      "id": 22,
+      "x": 240.0,
+      "y": 1440.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 10 Right"
+    },
+    {
+      "id": 23,
+      "x": 0,
+      "y": 1584.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 11 Left"
+    },
+    {
+      "id": 24,
+      "x": 240.0,
+      "y": 1584.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 11 Right"
+    },
+    {
+      "id": 25,
+      "x": 0,
+      "y": 1728.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 12 Left"
+    },
+    {
+      "id": 26,
+      "x": 240.0,
+      "y": 1728.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 12 Right"
+    },
+    {
+      "id": 27,
+      "x": 0,
+      "y": 1872.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 13 Left"
+    },
+    {
+      "id": 28,
+      "x": 240.0,
+      "y": 1872.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 13 Right"
+    },
+    {
+      "id": 29,
+      "x": 0,
+      "y": 2016.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 14 Left"
+    },
+    {
+      "id": 30,
+      "x": 240.0,
+      "y": 2016.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 14 Right"
+    },
+    {
+      "id": 31,
+      "x": 0,
+      "y": 2160.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 15 Left"
+    },
+    {
+      "id": 32,
+      "x": 240.0,
+      "y": 2160.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 15 Right"
+    },
+    {
+      "id": 33,
+      "x": 0,
+      "y": 2304.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 16 Left"
+    },
+    {
+      "id": 34,
+      "x": 240.0,
+      "y": 2304.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 16 Right"
+    },
+    {
+      "id": 35,
+      "x": 0,
+      "y": 2448.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 17 Left"
+    },
+    {
+      "id": 36,
+      "x": 240.0,
+      "y": 2448.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 17 Right"
+    },
+    {
+      "id": 37,
+      "x": 0,
+      "y": 2592.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 18 Left"
+    },
+    {
+      "id": 38,
+      "x": 240.0,
+      "y": 2592.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 18 Right"
+    },
+    {
+      "id": 39,
+      "x": 0,
+      "y": 2736.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 19 Left"
+    },
+    {
+      "id": 40,
+      "x": 240.0,
+      "y": 2736.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 19 Right"
+    },
+    {
+      "id": 41,
+      "x": 0,
+      "y": 2880.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 20 Left"
+    },
+    {
+      "id": 42,
+      "x": 240.0,
+      "y": 2880.0,
+      "z": 0,
+      "restraint": [false, false, true, true, true, false],
+      "mass": 15.0,
+      "label": "Story 20 Right"
+    },
+    {
+      "id": 101,
+      "x": 0,
+      "y": -1,
+      "z": 0,
+      "restraint": [true, true, true, true, true, true],
+      "mass": 0,
+      "label": "Ground Left"
+    },
+    {
+      "id": 102,
+      "x": 240,
+      "y": -1,
+      "z": 0,
+      "restraint": [true, true, true, true, true, true],
+      "mass": 0,
+      "label": "Ground Right"
+    }
+  ],
+  "materials": [
+    {
+      "id": 1,
+      "name": "A992 Steel Gr50",
+      "E": 29000,
+      "Fy": 50,
+      "density": 0.284,
+      "nu": 0.3
+    }
+  ],
+  "sections": [
+    {
+      "id": 1,
+      "name": "W14x500 (Lower Cols)",
+      "area": 147.0,
+      "Ix": 7820,
+      "Iy": 2880,
+      "Zx": 838,
+      "d": 19.6,
+      "bf": 17.0,
+      "tw": 2.19,
+      "tf": 3.5
+    },
+    {
+      "id": 2,
+      "name": "W14x370 (Mid Cols)",
+      "area": 109.0,
+      "Ix": 5440,
+      "Iy": 2000,
+      "Zx": 607,
+      "d": 17.9,
+      "bf": 16.5,
+      "tw": 1.66,
+      "tf": 2.66
+    },
+    {
+      "id": 3,
+      "name": "W14x257 (Upper Cols)",
+      "area": 75.6,
+      "Ix": 3400,
+      "Iy": 1290,
+      "Zx": 415,
+      "d": 16.4,
+      "bf": 16.0,
+      "tw": 1.18,
+      "tf": 1.89
+    },
+    {
+      "id": 4,
+      "name": "W36x300 (Lower Beams)",
+      "area": 88.3,
+      "Ix": 20300,
+      "Iy": 1300,
+      "Zx": 1110,
+      "d": 36.7,
+      "bf": 16.7,
+      "tw": 0.945,
+      "tf": 1.68
+    },
+    {
+      "id": 5,
+      "name": "W30x211 (Mid Beams)",
+      "area": 62.0,
+      "Ix": 10300,
+      "Iy": 757,
+      "Zx": 665,
+      "d": 30.9,
+      "bf": 15.1,
+      "tw": 0.775,
+      "tf": 1.32
+    },
+    {
+      "id": 6,
+      "name": "W24x146 (Upper Beams)",
+      "area": 43.0,
+      "Ix": 4580,
+      "Iy": 391,
+      "Zx": 371,
+      "d": 24.7,
+      "bf": 12.9,
+      "tw": 0.65,
+      "tf": 1.09
+    }
+  ],
+  "elements": [
+    {
+      "id": 1,
+      "type": "column",
+      "nodeI": 1,
+      "nodeJ": 3,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col L Story 1"
+    },
+    {
+      "id": 2,
+      "type": "column",
+      "nodeI": 2,
+      "nodeJ": 4,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col R Story 1"
+    },
+    {
+      "id": 3,
+      "type": "beam",
+      "nodeI": 3,
+      "nodeJ": 4,
+      "sectionId": 4,
+      "materialId": 1,
+      "label": "Beam Story 1"
+    },
+    {
+      "id": 4,
+      "type": "column",
+      "nodeI": 3,
+      "nodeJ": 5,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col L Story 2"
+    },
+    {
+      "id": 5,
+      "type": "column",
+      "nodeI": 4,
+      "nodeJ": 6,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col R Story 2"
+    },
+    {
+      "id": 6,
+      "type": "beam",
+      "nodeI": 5,
+      "nodeJ": 6,
+      "sectionId": 4,
+      "materialId": 1,
+      "label": "Beam Story 2"
+    },
+    {
+      "id": 7,
+      "type": "column",
+      "nodeI": 5,
+      "nodeJ": 7,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col L Story 3"
+    },
+    {
+      "id": 8,
+      "type": "column",
+      "nodeI": 6,
+      "nodeJ": 8,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col R Story 3"
+    },
+    {
+      "id": 9,
+      "type": "beam",
+      "nodeI": 7,
+      "nodeJ": 8,
+      "sectionId": 4,
+      "materialId": 1,
+      "label": "Beam Story 3"
+    },
+    {
+      "id": 10,
+      "type": "column",
+      "nodeI": 7,
+      "nodeJ": 9,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col L Story 4"
+    },
+    {
+      "id": 11,
+      "type": "column",
+      "nodeI": 8,
+      "nodeJ": 10,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col R Story 4"
+    },
+    {
+      "id": 12,
+      "type": "beam",
+      "nodeI": 9,
+      "nodeJ": 10,
+      "sectionId": 4,
+      "materialId": 1,
+      "label": "Beam Story 4"
+    },
+    {
+      "id": 13,
+      "type": "column",
+      "nodeI": 9,
+      "nodeJ": 11,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col L Story 5"
+    },
+    {
+      "id": 14,
+      "type": "column",
+      "nodeI": 10,
+      "nodeJ": 12,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col R Story 5"
+    },
+    {
+      "id": 15,
+      "type": "beam",
+      "nodeI": 11,
+      "nodeJ": 12,
+      "sectionId": 4,
+      "materialId": 1,
+      "label": "Beam Story 5"
+    },
+    {
+      "id": 16,
+      "type": "column",
+      "nodeI": 11,
+      "nodeJ": 13,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col L Story 6"
+    },
+    {
+      "id": 17,
+      "type": "column",
+      "nodeI": 12,
+      "nodeJ": 14,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col R Story 6"
+    },
+    {
+      "id": 18,
+      "type": "beam",
+      "nodeI": 13,
+      "nodeJ": 14,
+      "sectionId": 4,
+      "materialId": 1,
+      "label": "Beam Story 6"
+    },
+    {
+      "id": 19,
+      "type": "column",
+      "nodeI": 13,
+      "nodeJ": 15,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col L Story 7"
+    },
+    {
+      "id": 20,
+      "type": "column",
+      "nodeI": 14,
+      "nodeJ": 16,
+      "sectionId": 1,
+      "materialId": 1,
+      "label": "Col R Story 7"
+    },
+    {
+      "id": 21,
+      "type": "beam",
+      "nodeI": 15,
+      "nodeJ": 16,
+      "sectionId": 4,
+      "materialId": 1,
+      "label": "Beam Story 7"
+    },
+    {
+      "id": 22,
+      "type": "column",
+      "nodeI": 15,
+      "nodeJ": 17,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col L Story 8"
+    },
+    {
+      "id": 23,
+      "type": "column",
+      "nodeI": 16,
+      "nodeJ": 18,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col R Story 8"
+    },
+    {
+      "id": 24,
+      "type": "beam",
+      "nodeI": 17,
+      "nodeJ": 18,
+      "sectionId": 5,
+      "materialId": 1,
+      "label": "Beam Story 8"
+    },
+    {
+      "id": 25,
+      "type": "column",
+      "nodeI": 17,
+      "nodeJ": 19,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col L Story 9"
+    },
+    {
+      "id": 26,
+      "type": "column",
+      "nodeI": 18,
+      "nodeJ": 20,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col R Story 9"
+    },
+    {
+      "id": 27,
+      "type": "beam",
+      "nodeI": 19,
+      "nodeJ": 20,
+      "sectionId": 5,
+      "materialId": 1,
+      "label": "Beam Story 9"
+    },
+    {
+      "id": 28,
+      "type": "column",
+      "nodeI": 19,
+      "nodeJ": 21,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col L Story 10"
+    },
+    {
+      "id": 29,
+      "type": "column",
+      "nodeI": 20,
+      "nodeJ": 22,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col R Story 10"
+    },
+    {
+      "id": 30,
+      "type": "beam",
+      "nodeI": 21,
+      "nodeJ": 22,
+      "sectionId": 5,
+      "materialId": 1,
+      "label": "Beam Story 10"
+    },
+    {
+      "id": 31,
+      "type": "column",
+      "nodeI": 21,
+      "nodeJ": 23,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col L Story 11"
+    },
+    {
+      "id": 32,
+      "type": "column",
+      "nodeI": 22,
+      "nodeJ": 24,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col R Story 11"
+    },
+    {
+      "id": 33,
+      "type": "beam",
+      "nodeI": 23,
+      "nodeJ": 24,
+      "sectionId": 5,
+      "materialId": 1,
+      "label": "Beam Story 11"
+    },
+    {
+      "id": 34,
+      "type": "column",
+      "nodeI": 23,
+      "nodeJ": 25,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col L Story 12"
+    },
+    {
+      "id": 35,
+      "type": "column",
+      "nodeI": 24,
+      "nodeJ": 26,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col R Story 12"
+    },
+    {
+      "id": 36,
+      "type": "beam",
+      "nodeI": 25,
+      "nodeJ": 26,
+      "sectionId": 5,
+      "materialId": 1,
+      "label": "Beam Story 12"
+    },
+    {
+      "id": 37,
+      "type": "column",
+      "nodeI": 25,
+      "nodeJ": 27,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col L Story 13"
+    },
+    {
+      "id": 38,
+      "type": "column",
+      "nodeI": 26,
+      "nodeJ": 28,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col R Story 13"
+    },
+    {
+      "id": 39,
+      "type": "beam",
+      "nodeI": 27,
+      "nodeJ": 28,
+      "sectionId": 5,
+      "materialId": 1,
+      "label": "Beam Story 13"
+    },
+    {
+      "id": 40,
+      "type": "column",
+      "nodeI": 27,
+      "nodeJ": 29,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col L Story 14"
+    },
+    {
+      "id": 41,
+      "type": "column",
+      "nodeI": 28,
+      "nodeJ": 30,
+      "sectionId": 2,
+      "materialId": 1,
+      "label": "Col R Story 14"
+    },
+    {
+      "id": 42,
+      "type": "beam",
+      "nodeI": 29,
+      "nodeJ": 30,
+      "sectionId": 5,
+      "materialId": 1,
+      "label": "Beam Story 14"
+    },
+    {
+      "id": 43,
+      "type": "column",
+      "nodeI": 29,
+      "nodeJ": 31,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col L Story 15"
+    },
+    {
+      "id": 44,
+      "type": "column",
+      "nodeI": 30,
+      "nodeJ": 32,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col R Story 15"
+    },
+    {
+      "id": 45,
+      "type": "beam",
+      "nodeI": 31,
+      "nodeJ": 32,
+      "sectionId": 6,
+      "materialId": 1,
+      "label": "Beam Story 15"
+    },
+    {
+      "id": 46,
+      "type": "column",
+      "nodeI": 31,
+      "nodeJ": 33,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col L Story 16"
+    },
+    {
+      "id": 47,
+      "type": "column",
+      "nodeI": 32,
+      "nodeJ": 34,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col R Story 16"
+    },
+    {
+      "id": 48,
+      "type": "beam",
+      "nodeI": 33,
+      "nodeJ": 34,
+      "sectionId": 6,
+      "materialId": 1,
+      "label": "Beam Story 16"
+    },
+    {
+      "id": 49,
+      "type": "column",
+      "nodeI": 33,
+      "nodeJ": 35,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col L Story 17"
+    },
+    {
+      "id": 50,
+      "type": "column",
+      "nodeI": 34,
+      "nodeJ": 36,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col R Story 17"
+    },
+    {
+      "id": 51,
+      "type": "beam",
+      "nodeI": 35,
+      "nodeJ": 36,
+      "sectionId": 6,
+      "materialId": 1,
+      "label": "Beam Story 17"
+    },
+    {
+      "id": 52,
+      "type": "column",
+      "nodeI": 35,
+      "nodeJ": 37,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col L Story 18"
+    },
+    {
+      "id": 53,
+      "type": "column",
+      "nodeI": 36,
+      "nodeJ": 38,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col R Story 18"
+    },
+    {
+      "id": 54,
+      "type": "beam",
+      "nodeI": 37,
+      "nodeJ": 38,
+      "sectionId": 6,
+      "materialId": 1,
+      "label": "Beam Story 18"
+    },
+    {
+      "id": 55,
+      "type": "column",
+      "nodeI": 37,
+      "nodeJ": 39,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col L Story 19"
+    },
+    {
+      "id": 56,
+      "type": "column",
+      "nodeI": 38,
+      "nodeJ": 40,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col R Story 19"
+    },
+    {
+      "id": 57,
+      "type": "beam",
+      "nodeI": 39,
+      "nodeJ": 40,
+      "sectionId": 6,
+      "materialId": 1,
+      "label": "Beam Story 19"
+    },
+    {
+      "id": 58,
+      "type": "column",
+      "nodeI": 39,
+      "nodeJ": 41,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col L Story 20"
+    },
+    {
+      "id": 59,
+      "type": "column",
+      "nodeI": 40,
+      "nodeJ": 42,
+      "sectionId": 3,
+      "materialId": 1,
+      "label": "Col R Story 20"
+    },
+    {
+      "id": 60,
+      "type": "beam",
+      "nodeI": 41,
+      "nodeJ": 42,
+      "sectionId": 6,
+      "materialId": 1,
+      "label": "Beam Story 20"
+    }
+  ],
+  "bearings": [
+    {
+      "id": 1,
+      "nodeI": 101,
+      "nodeJ": 1,
+      "surfaces": [
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.03, "transRate": 25 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.12, "transRate": 25 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.12, "transRate": 25 },
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.03, "transRate": 25 }
+      ],
+      "radii": [22.0, 200.0, 22.0],
+      "dispCapacities": [5.0, 28.0, 5.0],
+      "weight": 300.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 18000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Bearing Left"
+    },
+    {
+      "id": 2,
+      "nodeI": 102,
+      "nodeJ": 2,
+      "surfaces": [
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.03, "transRate": 25 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.12, "transRate": 25 },
+        { "type": "VelDependent", "muSlow": 0.06, "muFast": 0.12, "transRate": 25 },
+        { "type": "VelDependent", "muSlow": 0.015, "muFast": 0.03, "transRate": 25 }
+      ],
+      "radii": [22.0, 200.0, 22.0],
+      "dispCapacities": [5.0, 28.0, 5.0],
+      "weight": 300.0,
+      "yieldDisp": 0.08,
+      "vertStiffness": 18000.0,
+      "minVertForce": 0.1,
+      "tolerance": 1e-08,
+      "label": "TFP Bearing Right"
+    }
+  ],
+  "loads": [
+    { "id": 1, "nodeId": 3, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 2, "nodeId": 4, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 3, "nodeId": 5, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 4, "nodeId": 6, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 5, "nodeId": 7, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 6, "nodeId": 8, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 7, "nodeId": 9, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 8, "nodeId": 10, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 9, "nodeId": 11, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 10, "nodeId": 12, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 11, "nodeId": 13, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 12, "nodeId": 14, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 13, "nodeId": 15, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 14, "nodeId": 16, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 15, "nodeId": 17, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 16, "nodeId": 18, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 17, "nodeId": 19, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 18, "nodeId": 20, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 19, "nodeId": 21, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 20, "nodeId": 22, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 21, "nodeId": 23, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 22, "nodeId": 24, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 23, "nodeId": 25, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 24, "nodeId": 26, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 25, "nodeId": 27, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 26, "nodeId": 28, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 27, "nodeId": 29, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 28, "nodeId": 30, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 29, "nodeId": 31, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 30, "nodeId": 32, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 31, "nodeId": 33, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 32, "nodeId": 34, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 33, "nodeId": 35, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 34, "nodeId": 36, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 35, "nodeId": 37, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 36, "nodeId": 38, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 37, "nodeId": 39, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 38, "nodeId": 40, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 39, "nodeId": 41, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
+    { "id": 40, "nodeId": 42, "fx": 0, "fy": -15, "fz": 0, "mx": 0, "my": 0, "mz": 0 }
+  ],
+  "groundMotions": []
+}

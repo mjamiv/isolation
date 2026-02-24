@@ -1,8 +1,5 @@
 import { create } from 'zustand';
-import type {
-  AnalysisType,
-  AnalysisResults,
-} from '@/types/analysis';
+import type { AnalysisType, AnalysisResults } from '@/types/analysis';
 
 // Re-export the canonical types from analysis.ts for backward compat
 export type { AnalysisResults };
@@ -11,11 +8,16 @@ export type { AnalysisResults };
 
 export type AnalysisStatus = 'idle' | 'running' | 'complete' | 'error';
 
+interface CachedAnalysis {
+  results: AnalysisResults;
+  analysisType: AnalysisType;
+}
+
 // ── Store interface ───────────────────────────────────────────────────
 
 interface AnalysisState {
   status: AnalysisStatus;
-  progress: number;        // 0 - 100
+  progress: number; // 0 - 100
   currentStep: number;
   totalSteps: number;
   analysisId: string | null;
@@ -23,9 +25,11 @@ interface AnalysisState {
   results: AnalysisResults | null;
   currentTimeStep: number;
   isPlaying: boolean;
-  playbackSpeed: number;   // multiplier: 0.25, 0.5, 1, 2, 4
+  playbackSpeed: number; // multiplier: 0.25, 0.5, 1, 2, 4
   selectedModeNumber: number | null;
   error: string | null;
+  /** Per-model result cache keyed by model name. */
+  resultCache: Map<string, CachedAnalysis>;
 
   // Actions
   startAnalysis: () => void;
@@ -35,6 +39,10 @@ interface AnalysisState {
   setResults: (results: AnalysisResults) => void;
   setError: (error: string) => void;
   resetAnalysis: () => void;
+  /** Save current results to cache under the given model name. */
+  saveToCache: (modelName: string) => void;
+  /** Restore cached results for the given model name. Returns true if found. */
+  restoreFromCache: (modelName: string) => boolean;
   setTimeStep: (step: number) => void;
   togglePlayback: () => void;
   setPlaybackSpeed: (speed: number) => void;
@@ -44,7 +52,7 @@ interface AnalysisState {
 
 // ── Store implementation ──────────────────────────────────────────────
 
-export const useAnalysisStore = create<AnalysisState>((set) => ({
+export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   status: 'idle',
   progress: 0,
   currentStep: 0,
@@ -57,6 +65,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   playbackSpeed: 1,
   selectedModeNumber: null,
   error: null,
+  resultCache: new Map(),
 
   startAnalysis: () =>
     set({
@@ -68,14 +77,11 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       error: null,
     }),
 
-  setAnalysisId: (id) =>
-    set({ analysisId: id }),
+  setAnalysisId: (id) => set({ analysisId: id }),
 
-  setAnalysisType: (type) =>
-    set({ analysisType: type }),
+  setAnalysisType: (type) => set({ analysisType: type }),
 
-  setProgress: (progress, currentStep, totalSteps) =>
-    set({ progress, currentStep, totalSteps }),
+  setProgress: (progress, currentStep, totalSteps) => set({ progress, currentStep, totalSteps }),
 
   setResults: (results) =>
     set({
@@ -105,18 +111,37 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       error: null,
     }),
 
-  setTimeStep: (step) =>
-    set({ currentTimeStep: step }),
+  saveToCache: (modelName) => {
+    const { results, analysisType, resultCache } = get();
+    if (!results || !analysisType) return;
+    const next = new Map(resultCache);
+    next.set(modelName, { results, analysisType });
+    set({ resultCache: next });
+  },
 
-  togglePlayback: () =>
-    set((state) => ({ isPlaying: !state.isPlaying })),
+  restoreFromCache: (modelName) => {
+    const cached = get().resultCache.get(modelName);
+    if (!cached) return false;
+    set({
+      results: cached.results,
+      analysisType: cached.analysisType,
+      status: 'complete',
+      progress: 100,
+      currentTimeStep: 0,
+      isPlaying: false,
+      selectedModeNumber: null,
+      error: null,
+    });
+    return true;
+  },
 
-  setPlaybackSpeed: (speed) =>
-    set({ playbackSpeed: speed }),
+  setTimeStep: (step) => set({ currentTimeStep: step }),
 
-  setIsPlaying: (playing) =>
-    set({ isPlaying: playing }),
+  togglePlayback: () => set((state) => ({ isPlaying: !state.isPlaying })),
 
-  setSelectedModeNumber: (mode) =>
-    set({ selectedModeNumber: mode }),
+  setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
+
+  setIsPlaying: (playing) => set({ isPlaying: playing }),
+
+  setSelectedModeNumber: (mode) => set({ selectedModeNumber: mode }),
 }));

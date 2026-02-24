@@ -461,28 +461,25 @@ export function ForceDiagrams() {
           if (maxY > 0 || maxZ > 0) component = maxY >= maxZ ? 'y' : 'z';
         }
 
+        // Build internal-force values at each station along the member.
+        // OpenSeesPy sign convention: at shared internal nodes the J-end
+        // force of one sub-element equals the negative of the I-end force
+        // of the next (equilibrium).  To get a consistent internal-force
+        // diagram we use the I-end value at every station and negate the
+        // J-end value at the last station.
         const values: number[] = [];
         const lastStation = nodeChain.length - 1;
         for (let s = 0; s <= lastStation; s++) {
-          if (s === 0) {
-            const vec = forceByElement[subElementIds[0]!];
+          if (s < lastStation) {
+            // Stations 0..N-1: I-end of sub-element[s]
+            const vec = forceByElement[subElementIds[s]!];
             values.push(vec ? getEndValuesWithComponent(vec, forceType, component).i : 0);
-            continue;
-          }
-          if (s === lastStation) {
+          } else {
+            // Last station: negate J-end of last sub-element to convert
+            // from element-reaction convention to internal-force convention
             const vec = forceByElement[subElementIds[subElementIds.length - 1]!];
-            values.push(vec ? getEndValuesWithComponent(vec, forceType, component).j : 0);
-            continue;
+            values.push(vec ? -getEndValuesWithComponent(vec, forceType, component).j : 0);
           }
-
-          const prevVec = forceByElement[subElementIds[s - 1]!];
-          const nextVec = forceByElement[subElementIds[s]!];
-          const prev = prevVec ? getEndValuesWithComponent(prevVec, forceType, component).j : null;
-          const next = nextVec ? getEndValuesWithComponent(nextVec, forceType, component).i : null;
-          if (prev !== null && next !== null) values.push(0.5 * (prev + next));
-          else if (prev !== null) values.push(prev);
-          else if (next !== null) values.push(next);
-          else values.push(0);
         }
 
         tracesByElement.push({ id: origId, component, basePoints, values });
@@ -514,7 +511,7 @@ export function ForceDiagrams() {
           id,
           component: auto.component,
           basePoints: [pI, pJ],
-          values: [auto.i, auto.j],
+          values: [auto.i, -auto.j],
         });
       }
     } else {
@@ -542,7 +539,7 @@ export function ForceDiagrams() {
           id,
           component: auto.component,
           basePoints: [pI, pJ],
-          values: [auto.i, auto.j],
+          values: [auto.i, -auto.j],
         });
       }
     }

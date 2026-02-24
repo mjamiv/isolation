@@ -125,17 +125,21 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
             results = run_modal_analysis(model_data, num_modes=num_modes)
 
         elif analysis_type == "time_history":
-            # Use first ground motion record
             if not params.ground_motions:
                 raise ValueError("No ground motion records provided")
-            gm = params.ground_motions[0]
-            accel = [a * gm.scale_factor for a in gm.acceleration]
+            gm_list = [
+                {
+                    "acceleration": [a * gm.scale_factor for a in gm.acceleration],
+                    "dt": gm.dt,
+                    "direction": gm.direction,
+                }
+                for gm in params.ground_motions
+            ]
             results = run_time_history(
                 model_data,
-                ground_motion=accel,
-                dt=params.dt or gm.dt,
-                num_steps=params.num_steps or len(accel),
-                direction=gm.direction,
+                ground_motions=gm_list,
+                dt=params.dt or gm_list[0]["dt"],
+                num_steps=params.num_steps or len(gm_list[0]["acceleration"]),
             )
 
         elif analysis_type == "pushover":

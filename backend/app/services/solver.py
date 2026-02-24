@@ -578,22 +578,25 @@ def run_modal_analysis(model_data: dict, num_modes: int = 3) -> dict:
 
 def run_time_history(
     model_data: dict,
-    ground_motion: list[float],
-    dt: float,
-    num_steps: int,
+    ground_motion: list[float] | None = None,
+    dt: float = 0.01,
+    num_steps: int = 1000,
     direction: int = 1,
+    ground_motions: list[dict] | None = None,
 ) -> dict:
     """Run a nonlinear time-history analysis (NLTHA).
 
-    Applies a uniform excitation ground motion and integrates the
-    equations of motion using Newmark's method.
+    Applies one or more uniform excitation ground motions and integrates
+    the equations of motion using Newmark's method.
 
     Args:
         model_data: A dict conforming to :class:`StructuralModelSchema`.
-        ground_motion: List of ground acceleration values.
+        ground_motion: List of ground acceleration values (legacy single-GM).
         dt: Time step of the ground motion record (s).
         num_steps: Number of integration steps.
         direction: Excitation DOF direction (1=X, 2=Y, 3=Z).
+        ground_motions: List of dicts with keys ``acceleration``, ``dt``,
+            and ``direction`` for multi-directional excitation.
 
     Returns:
         A dict with keys ``time``, ``node_displacements``,
@@ -604,6 +607,14 @@ def run_time_history(
         model_data, disc_map, int_coords = _discretize_elements(model_data)
         build_model(model_data)
         _assign_mass(model_data)
+
+        # Build GM list from either new multi-GM param or legacy single-GM param
+        if ground_motions is None:
+            if ground_motion is None:
+                raise ValueError("Either ground_motion or ground_motions must be provided")
+            gm_list = [{"acceleration": ground_motion, "dt": dt, "direction": direction}]
+        else:
+            gm_list = ground_motions
 
         # --- Gravity pre-load (critical for TFP bearing models) ---
         has_bearings = bool(model_data.get("bearings"))
@@ -622,14 +633,17 @@ def run_time_history(
         except Exception:
             pass  # wipeAnalysis may not exist in all versions
 
-        # --- Ground motion time series ---
-        gm_tag = 100
-        ops.timeSeries("Path", gm_tag, "-dt", dt, "-values", *ground_motion)
-
-        # Uniform excitation in direction 1 (horizontal)
-        pattern_tag = 100
-        exc_direction = int(direction) if direction in (1, 2, 3) else 1
-        ops.pattern("UniformExcitation", pattern_tag, exc_direction, "-accel", gm_tag)
+        # --- Ground motion time series (multi-directional) ---
+        for i, gm in enumerate(gm_list):
+            gm_tag = 100 + i
+            gm_dt = gm.get("dt", dt)
+            gm_accel = gm["acceleration"]
+            ops.timeSeries("Path", gm_tag, "-dt", gm_dt, "-values", *gm_accel)
+            pattern_tag = 200 + i
+            exc_dir = int(gm.get("direction", 1))
+            if exc_dir not in (1, 2, 3):
+                exc_dir = 1
+            ops.pattern("UniformExcitation", pattern_tag, exc_dir, "-accel", gm_tag)
 
         # --- Rayleigh damping (5 % at first mode) ---
         try:

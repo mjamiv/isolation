@@ -17,13 +17,15 @@ const DISPLAY_MODES: { value: DisplayMode; label: string }[] = [
 const IMPORT_FILE_VALUE = '__import__';
 
 export function Toolbar() {
-  const loadSampleModel = useModelStore((state) => state.loadSampleModel);
+  const model = useModelStore((state) => state.model);
   const loadModelFromJSON = useModelStore((state) => state.loadModelFromJSON);
   const clearModel = useModelStore((state) => state.clearModel);
   const displayMode = useDisplayStore((state) => state.displayMode);
   const setDisplayMode = useDisplayStore((state) => state.setDisplayMode);
   const analysisStatus = useAnalysisStore((state) => state.status);
   const resetAnalysis = useAnalysisStore((state) => state.resetAnalysis);
+  const saveToCache = useAnalysisStore((state) => state.saveToCache);
+  const restoreFromCache = useAnalysisStore((state) => state.restoreFromCache);
   const resetComparison = useComparisonStore((state) => state.resetComparison);
   const addToast = useToastStore((state) => state.addToast);
 
@@ -40,21 +42,27 @@ export function Toolbar() {
     const preset = PRESET_MODELS[index];
     if (!preset) return;
 
+    // Save current results to cache before switching
+    if (model) {
+      saveToCache(model.name);
+    }
+
     resetAnalysis();
     resetComparison();
-
-    if (preset.url === null) {
-      loadSampleModel();
-      addToast('success', `Loaded "${preset.label}"`);
-      return;
-    }
 
     try {
       const response = await fetch(preset.url);
       if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
       const json = (await response.json()) as ModelJSON;
       loadModelFromJSON(json);
-      addToast('success', `Loaded "${preset.label}"`);
+
+      // Restore cached results if available for this model
+      const restored = restoreFromCache(json.modelInfo.name);
+      if (restored) {
+        addToast('success', `Loaded "${preset.label}" (results restored)`);
+      } else {
+        addToast('success', `Loaded "${preset.label}"`);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       addToast('error', `Failed to load model: ${msg}`);

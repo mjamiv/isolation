@@ -28,6 +28,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const [pushDirection, setPushDirection] = useState<PushDirection>('X');
   const [loadPattern, setLoadPattern] = useState<LoadPattern>('linear');
   const [displacementIncrement, setDisplacementIncrement] = useState('0.1');
+  const [selectedDirections, setSelectedDirections] = useState<Set<1 | 2 | 3>>(new Set([1]));
 
   // Comparison options
   const [runComparisonMode, setRunComparisonMode] = useState(false);
@@ -71,6 +72,9 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     if (analysisType === 'time_history' && !selectedGmId) {
       return 'Please select a ground motion record.';
     }
+    if (analysisType === 'time_history' && selectedDirections.size === 0) {
+      return 'Please select at least one excitation direction.';
+    }
     if (analysisType === 'pushover' && loads.size === 0) {
       return 'Pushover analysis requires at least one load defined.';
     }
@@ -97,14 +101,18 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     if (analysisType === 'time_history') {
       const selectedGm = gmArray.find((gm) => gm.id === Number(selectedGmId));
       if (selectedGm) {
-        params.groundMotions = [
-          {
-            dt: selectedGm.dt,
-            acceleration: selectedGm.acceleration,
-            direction: selectedGm.direction,
-            scaleFactor: selectedGm.scaleFactor,
-          },
-        ];
+        // For Z-up bearing models, the serializer swaps Y↔Z axes so
+        // backend DOF 2 = frontend Z (lateral) and DOF 3 = frontend Y (vertical).
+        // Map the user's frontend direction to the backend DOF accordingly.
+        const zUp = bearings.size > 0;
+        const mapDir = (d: 1 | 2 | 3): 1 | 2 | 3 => (zUp ? (d === 2 ? 3 : d === 3 ? 2 : d) : d);
+
+        params.groundMotions = Array.from(selectedDirections).map((dir) => ({
+          dt: selectedGm.dt,
+          acceleration: selectedGm.acceleration,
+          direction: mapDir(dir),
+          scaleFactor: selectedGm.scaleFactor,
+        }));
       }
       params.dt = Number(dt) || 0.01;
       params.numSteps = Number(numSteps) || 1000;
@@ -211,6 +219,29 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                       </option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-400">Excitation Directions</label>
+                  <div className="mt-1 flex gap-3">
+                    {([1, 2, 3] as const).map((dir) => (
+                      <label key={dir} className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedDirections.has(dir)}
+                          onChange={(e) => {
+                            const next = new Set(selectedDirections);
+                            if (e.target.checked) next.add(dir);
+                            else next.delete(dir);
+                            if (next.size > 0) setSelectedDirections(next);
+                          }}
+                          className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+                        />
+                        <span className="text-xs text-gray-300">
+                          {dir === 1 ? 'X' : dir === 2 ? 'Y' : 'Z'}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>

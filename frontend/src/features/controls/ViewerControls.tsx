@@ -114,6 +114,10 @@ export function ViewerControls() {
   const setShowForces = useDisplayStore((state) => state.setShowForces);
   const setForceType = useDisplayStore((state) => state.setForceType);
   const setForceScale = useDisplayStore((state) => state.setForceScale);
+  const showMassLabels = useDisplayStore((state) => state.showMassLabels);
+  const showStiffnessLabels = useDisplayStore((state) => state.showStiffnessLabels);
+  const setShowMassLabels = useDisplayStore((state) => state.setShowMassLabels);
+  const setShowStiffnessLabels = useDisplayStore((state) => state.setShowStiffnessLabels);
   const setColorMap = useDisplayStore((state) => state.setColorMap);
 
   return (
@@ -176,6 +180,15 @@ export function ViewerControls() {
           value={colorMap}
           options={COLOR_MAP_OPTIONS}
           onChange={setColorMap}
+        />
+      </ControlSection>
+
+      <ControlSection title="Element Properties">
+        <Toggle label="Show Mass" checked={showMassLabels} onChange={setShowMassLabels} />
+        <Toggle
+          label="Show Stiffness"
+          checked={showStiffnessLabels}
+          onChange={setShowStiffnessLabels}
         />
       </ControlSection>
     </div>
