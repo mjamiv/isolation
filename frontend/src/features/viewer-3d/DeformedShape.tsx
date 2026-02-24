@@ -7,9 +7,9 @@ import { useAnalysisStore } from '@/stores/analysisStore';
 import { useComparisonStore } from '@/stores/comparisonStore';
 import type { StaticResults, TimeHistoryResults, PushoverResults } from '@/types/analysis';
 
-const DEFORMED_COLOR = '#D4AF37'; // gold
-const OVERLAY_COLOR = '#FACC15'; // yellow-400
-const DEFORMED_OPACITY = 0.5;
+const DEFORMED_COLOR = '#22d3ee'; // cyan-400
+const OVERLAY_COLOR = '#f97316'; // orange-500
+const DEFORMED_OPACITY = 0.7;
 const NODE_RADIUS = 2;
 const NODE_SEGMENTS = 8;
 

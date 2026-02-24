@@ -15,6 +15,7 @@ beforeEach(() => {
   const s = getState();
   s.setDisplayMode('wireframe');
   s.setShowDeformed(false);
+  s.setHideUndeformed(false);
   s.setScaleFactor(100);
   s.setShowLabels(false);
   s.setShowGrid(true);
@@ -119,6 +120,14 @@ describe('displayStore — toggles', () => {
     expect(getState().showLabels).toBe(false);
     getState().setShowLabels(true);
     expect(getState().showLabels).toBe(true);
+  });
+
+  it('toggles hideUndeformed correctly', () => {
+    expect(getState().hideUndeformed).toBe(false);
+    getState().setHideUndeformed(true);
+    expect(getState().hideUndeformed).toBe(true);
+    getState().setHideUndeformed(false);
+    expect(getState().hideUndeformed).toBe(false);
   });
 
   it('toggles showGrid correctly', () => {

@@ -31,6 +31,76 @@ const LINE_WIDTH_HOVERED = 3;
 const DEFAULT_DEPTH = 12;
 const DEFAULT_WIDTH = 6;
 
+// ── Helper: create W-shape (I-beam) extruded geometry ────────────────
+
+/**
+ * Build a THREE.ExtrudeGeometry with an I-beam cross-section.
+ *
+ * Profile in XZ plane (local coordinates):
+ *   ___bf___
+ *  |________|  ← top flange (tf thick)
+ *      ||      ← web (tw wide, d-2tf tall)
+ *  |________|  ← bottom flange (tf thick)
+ *
+ * Extrusion runs along local Y (member length axis) by rotating the
+ * default Z-extrusion with a π/2 rotation applied to the geometry.
+ */
+function createWShapeGeometry(
+  d: number,
+  bf: number,
+  tf: number,
+  tw: number,
+  length: number,
+): THREE.ExtrudeGeometry {
+  const halfD = d / 2;
+  const halfBf = bf / 2;
+  const halfTw = tw / 2;
+
+  // Build 2D I-beam shape in the XZ plane (x = width, y = depth here in Shape coords)
+  const shape = new THREE.Shape();
+
+  // Start at bottom-left of bottom flange
+  shape.moveTo(-halfBf, -halfD);
+  // Bottom flange: bottom edge
+  shape.lineTo(halfBf, -halfD);
+  // Up to inner bottom-right
+  shape.lineTo(halfBf, -halfD + tf);
+  // Inward to web right
+  shape.lineTo(halfTw, -halfD + tf);
+  // Web right side up
+  shape.lineTo(halfTw, halfD - tf);
+  // Out to top flange right
+  shape.lineTo(halfBf, halfD - tf);
+  // Top flange: top-right
+  shape.lineTo(halfBf, halfD);
+  // Top flange: top-left
+  shape.lineTo(-halfBf, halfD);
+  // Down to inner top-left
+  shape.lineTo(-halfBf, halfD - tf);
+  // Inward to web left
+  shape.lineTo(-halfTw, halfD - tf);
+  // Web left side down
+  shape.lineTo(-halfTw, -halfD + tf);
+  // Out to bottom flange left
+  shape.lineTo(-halfBf, -halfD + tf);
+  // Close back to start
+  shape.lineTo(-halfBf, -halfD);
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: length,
+    bevelEnabled: false,
+  });
+
+  // ExtrudeGeometry extrudes along +Z. Rotate so extrusion aligns with +Y
+  // (the member direction axis that useMemberTransform handles).
+  geometry.rotateX(-Math.PI / 2);
+
+  // Center the geometry along the extrusion (Y) axis so it sits at the midpoint.
+  geometry.translate(0, -length / 2, 0);
+
+  return geometry;
+}
+
 // ── Wireframe member (Line) ─────────────────────────────────────────
 
 interface MemberLineProps {
@@ -113,13 +183,27 @@ function useMemberTransform(nodeI: Node, nodeJ: Node) {
     const direction = new THREE.Vector3().subVectors(end, start);
     const length = direction.length();
 
-    // Compute quaternion that rotates the Y-axis (BoxGeometry default) to the member axis
+    // Build a quaternion that:
+    //   - Aligns local Y with the member axis
+    //   - Orients local Z (cross-section depth) toward gravity (world Y) for
+    //     horizontal members, or toward world X for vertical members.
+    // This ensures W-shape beams display in strong-axis bending orientation.
     const quaternion = new THREE.Quaternion();
     if (length > 0) {
-      const normalizedDir = direction.clone().normalize();
-      // BoxGeometry is centered at origin, extends along Y axis by default
-      // We need to rotate from (0,1,0) to the member direction
-      quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normalizedDir);
+      const yAxis = direction.clone().normalize();
+
+      // Pick a reference "up" for the cross-section depth direction.
+      // For near-vertical members, fall back to world X.
+      let refUp = new THREE.Vector3(0, 1, 0);
+      if (Math.abs(yAxis.dot(refUp)) > 0.9) {
+        refUp = new THREE.Vector3(1, 0, 0);
+      }
+
+      const xAxis = new THREE.Vector3().crossVectors(yAxis, refUp).normalize();
+      const zAxis = new THREE.Vector3().crossVectors(xAxis, yAxis).normalize();
+
+      const m = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+      quaternion.setFromRotationMatrix(m);
     }
 
     return { midpoint, length, quaternion };
@@ -155,6 +239,17 @@ function MemberExtruded({
   // Cross-section dimensions from section properties
   const depth = section?.d ?? DEFAULT_DEPTH;
   const width = section?.bf ?? DEFAULT_WIDTH;
+  const tf = section?.tf;
+  const tw = section?.tw;
+
+  const hasWShape = tf != null && tw != null && tf > 0 && tw > 0;
+
+  const geometry = useMemo(() => {
+    if (hasWShape) {
+      return createWShapeGeometry(depth, width, tf!, tw!, length);
+    }
+    return new THREE.BoxGeometry(width, length, depth);
+  }, [depth, width, tf, tw, length, hasWShape]);
 
   let color = ELEMENT_COLORS[element.type];
   if (isSelected) {
@@ -185,8 +280,6 @@ function MemberExtruded({
 
   if (length === 0) return null;
 
-  // BoxGeometry(width, height, depth) — here height = member length (along Y before rotation)
-  // width = flange width (local X), depth = section depth (local Z)
   return (
     <mesh
       ref={meshRef}
@@ -195,8 +288,8 @@ function MemberExtruded({
       onClick={handleClick}
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
+      geometry={geometry}
     >
-      <boxGeometry args={[width, length, depth]} />
       <meshBasicMaterial
         color={color}
         transparent
@@ -238,6 +331,17 @@ function MemberSolid({
   // Cross-section dimensions from section properties
   const depth = section?.d ?? DEFAULT_DEPTH;
   const width = section?.bf ?? DEFAULT_WIDTH;
+  const tf = section?.tf;
+  const tw = section?.tw;
+
+  const hasWShape = tf != null && tw != null && tf > 0 && tw > 0;
+
+  const geometry = useMemo(() => {
+    if (hasWShape) {
+      return createWShapeGeometry(depth, width, tf!, tw!, length);
+    }
+    return new THREE.BoxGeometry(width, length, depth);
+  }, [depth, width, tf, tw, length, hasWShape]);
 
   let color = SOLID_COLORS[element.type];
   if (isSelected) {
@@ -276,8 +380,8 @@ function MemberSolid({
       onClick={handleClick}
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
+      geometry={geometry}
     >
-      <boxGeometry args={[width, length, depth]} />
       <meshStandardMaterial color={color} roughness={0.6} metalness={0.2} />
     </mesh>
   );

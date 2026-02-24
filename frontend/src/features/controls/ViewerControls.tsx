@@ -162,8 +162,10 @@ export function ViewerControls() {
   const setShowStiffnessLabels = useDisplayStore((state) => state.setShowStiffnessLabels);
 
   const showDeformed = useDisplayStore((state) => state.showDeformed);
+  const hideUndeformed = useDisplayStore((state) => state.hideUndeformed);
   const scaleFactor = useDisplayStore((state) => state.scaleFactor);
   const setShowDeformed = useDisplayStore((state) => state.setShowDeformed);
+  const setHideUndeformed = useDisplayStore((state) => state.setHideUndeformed);
   const setScaleFactor = useDisplayStore((state) => state.setScaleFactor);
 
   const showForces = useDisplayStore((state) => state.showForces);
@@ -224,6 +226,7 @@ export function ViewerControls() {
       {/* Deformation: result-dependent — deformed shape + scale */}
       <ControlSection title="Deformation">
         <Toggle label="Show Deformed Shape" checked={showDeformed} onChange={setShowDeformed} />
+        <Toggle label="Deformed Only" checked={hideUndeformed} onChange={setHideUndeformed} />
         <SliderControl
           label="Scale Factor"
           min={1}

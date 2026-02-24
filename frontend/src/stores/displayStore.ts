@@ -14,6 +14,7 @@ interface DisplayState {
   // Rendering
   displayMode: DisplayMode;
   showDeformed: boolean;
+  hideUndeformed: boolean;
   scaleFactor: number;
   showLabels: boolean;
   showGrid: boolean;
@@ -47,6 +48,7 @@ interface DisplayState {
   setEnvironment: (preset: EnvironmentPreset) => void;
   setDisplayMode: (mode: DisplayMode) => void;
   setShowDeformed: (show: boolean) => void;
+  setHideUndeformed: (hide: boolean) => void;
   setScaleFactor: (factor: number) => void;
   setShowLabels: (show: boolean) => void;
   setShowGrid: (show: boolean) => void;
@@ -79,6 +81,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   // Default display state
   displayMode: 'wireframe',
   showDeformed: false,
+  hideUndeformed: false,
   scaleFactor: 100,
   showLabels: false,
   showGrid: true,
@@ -110,6 +113,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   // ── Display setters ──────────────────────────────
   setDisplayMode: (mode) => set({ displayMode: mode }),
   setShowDeformed: (show) => set({ showDeformed: show }),
+  setHideUndeformed: (hide) => set({ hideUndeformed: hide }),
   setScaleFactor: (factor) => set({ scaleFactor: factor }),
   setShowLabels: (show) => set({ showLabels: show }),
   setShowGrid: (show) => set({ showGrid: show }),

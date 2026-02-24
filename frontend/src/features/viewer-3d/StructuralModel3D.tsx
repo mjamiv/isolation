@@ -17,6 +17,7 @@ import { ForceDiagrams } from './ForceDiagrams';
 export function StructuralModel3D() {
   const model = useModelStore((state) => state.model);
   const showDeformed = useDisplayStore((state) => state.showDeformed);
+  const hideUndeformed = useDisplayStore((state) => state.hideUndeformed);
   const showForces = useDisplayStore((state) => state.showForces);
   const forceType = useDisplayStore((state) => state.forceType);
   const results = useAnalysisStore((state) => state.results);
@@ -34,10 +35,12 @@ export function StructuralModel3D() {
   const hasForceResults =
     results?.type === 'static' || results?.type === 'time_history' || results?.type === 'pushover';
 
+  const hideOriginal = showDeformed && hideUndeformed;
+
   return (
     <group>
-      <MemberLines />
-      <NodePoints />
+      {!hideOriginal && <MemberLines />}
+      {!hideOriginal && <NodePoints />}
       <SupportSymbols />
       <BearingSymbols />
       <NodeLabels />
