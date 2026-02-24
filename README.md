@@ -14,13 +14,13 @@ Phases 1 through 5 are complete. The app provides:
 - **Property Inspector** (right panel) showing read-only details for selected nodes and elements
 - **3D labels** on nodes and elements, visible on hover, selection, or global toggle
 - **Viewer controls** for display mode, grid, axes, labels, deformation scale, force diagrams, and color maps
-- **Model import** — "Load Model" dropdown with 4 presets (hospital frame + 3 IBR bridge alternatives) and JSON file import
+- **Model import** — "Load Model" dropdown with 4 presets (20-Story Tower fixed/isolated, 2-Story 2x2 fixed/isolated) and JSON file import
 - **Sample model** — 3-story 2-bay steel moment frame auto-loaded on startup
 
 ### Phase 2 — Load Editing, Analysis Runner & Results
 - **Load Editor** — CRUD for point loads with node selector and force fields; gravity loads auto-created with sample model
 - **Ground Motion Editor** — add/edit ground motion records with sample 1 Hz sinusoidal generator
-- **Analysis Dialog** — configure and run Static, Modal, or Time-History analyses with type-specific parameters and validation
+- **Analysis Dialog** — configure and run Static, Modal, or Time-History analyses with type-specific parameters, multi-direction ground motion selection (X/Y/Z checkboxes), and validation
 - **Analysis Pipeline** — model serialization, backend submission, status polling, and result fetching via `useRunAnalysis` hook
 - **Results Panel** — right panel tab with type-routed views:
   - Static: node displacement and support reaction tables with max highlighting
@@ -78,14 +78,21 @@ Phases 1 through 5 are complete. The app provides:
 - **Key results**: 64% base shear reduction, 93% drift reduction, 0 plastic hinges (vs 15 fixed-base), performance upgraded from Life Safety to Immediate Occupancy
 - **Supporting documents**: `analysis_calculations.md` (984 lines of step-by-step calculations), `aashto_compliance.md` (1,029 lines of detailed code compliance review)
 
-### Model Import & IBR Bridge Models
-- **Load Model dropdown** — toolbar dropdown with 9 presets and an "Import JSON File..." option
-- **Preset models**: 3-Story Hospital Frame (built-in), 20-Story Steel Tower, IBR Alt A: Ductile Bridge, IBR Alt B: TFP Isolated, IBR Alt C: Extradosed + TFP, 2-Story 2x2-Bay (Fixed), 2-Story 2x2-Bay (Isolated), 5-Story Office (Fixed), 5-Story Office (Isolated)
+### Model Import & Session Persistence
+- **Load Model dropdown** — toolbar dropdown with 4 focused presets and an "Import JSON File..." option
+- **Preset models**: 20-Story Tower (Fixed), 20-Story Tower (Isolated), 2-Story 2x2 (Fixed), 2-Story 2x2 (Isolated)
 - **20-story steel tower** — 1-bay 20'x20' moment frame, 3 column tiers (W14x500/370/257), 3 beam tiers (W36x300/W30x211/W24x146), T1=1.41s, fully verified with all 4 analysis types
 - **Auto-generated ground motions** — models imported without ground motion records automatically get 4 synthetic records (El Centro, Near-Fault, Harmonic, Subduction), enabling immediate time-history analysis
 - **JSON file import** — load any arbitrary model JSON via file picker with validation and toast notifications
-- **IBR bridge models** — 3 structural models for the Interstate Bridge Replacement seismic isolation study (3-span bridge, Cascadia Subduction Zone)
-- **Analysis/comparison reset** — switching models automatically clears stale analysis and comparison results
+- **Session result caching** — analysis results are cached per model name; switching between presets preserves results within a dev session without re-running analyses
+
+### Multi-Directional Time History & Element Property Labels
+- **Simultaneous XYZ excitation** — time-history analysis supports multiple concurrent ground motion directions; backend creates separate `UniformExcitation` patterns per direction with unique tags
+- **Direction checkboxes** — AnalysisDialog shows X/Y/Z checkboxes for time-history; each checked direction replicates the selected ground motion record
+- **Y-Z direction swap** — for isolated (bearing) models, the frontend automatically maps Y↔Z directions to match the backend Z-up convention required by TFP elements
+- **Element mass labels** — toggle "Show Mass" in Viewer Controls to display tributary mass at element midpoints, derived from gravity loads (`|Fy|/g`) with unit-aware formatting (kip-in, kN-m, etc.)
+- **Element stiffness labels** — toggle "Show Stiffness" to display EI/L (flexural) or EA/L (axial) stiffness at element midpoints
+- **Adaptive label formatting** — values use appropriate precision: k/M suffixes for large values, 3 decimals for small values, scientific notation for very small values
 
 ### Integration Testing & Solver Hardening
 - **23/23 integration tests passing** — end-to-end tests through real OpenSeesPy backend across 4 models (Hospital SMRF, Alt A Ductile Bridge, Alt B Isolated Bridge, Alt C Extradosed+TFP) and 5 analysis types (static, modal, pushover, time-history, comparison)
@@ -161,7 +168,7 @@ isolation/
       components/ui/ # Shared UI primitives (FormField, IconButton, ConfirmDialog, etc.)
       features/
         layout/      # AppLayout, Toolbar, StatusBar
-        viewer-3d/   # 3D canvas, NodePoints, MemberLines (wireframe/extruded/solid), SupportSymbols, BearingSymbols, Labels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver
+        viewer-3d/   # 3D canvas, NodePoints, MemberLines (wireframe/extruded/solid), SupportSymbols, BearingSymbols, Labels, ElementPropertyLabels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         controls/    # ViewerControls (display toggles, scale, color map)
