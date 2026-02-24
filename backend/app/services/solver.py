@@ -127,6 +127,14 @@ def _discretize_elements(
     for node in data.get("nodes", []):
         node_lookup[node["id"]] = list(node["coords"])
 
+    # Build fixity lookup for propagation to internal nodes
+    fixity_lookup: dict[int, list[int]] = {}
+    for node in data.get("nodes", []):
+        raw_fix = list(node.get("fixity", []))
+        while len(raw_fix) < ndf:
+            raw_fix.append(0)
+        fixity_lookup[node["id"]] = raw_fix[:ndf]
+
     # Compute starting IDs for new nodes and elements
     all_node_ids = [n["id"] for n in data.get("nodes", [])]
     next_node_id = max(all_node_ids) + 1 if all_node_ids else 1
@@ -165,12 +173,16 @@ def _discretize_elements(
             ]
             nid = next_node_id
             next_node_id += 1
+            fix_i = fixity_lookup.get(node_i_id, [0] * ndf)
+            fix_j = fixity_lookup.get(node_j_id, [0] * ndf)
+            internal_fixity = [a & b for a, b in zip(fix_i, fix_j)]
             new_nodes.append({
                 "id": nid,
                 "coords": interp_coords,
-                "fixity": [0] * ndf,
+                "fixity": list(internal_fixity),
             })
             node_lookup[nid] = interp_coords
+            fixity_lookup[nid] = list(internal_fixity)
             internal_node_coords[nid] = interp_coords
             chain_node_ids.append(nid)
         chain_node_ids.append(node_j_id)
@@ -419,7 +431,7 @@ def run_static_analysis(model_data: dict) -> dict:
         for elem in model_data.get("elements", []):
             eid = elem["id"]
             try:
-                forces = list(ops.eleResponse(eid, "force"))
+                forces = list(ops.eleResponse(eid, "localForce"))
                 element_forces[str(eid)] = forces
             except Exception:
                 element_forces[str(eid)] = []
@@ -758,7 +770,8 @@ def run_time_history(
                 ekey = str(elem["id"])
                 ehist = element_force_history[ekey]
                 try:
-                    force_vals = _to_float_list(ops.eleResponse(elem["id"], "force"))
+                    force_vals = _to_float_list(ops.eleResponse(elem["id"], "localForce"))
+                    pass
                 except Exception:
                     force_vals = []
 
@@ -1021,7 +1034,7 @@ def run_pushover_analysis(
         for elem in model_data.get("elements", []):
             eid = elem["id"]
             try:
-                forces = list(ops.eleResponse(eid, "force"))
+                forces = list(ops.eleResponse(eid, "localForce"))
                 element_forces[str(eid)] = forces
             except Exception:
                 element_forces[str(eid)] = []
@@ -1078,13 +1091,15 @@ def _build_2d_elements(model_data: dict) -> None:
 
         if etype == "elasticBeamColumn":
             sec = _find_section(model_data, elem.get("section_id", 0))
-            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
+            props = sec.get("properties", {}) if sec else {}
+            A = _prop(props, "A")
             E = _get_material_E(model_data, sec.get("material_id")) if sec else 1.0
-            Iz = sec.get("properties", {}).get("Iz", 1.0) if sec else 1.0
+            Iz = _prop(props, "Iz")
             ops.element("elasticBeamColumn", eid, *enodes, A, E, Iz, transf_tag)
         elif etype == "truss":
             sec = _find_section(model_data, elem.get("section_id", 0))
-            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
+            props = sec.get("properties", {}) if sec else {}
+            A = _prop(props, "A")
             mat_id = sec.get("material_id", 1) if sec else 1
             ops.element("Truss", eid, *enodes, A, mat_id)
         elif etype == "zeroLength":
@@ -1124,13 +1139,14 @@ def _build_3d_elements(
 
         if etype == "elasticBeamColumn":
             sec = _find_section(model_data, elem.get("section_id", 0))
-            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
+            props = sec.get("properties", {}) if sec else {}
+            A = _prop(props, "A")
             E = _get_material_E(model_data, sec.get("material_id")) if sec else 1.0
             # Section properties (frontend convention)
-            Iz_section = sec.get("properties", {}).get("Iz", 1.0) if sec else 1.0
-            Iy_section = sec.get("properties", {}).get("Iy", Iz_section) if sec else Iz_section
-            J = sec.get("properties", {}).get("J", 1.0) if sec else 1.0
-            G = sec.get("properties", {}).get("G", E / 2.6)
+            Iz_section = _prop(props, "Iz")
+            Iy_section = _prop(props, "Iy", Iz_section)
+            J = _prop(props, "J")
+            G = _prop(props, "G", E / 2.6)
 
             # Compute element direction for vecxz
             ci = node_coords.get(enodes[0], [0, 0, 0])
@@ -1177,7 +1193,8 @@ def _build_3d_elements(
 
         elif etype == "truss":
             sec = _find_section(model_data, elem.get("section_id", 0))
-            A = sec.get("properties", {}).get("A", 1.0) if sec else 1.0
+            props = sec.get("properties", {}) if sec else {}
+            A = _prop(props, "A")
             mat_id = sec.get("material_id", 1) if sec else 1
             ops.element("Truss", eid, *enodes, A, mat_id)
 
@@ -1261,11 +1278,11 @@ def _compute_hinge_states(
         sec = _find_section(model_data, elem.get("section_id", 0))
         if sec:
             props = sec.get("properties", {})
-            Iz = props.get("Iz", 1.0)
-            E = props.get("E", _get_material_E(model_data, sec.get("material_id")))
+            Iz = _prop(props, "Iz")
+            E = _prop(props, "E", _get_material_E(model_data, sec.get("material_id")))
             # Approximate yield moment: My = Fy * S ≈ (E/200) * Iz / (d/2)
             # Use a simplified D/C ratio based on moment capacity
-            depth = props.get("d", 14.0)  # approximate section depth
+            depth = _prop(props, "d", 14.0)  # approximate section depth
             S = Iz / (depth / 2.0) if depth > 0 else Iz
             My = (E / 200.0) * S  # rough yield moment estimate
         else:
@@ -1312,12 +1329,12 @@ def _define_materials(materials: list[dict]) -> None:
         params = mat.get("params", {})
 
         if mtype == "Elastic":
-            E = params.get("E", 1.0)
+            E = _prop(params, "E")
             ops.uniaxialMaterial("Elastic", mid, E)
         elif mtype == "Steel02":
-            Fy = params.get("Fy", 250.0)
-            E0 = params.get("E", 200000.0)
-            b = params.get("b", 0.01)
+            Fy = _prop(params, "Fy", 250.0)
+            E0 = _prop(params, "E", 200000.0)
+            b = _prop(params, "b", 0.01)
             ops.uniaxialMaterial("Steel02", mid, Fy, E0, b)
         elif mtype == "VelDependent":
             # Friction model, not a uniaxial material
@@ -1341,15 +1358,15 @@ def _define_sections(
         props = sec.get("properties", {})
 
         if stype == "Elastic":
-            E = props.get("E") or _get_material_E(
+            E = _prop(props, "E", 0.0) or _get_material_E(
                 model_data, sec.get("material_id")
             )
-            A = props.get("A", 1.0)
-            Iz = props.get("Iz", 1.0)
+            A = _prop(props, "A")
+            Iz = _prop(props, "Iz")
             if ndm >= 3:
-                Iy = props.get("Iy", Iz)
+                Iy = _prop(props, "Iy", Iz)
                 G = E / 2.6  # approximate shear modulus
-                J = props.get("J", 1.0)
+                J = _prop(props, "J")
                 ops.section("Elastic", sid, E, A, Iz, Iy, G, J)
             else:
                 ops.section("Elastic", sid, E, A, Iz)
@@ -1582,6 +1599,25 @@ def _apply_nodal_loads(model_data: dict) -> None:
             ops.load(load["node_id"], *values[:ndf])
 
 
+def _prop(d: dict, key: str, default: float = 1.0) -> float:
+    """Get a property value handling snake_case key mangling.
+
+    The frontend ``keysToSnake`` converts uppercase-leading keys like
+    ``"A"`` → ``"_a"``, ``"Iz"`` → ``"_iz"``, ``"E"`` → ``"_e"``.
+    This helper tries the original key first, then the mangled form.
+    """
+    if key in d:
+        return float(d[key])
+    mangled = "_" + key.lower()
+    if mangled in d:
+        return float(d[mangled])
+    # Also try pure lowercase (e.g. "a", "iz")
+    lower = key.lower()
+    if lower in d:
+        return float(d[lower])
+    return default
+
+
 def _find_section(model_data: dict, section_id: int) -> dict | None:
     """Look up a section dict by ID from the model data."""
     for sec in model_data.get("sections", []):
@@ -1596,7 +1632,8 @@ def _get_material_E(model_data: dict, mat_id: int | None) -> float:
         return 1.0
     for mat in model_data.get("materials", []):
         if mat["id"] == mat_id:
-            return mat.get("params", {}).get("E", 1.0)
+            params = mat.get("params", {})
+            return _prop(params, "E", 1.0)
     return 1.0
 
 

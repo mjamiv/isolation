@@ -31,6 +31,7 @@ from app.services.solver import (  # noqa: E402
     _assign_mass,
     _compute_deformed_shape,
     _compute_hinge_states,
+    _discretize_elements,
     _find_section,
     _get_material_E,
     apply_lambda_factor,
@@ -871,3 +872,228 @@ class TestAssignMass:
         for c in mass_calls:
             expected_mass = 150.0 / 9.81
             assert c[0][1] == pytest.approx(expected_mass)
+
+
+# ---------------------------------------------------------------------------
+# eleResponse uses "localForce" (not "force")
+# ---------------------------------------------------------------------------
+
+
+class TestEleResponseUsesLocalForce:
+    """Verify that eleResponse is called with 'localForce' for beam/column
+    elements in static, time-history, and pushover analyses."""
+
+    def test_static_uses_local_force(self, minimal_2d_model):
+        _mock_ops.analyze.return_value = 0
+        _mock_ops.nodeDisp.return_value = 0.0
+        _mock_ops.nodeReaction.return_value = 0.0
+        _mock_ops.eleResponse.return_value = [0.0] * 6
+
+        run_static_analysis(minimal_2d_model)
+
+        # All eleResponse calls for beam-column elements should use "localForce"
+        ele_resp_calls = _mock_ops.eleResponse.call_args_list
+        assert len(ele_resp_calls) > 0
+        for c in ele_resp_calls:
+            assert c[0][1] == "localForce", (
+                f"Expected 'localForce' but got '{c[0][1]}'"
+            )
+
+    def test_time_history_uses_local_force(self, minimal_2d_model):
+        _mock_ops.analyze.return_value = 0
+        _mock_ops.eigen.return_value = [100.0]
+        _mock_ops.nodeDisp.return_value = 0.0
+        _mock_ops.eleResponse.return_value = [0.0] * 6
+
+        run_time_history(minimal_2d_model, [0.1, 0.2], dt=0.01, num_steps=2)
+
+        # Filter eleResponse calls for beam elements (not bearings)
+        ele_resp_calls = _mock_ops.eleResponse.call_args_list
+        beam_calls = [c for c in ele_resp_calls if c[0][1] not in ("basicForce", "basicDisplacement")]
+        assert len(beam_calls) > 0
+        for c in beam_calls:
+            assert c[0][1] == "localForce", (
+                f"Expected 'localForce' but got '{c[0][1]}'"
+            )
+
+    def test_pushover_uses_local_force(self, minimal_2d_model):
+        _mock_ops.analyze.return_value = 0
+        _mock_ops.nodeDisp.return_value = 0.5
+        _mock_ops.nodeReaction.return_value = -10.0
+        _mock_ops.eleResponse.return_value = [0.0] * 6
+
+        run_pushover_analysis(
+            minimal_2d_model, target_displacement=5.0, num_steps=3
+        )
+
+        # All eleResponse calls for beam-column elements should use "localForce"
+        ele_resp_calls = _mock_ops.eleResponse.call_args_list
+        beam_calls = [c for c in ele_resp_calls if c[0][1] not in ("basicForce", "basicDisplacement")]
+        assert len(beam_calls) > 0
+        for c in beam_calls:
+            assert c[0][1] == "localForce", (
+                f"Expected 'localForce' but got '{c[0][1]}'"
+            )
+
+    def test_bearing_still_uses_basic_force(self, three_story_frame_model):
+        """Bearings should still use 'basicForce' / 'basicDisplacement', not 'localForce'."""
+        _mock_ops.analyze.return_value = 0
+        _mock_ops.eigen.return_value = [100.0]
+        _mock_ops.nodeDisp.return_value = 0.0
+        _mock_ops.eleResponse.return_value = [0.0] * 6
+
+        run_time_history(
+            three_story_frame_model, [0.1], dt=0.01, num_steps=1
+        )
+
+        ele_resp_calls = _mock_ops.eleResponse.call_args_list
+        # Bearing element tags are 10001, 10002, 10003 (10000 + bearing id)
+        bearing_tags = {10000 + b["id"] for b in three_story_frame_model["bearings"]}
+        bearing_calls = [
+            c for c in ele_resp_calls if c[0][0] in bearing_tags
+        ]
+        assert len(bearing_calls) > 0
+        for c in bearing_calls:
+            assert c[0][1] in ("basicForce", "basicDisplacement"), (
+                f"Bearing eleResponse should use 'basicForce'/'basicDisplacement', got '{c[0][1]}'"
+            )
+
+
+# ---------------------------------------------------------------------------
+# _discretize_elements fixity propagation
+# ---------------------------------------------------------------------------
+
+
+class TestDiscretizeFixityPropagation:
+    """Verify that internal nodes created by _discretize_elements inherit
+    fixity from their endpoint nodes (bitwise AND)."""
+
+    def test_2d_in_3d_fixity_propagated(self):
+        """When both endpoints have 2D-in-3D fixity [0,0,1,1,1,0],
+        internal nodes should inherit the same pattern."""
+        model = {
+            "model_info": {"ndm": 3, "ndf": 6},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0, 0.0], "fixity": [0, 0, 1, 1, 1, 0]},
+                {"id": 2, "coords": [100.0, 0.0, 0.0], "fixity": [0, 0, 1, 1, 1, 0]},
+            ],
+            "elements": [
+                {"id": 1, "type": "elasticBeamColumn", "nodes": [1, 2], "section_id": 1},
+            ],
+            "bearings": [],
+        }
+
+        result_data, disc_map, int_coords = _discretize_elements(model, ratio=5)
+
+        # 4 internal nodes should be created (ratio=5 -> 4 internal)
+        internal_nodes = [
+            n for n in result_data["nodes"]
+            if n["id"] not in (1, 2)
+        ]
+        assert len(internal_nodes) == 4
+
+        # Each internal node should have fixity [0,0,1,1,1,0]
+        for node in internal_nodes:
+            assert node["fixity"] == [0, 0, 1, 1, 1, 0], (
+                f"Node {node['id']} has wrong fixity {node['fixity']}, "
+                f"expected [0, 0, 1, 1, 1, 0]"
+            )
+
+    def test_all_free_endpoints_produce_free_internal(self):
+        """When endpoints are all-free [0,0,0,0,0,0], internal nodes
+        should also be all-free."""
+        model = {
+            "model_info": {"ndm": 3, "ndf": 6},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0, 0.0], "fixity": [0, 0, 0, 0, 0, 0]},
+                {"id": 2, "coords": [100.0, 0.0, 0.0], "fixity": [0, 0, 0, 0, 0, 0]},
+            ],
+            "elements": [
+                {"id": 1, "type": "elasticBeamColumn", "nodes": [1, 2], "section_id": 1},
+            ],
+            "bearings": [],
+        }
+
+        result_data, disc_map, int_coords = _discretize_elements(model, ratio=3)
+
+        internal_nodes = [
+            n for n in result_data["nodes"]
+            if n["id"] not in (1, 2)
+        ]
+        assert len(internal_nodes) == 2
+
+        for node in internal_nodes:
+            assert node["fixity"] == [0, 0, 0, 0, 0, 0], (
+                f"Node {node['id']} should be all-free"
+            )
+
+    def test_mixed_fixity_uses_bitwise_and(self):
+        """When one endpoint is fixed [1,1,1,1,1,1] and the other free
+        [0,0,0,0,0,0], AND produces all-free internal nodes."""
+        model = {
+            "model_info": {"ndm": 3, "ndf": 6},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0, 0.0], "fixity": [1, 1, 1, 1, 1, 1]},
+                {"id": 2, "coords": [100.0, 0.0, 0.0], "fixity": [0, 0, 0, 0, 0, 0]},
+            ],
+            "elements": [
+                {"id": 1, "type": "elasticBeamColumn", "nodes": [1, 2], "section_id": 1},
+            ],
+            "bearings": [],
+        }
+
+        result_data, disc_map, int_coords = _discretize_elements(model, ratio=2)
+
+        internal_nodes = [
+            n for n in result_data["nodes"]
+            if n["id"] not in (1, 2)
+        ]
+        assert len(internal_nodes) == 1
+        assert internal_nodes[0]["fixity"] == [0, 0, 0, 0, 0, 0]
+
+    def test_2d_model_fixity_propagated(self):
+        """2D model (ndf=3) with fixed endpoint produces correct internal fixity."""
+        model = {
+            "model_info": {"ndm": 2, "ndf": 3},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0], "fixity": [1, 1, 1]},
+                {"id": 2, "coords": [100.0, 0.0], "fixity": [0, 0, 0]},
+            ],
+            "elements": [
+                {"id": 1, "type": "elasticBeamColumn", "nodes": [1, 2], "section_id": 1},
+            ],
+            "bearings": [],
+        }
+
+        result_data, disc_map, int_coords = _discretize_elements(model, ratio=2)
+
+        internal_nodes = [
+            n for n in result_data["nodes"]
+            if n["id"] not in (1, 2)
+        ]
+        assert len(internal_nodes) == 1
+        # AND of [1,1,1] and [0,0,0] = [0,0,0]
+        assert internal_nodes[0]["fixity"] == [0, 0, 0]
+
+    def test_empty_fixity_treated_as_free(self):
+        """Nodes with empty fixity lists should be treated as all-free."""
+        model = {
+            "model_info": {"ndm": 2, "ndf": 3},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0], "fixity": []},
+                {"id": 2, "coords": [100.0, 0.0], "fixity": []},
+            ],
+            "elements": [
+                {"id": 1, "type": "elasticBeamColumn", "nodes": [1, 2], "section_id": 1},
+            ],
+            "bearings": [],
+        }
+
+        result_data, disc_map, int_coords = _discretize_elements(model, ratio=2)
+
+        internal_nodes = [
+            n for n in result_data["nodes"]
+            if n["id"] not in (1, 2)
+        ]
+        assert len(internal_nodes) == 1
+        assert internal_nodes[0]["fixity"] == [0, 0, 0]

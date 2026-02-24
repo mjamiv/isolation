@@ -138,7 +138,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
       const useYMoment = maxMy >= maxMz;
       shearIIdx = useYShear ? 1 : 2;
       momentIIdx = useYMoment ? 4 : 5;
-      shearLabel = useYShear ? 'Fy' : 'Fz';
+      shearLabel = useYShear ? 'Vy' : 'Vz';
       momentLabel = useYMoment ? 'My' : 'Mz';
     }
 

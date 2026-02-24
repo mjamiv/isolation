@@ -108,6 +108,9 @@ Phases 1 through 5 are complete. The app provides:
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
 - **Load pattern fix** — pushover load pattern values now match backend expectations (`linear`/`first_mode` instead of `uniform`/`firstMode`)
 - **Empty tab states** — Results and Compare tabs show centered placeholder messages when no analysis/comparison data exists, with guidance on what to do next
+- **Local force diagrams** — Backend switched from global `eleResponse("force")` to local `eleResponse("localForce")` for correct force diagram rendering regardless of element orientation
+- **Section property key mangling** — Frontend `keysToSnake` converted property keys like `"A"` → `"_a"` and `"Iz"` → `"_iz"`, causing discretized sub-elements to get default stiffness (A=1, E=1). Backend `_prop()` helper now resolves both original and mangled key formats
+- **Fixity propagation** — Internal nodes from member discretization now inherit the intersection of endpoint boundary conditions instead of being all-free
 
 ### Review Sprint — Security, UX & Code Quality
 - **Theme overhaul** — black/white/gold/yellow color scheme replacing all blue/emerald/amber accents, including Tailwind config, 3D viewer colors, and Plotly chart traces
@@ -229,7 +232,7 @@ cd frontend && npm test
 # Frontend lint
 cd frontend && npm run lint
 
-# Backend unit tests (105 tests with mocked OpenSeesPy)
+# Backend unit tests (116 tests with mocked OpenSeesPy)
 cd backend && pytest
 
 # Integration tests (23 tests, requires running backend)
