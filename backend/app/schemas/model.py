@@ -166,6 +166,27 @@ class TFPBearingSchema(BaseModel):
         return v
 
 
+class RigidDiaphragmSchema(BaseModel):
+    """Rigid diaphragm constraint definition.
+
+    Constrains all specified nodes to move together in-plane with
+    a master (retained) node using OpenSeesPy's rigidDiaphragm command.
+
+    Attributes:
+        master_node_id: Retained node tag.
+        constrained_node_ids: List of slave node tags.
+        perp_direction: Perpendicular direction (2=Y, 3=Z).
+    """
+
+    model_config = ConfigDict(strict=False)
+
+    master_node_id: int = Field(..., gt=0, description="Retained (master) node tag")
+    constrained_node_ids: list[int] = Field(
+        ..., min_length=1, description="Slave node tags"
+    )
+    perp_direction: int = Field(..., ge=2, le=3, description="Perpendicular direction (2=Y, 3=Z)")
+
+
 class LoadSchema(BaseModel):
     """A load applied to the structural model.
 
@@ -295,6 +316,7 @@ class StructuralModelSchema(BaseModel):
     sections: list[SectionSchema] = Field(default_factory=list, max_length=1000, description="Section definitions")
     elements: list[ElementSchema] = Field(default_factory=list, max_length=10000, description="Structural elements")
     bearings: list[TFPBearingSchema] = Field(default_factory=list, max_length=1000, description="TFP bearing elements")
+    diaphragms: list[RigidDiaphragmSchema] = Field(default_factory=list, max_length=1000, description="Rigid diaphragm constraints")
     loads: list[LoadSchema] = Field(default_factory=list, max_length=10000, description="Applied loads")
 
     @model_validator(mode="after")
@@ -316,6 +338,18 @@ class StructuralModelSchema(BaseModel):
                 if nid not in node_ids:
                     raise ValueError(
                         f"Bearing {bearing.id} references non-existent node {nid}"
+                    )
+
+        # Validate diaphragm node references
+        for diaphragm in self.diaphragms:
+            if diaphragm.master_node_id not in node_ids:
+                raise ValueError(
+                    f"Diaphragm master node {diaphragm.master_node_id} does not exist"
+                )
+            for nid in diaphragm.constrained_node_ids:
+                if nid not in node_ids:
+                    raise ValueError(
+                        f"Diaphragm constrained node {nid} does not exist"
                     )
 
         # Validate material references in sections

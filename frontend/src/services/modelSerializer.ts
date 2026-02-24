@@ -12,6 +12,7 @@ import type {
   TFPBearing,
   PointLoad,
   GroundMotionRecord,
+  RigidDiaphragm,
 } from '@/types/storeModel';
 
 // ---------------------------------------------------------------------------
@@ -114,6 +115,26 @@ function serializeGroundMotion(
   };
 }
 
+function serializeDiaphragm(
+  d: RigidDiaphragm,
+  zUp: boolean,
+): { master_node_id: number; constrained_node_ids: number[]; perp_direction: number } {
+  // In Y-up frontend, perpDirection=2 means Y-perp (horizontal diaphragm).
+  // In Z-up backend, that becomes perpDirection=3. Swap 2↔3 when zUp.
+  const perpDirection = zUp
+    ? d.perpDirection === 2
+      ? 3
+      : d.perpDirection === 3
+        ? 2
+        : d.perpDirection
+    : d.perpDirection;
+  return {
+    master_node_id: d.masterNodeId,
+    constrained_node_ids: [...d.constrainedNodeIds],
+    perp_direction: perpDirection,
+  };
+}
+
 function serializeBearing(bearing: TFPBearing): StructuralModel['bearings'][number] {
   return {
     id: bearing.id,
@@ -148,6 +169,7 @@ interface StoreSnapshot {
   bearings: Map<number, TFPBearing>;
   loads: Map<number, PointLoad>;
   groundMotions: Map<number, GroundMotionRecord>;
+  diaphragms: Map<number, RigidDiaphragm>;
 }
 
 export function serializeModel(store: StoreSnapshot): StructuralModel {
@@ -172,5 +194,6 @@ export function serializeModel(store: StoreSnapshot): StructuralModel {
     groundMotions: Array.from(store.groundMotions.values()).map((gm) =>
       serializeGroundMotion(gm, zUp),
     ),
+    diaphragms: Array.from(store.diaphragms.values()).map((d) => serializeDiaphragm(d, zUp)),
   };
 }

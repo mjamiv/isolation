@@ -31,6 +31,7 @@ from app.services.solver import (  # noqa: E402
     _assign_mass,
     _compute_deformed_shape,
     _compute_hinge_states,
+    _define_rigid_diaphragms,
     _discretize_elements,
     _find_section,
     _get_material_E,
@@ -1098,3 +1099,72 @@ class TestDiscretizeFixityPropagation:
         ]
         assert len(internal_nodes) == 1
         assert internal_nodes[0]["fixity"] == [0, 0, 0]
+
+
+# ---------------------------------------------------------------------------
+# Rigid diaphragm tests
+# ---------------------------------------------------------------------------
+
+
+class TestDefineRigidDiaphragms:
+    """Tests for _define_rigid_diaphragms helper."""
+
+    def test_calls_rigid_diaphragm_for_each_entry(self):
+        """Each diaphragm dict should produce one ops.rigidDiaphragm call."""
+        diaphragms = [
+            {"perp_direction": 3, "master_node_id": 10, "constrained_node_ids": [11, 12, 13]},
+            {"perp_direction": 3, "master_node_id": 20, "constrained_node_ids": [21, 22]},
+        ]
+        _define_rigid_diaphragms(diaphragms)
+        calls = _mock_ops.rigidDiaphragm.call_args_list
+        assert len(calls) == 2
+        assert calls[0] == call(3, 10, 11, 12, 13)
+        assert calls[1] == call(3, 20, 21, 22)
+
+    def test_empty_list_no_calls(self):
+        """An empty diaphragm list should not call ops.rigidDiaphragm."""
+        _define_rigid_diaphragms([])
+        _mock_ops.rigidDiaphragm.assert_not_called()
+
+    def test_single_constrained_node(self):
+        """A diaphragm with one slave node should work."""
+        _define_rigid_diaphragms([
+            {"perp_direction": 2, "master_node_id": 5, "constrained_node_ids": [6]},
+        ])
+        _mock_ops.rigidDiaphragm.assert_called_once_with(2, 5, 6)
+
+    def test_build_model_without_diaphragms_key(self):
+        """build_model should not fail when model_data has no diaphragms key."""
+        model = {
+            "model_info": {"ndm": 2, "ndf": 3},
+            "nodes": [
+                {"id": 1, "coords": [0.0, 0.0], "fixity": [1, 1, 1]},
+            ],
+            "materials": [{"id": 1, "type": "Elastic", "params": {"E": 29000}}],
+            "sections": [{"id": 1, "type": "Elastic", "properties": {"A": 10, "Iz": 100}, "material_id": 1}],
+            "elements": [],
+            "bearings": [],
+        }
+        # Should not raise — diaphragms key is optional
+        build_model(model)
+        _mock_ops.rigidDiaphragm.assert_not_called()
+
+    def test_build_model_with_diaphragms(self):
+        """build_model should call rigidDiaphragm when diaphragms are provided."""
+        model = {
+            "model_info": {"ndm": 3, "ndf": 6},
+            "nodes": [
+                {"id": 10, "coords": [0.0, 0.0, 180.0], "fixity": [0, 0, 0, 0, 0, 0]},
+                {"id": 11, "coords": [240.0, 0.0, 180.0], "fixity": [0, 0, 0, 0, 0, 0]},
+                {"id": 12, "coords": [480.0, 0.0, 180.0], "fixity": [0, 0, 0, 0, 0, 0]},
+            ],
+            "materials": [{"id": 1, "type": "Elastic", "params": {"E": 29000}}],
+            "sections": [{"id": 1, "type": "Elastic", "properties": {"A": 10, "Iz": 100}, "material_id": 1}],
+            "elements": [],
+            "bearings": [],
+            "diaphragms": [
+                {"perp_direction": 3, "master_node_id": 10, "constrained_node_ids": [11, 12]},
+            ],
+        }
+        build_model(model)
+        _mock_ops.rigidDiaphragm.assert_called_once_with(3, 10, 11, 12)

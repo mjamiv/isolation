@@ -6,6 +6,7 @@ import { NodePoints } from './NodePoints';
 import { MemberLines } from './MemberLines';
 import { SupportSymbols } from './SupportSymbols';
 import { BearingSymbols } from './BearingSymbols';
+import { DiaphragmPlanes } from './DiaphragmPlanes';
 import { NodeLabels, ElementLabels } from './Labels';
 import { ElementPropertyLabels } from './ElementPropertyLabels';
 import { DeformedShape } from './DeformedShape';
@@ -43,6 +44,7 @@ export function StructuralModel3D() {
       {!hideOriginal && <NodePoints />}
       <SupportSymbols />
       <BearingSymbols />
+      <DiaphragmPlanes />
       <NodeLabels />
       <ElementLabels />
       <ElementPropertyLabels />

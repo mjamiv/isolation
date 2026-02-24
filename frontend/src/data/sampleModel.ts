@@ -268,6 +268,7 @@ export const sampleModel: StructuralModel = {
   sections,
   elements,
   bearings,
+  diaphragms: [],
   loads,
   groundMotions,
 };

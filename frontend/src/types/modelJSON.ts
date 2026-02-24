@@ -6,6 +6,7 @@ import type {
   TFPBearing,
   PointLoad,
   GroundMotionRecord,
+  RigidDiaphragm,
 } from './storeModel';
 
 /** Shape of an importable model JSON file (arrays, not Maps). */
@@ -22,6 +23,7 @@ export interface ModelJSON {
   bearings: TFPBearing[];
   loads: PointLoad[];
   groundMotions: GroundMotionRecord[];
+  diaphragms?: RigidDiaphragm[];
 }
 
 export interface PresetModel {

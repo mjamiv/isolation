@@ -361,6 +361,9 @@ def build_model(model_data: dict) -> None:
     # --- TFP Bearings ---
     _define_bearings(model_data.get("bearings", []), ndm)
 
+    # --- Rigid Diaphragms ---
+    _define_rigid_diaphragms(model_data.get("diaphragms", []))
+
     logger.info("Model build complete")
 
 
@@ -1407,6 +1410,26 @@ def _define_sections(
             logger.warning(
                 "Unsupported section type '%s' for section %d", stype, sid
             )
+
+
+def _define_rigid_diaphragms(diaphragms: list[dict]) -> None:
+    """Apply rigid diaphragm constraints.
+
+    Each diaphragm constrains its slave nodes to move in-plane with
+    the master node using ``ops.rigidDiaphragm``.
+
+    Args:
+        diaphragms: List of dicts with ``perp_direction``, ``master_node_id``,
+            and ``constrained_node_ids``.
+    """
+    for d in diaphragms:
+        perp = d["perp_direction"]
+        master = d["master_node_id"]
+        slaves = d["constrained_node_ids"]
+        ops.rigidDiaphragm(perp, master, *slaves)
+        logger.info(
+            "rigidDiaphragm: perpDirn=%d master=%d slaves=%s", perp, master, slaves
+        )
 
 
 def _define_bearings(bearings: list[dict], ndm: int) -> None:

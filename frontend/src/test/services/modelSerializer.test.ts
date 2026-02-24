@@ -16,6 +16,7 @@ import type {
   FrictionSurface,
   PointLoad,
   GroundMotionRecord,
+  RigidDiaphragm,
 } from '@/types/storeModel';
 
 function makeStore(overrides: Partial<Parameters<typeof serializeModel>[0]> = {}) {
@@ -26,6 +27,7 @@ function makeStore(overrides: Partial<Parameters<typeof serializeModel>[0]> = {}
     sections: new Map<number, Section>(),
     materials: new Map<number, Material>(),
     bearings: new Map<number, TFPBearing>(),
+    diaphragms: new Map<number, RigidDiaphragm>(),
     loads: new Map<number, PointLoad>(),
     groundMotions: new Map<number, GroundMotionRecord>(),
     ...overrides,
@@ -355,5 +357,128 @@ describe('modelSerializer — sample model round-trip', () => {
     expect(result.loads).toHaveLength(1);
     expect(result.groundMotions).toHaveLength(0);
     expect(result.bearings).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Diaphragm serialization
+// ---------------------------------------------------------------------------
+
+describe('modelSerializer — diaphragms', () => {
+  it('serializes empty diaphragms as empty array', () => {
+    const result = serializeModel(makeStore());
+    expect(result.diaphragms).toEqual([]);
+  });
+
+  it('serializes diaphragm with correct snake_case keys', () => {
+    const diaphragms = new Map<number, RigidDiaphragm>();
+    diaphragms.set(1, {
+      id: 1,
+      masterNodeId: 10,
+      constrainedNodeIds: [11, 12, 13],
+      perpDirection: 2,
+      label: 'Floor 1',
+    });
+    const result = serializeModel(makeStore({ diaphragms }));
+    expect(result.diaphragms).toHaveLength(1);
+    expect(result.diaphragms[0]).toEqual({
+      master_node_id: 10,
+      constrained_node_ids: [11, 12, 13],
+      perp_direction: 2,
+    });
+  });
+
+  it('swaps perpDirection 2↔3 when bearings are present (zUp mode)', () => {
+    const bearings = new Map<number, TFPBearing>();
+    const surface: FrictionSurface = {
+      type: 'Coulomb',
+      muSlow: 0.01,
+      muFast: 0.02,
+      transRate: 0.4,
+    };
+    bearings.set(1, {
+      id: 1,
+      nodeI: 1,
+      nodeJ: 2,
+      surfaces: [surface, surface, surface, surface],
+      radii: [16, 84, 16],
+      dispCapacities: [2, 16, 2],
+      weight: 150,
+      yieldDisp: 0.04,
+      vertStiffness: 10000,
+      minVertForce: 0.1,
+      tolerance: 1e-8,
+    });
+
+    const diaphragms = new Map<number, RigidDiaphragm>();
+    diaphragms.set(1, {
+      id: 1,
+      masterNodeId: 10,
+      constrainedNodeIds: [11],
+      perpDirection: 2,
+    });
+
+    const nodes = new Map<number, Node>();
+    nodes.set(1, { id: 1, x: 0, y: -1, z: 0, restraint: [true, true, true, true, true, true] });
+    nodes.set(2, {
+      id: 2,
+      x: 0,
+      y: 0,
+      z: 0,
+      restraint: [false, false, false, false, false, false],
+    });
+    nodes.set(10, {
+      id: 10,
+      x: 0,
+      y: 144,
+      z: 0,
+      restraint: [false, false, false, false, false, false],
+    });
+    nodes.set(11, {
+      id: 11,
+      x: 288,
+      y: 144,
+      z: 0,
+      restraint: [false, false, false, false, false, false],
+    });
+
+    const result = serializeModel(makeStore({ nodes, bearings, diaphragms }));
+    // perpDirection 2 (Y-perp) → 3 (Z-perp) in Z-up backend
+    expect(result.diaphragms[0]!.perp_direction).toBe(3);
+  });
+
+  it('keeps perpDirection 3 as 2 when zUp is true', () => {
+    const bearings = new Map<number, TFPBearing>();
+    const surface: FrictionSurface = {
+      type: 'Coulomb',
+      muSlow: 0.01,
+      muFast: 0.02,
+      transRate: 0.4,
+    };
+    bearings.set(1, {
+      id: 1,
+      nodeI: 1,
+      nodeJ: 2,
+      surfaces: [surface, surface, surface, surface],
+      radii: [16, 84, 16],
+      dispCapacities: [2, 16, 2],
+      weight: 150,
+      yieldDisp: 0.04,
+      vertStiffness: 10000,
+      minVertForce: 0.1,
+      tolerance: 1e-8,
+    });
+
+    const diaphragms = new Map<number, RigidDiaphragm>();
+    diaphragms.set(1, {
+      id: 1,
+      masterNodeId: 10,
+      constrainedNodeIds: [11],
+      perpDirection: 3,
+    });
+
+    const result = serializeModel(makeStore({ bearings, diaphragms }));
+    // perpDirection 3 → 2 when zUp
+    expect(result.diaphragms[0]!.perp_direction).toBe(2);
   });
 });

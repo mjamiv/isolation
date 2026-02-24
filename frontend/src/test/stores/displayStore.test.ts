@@ -212,3 +212,20 @@ describe('displayStore — selection', () => {
     expect(getState().selectedElementIds.size).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Diaphragm visibility toggle
+// ---------------------------------------------------------------------------
+
+describe('displayStore — showDiaphragms', () => {
+  it('defaults to true', () => {
+    expect(getState().showDiaphragms).toBe(true);
+  });
+
+  it('toggles off and on', () => {
+    getState().setShowDiaphragms(false);
+    expect(getState().showDiaphragms).toBe(false);
+    getState().setShowDiaphragms(true);
+    expect(getState().showDiaphragms).toBe(true);
+  });
+});

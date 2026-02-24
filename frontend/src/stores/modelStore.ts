@@ -9,6 +9,7 @@ import type {
   FrictionModelType,
   PointLoad,
   GroundMotionRecord,
+  RigidDiaphragm,
   StructuralModel,
 } from '@/types/storeModel';
 import type { ModelJSON } from '@/types/modelJSON';
@@ -24,6 +25,7 @@ export type {
   FrictionModelType,
   PointLoad,
   GroundMotionRecord,
+  RigidDiaphragm,
   StructuralModel,
 };
 
@@ -188,6 +190,7 @@ interface ModelState {
   sections: Map<number, Section>;
   materials: Map<number, Material>;
   bearings: Map<number, TFPBearing>;
+  diaphragms: Map<number, RigidDiaphragm>;
   loads: Map<number, PointLoad>;
   groundMotions: Map<number, GroundMotionRecord>;
 
@@ -219,6 +222,11 @@ interface ModelState {
   updateBearing: (id: number, updates: Partial<TFPBearing>) => void;
   removeBearing: (id: number) => void;
 
+  // Diaphragm CRUD
+  addDiaphragm: (diaphragm: RigidDiaphragm) => void;
+  updateDiaphragm: (id: number, updates: Partial<RigidDiaphragm>) => void;
+  removeDiaphragm: (id: number) => void;
+
   // Load CRUD
   addLoad: (load: PointLoad) => void;
   updateLoad: (id: number, updates: Partial<PointLoad>) => void;
@@ -244,6 +252,7 @@ export const useModelStore = create<ModelState>((set) => ({
   sections: new Map(),
   materials: new Map(),
   bearings: new Map(),
+  diaphragms: new Map(),
   loads: new Map(),
   groundMotions: new Map(),
 
@@ -375,6 +384,31 @@ export const useModelStore = create<ModelState>((set) => ({
       return { bearings };
     }),
 
+  // ── Diaphragm CRUD ────────────────────────────────
+  addDiaphragm: (diaphragm) =>
+    set((state) => {
+      const diaphragms = new Map(state.diaphragms);
+      diaphragms.set(diaphragm.id, diaphragm);
+      return { diaphragms };
+    }),
+
+  updateDiaphragm: (id, updates) =>
+    set((state) => {
+      const diaphragms = new Map(state.diaphragms);
+      const existing = diaphragms.get(id);
+      if (existing) {
+        diaphragms.set(id, { ...existing, ...updates });
+      }
+      return { diaphragms };
+    }),
+
+  removeDiaphragm: (id) =>
+    set((state) => {
+      const diaphragms = new Map(state.diaphragms);
+      diaphragms.delete(id);
+      return { diaphragms };
+    }),
+
   // ── Load CRUD ─────────────────────────────────
   addLoad: (load) =>
     set((state) => {
@@ -452,6 +486,7 @@ export const useModelStore = create<ModelState>((set) => ({
       sections: toMap(json.sections),
       materials: toMap(json.materials),
       bearings: toMap(json.bearings),
+      diaphragms: json.diaphragms ? toMap(json.diaphragms) : new Map(),
       loads: toMap(json.loads),
       groundMotions: gmMap,
     });
@@ -466,6 +501,7 @@ export const useModelStore = create<ModelState>((set) => ({
       sections: new Map(),
       materials: new Map(),
       bearings: new Map(),
+      diaphragms: new Map(),
       loads: new Map(),
       groundMotions: new Map(),
     }),

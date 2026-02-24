@@ -4,6 +4,7 @@ import { ElementList } from './ElementList';
 import { SectionList } from './SectionList';
 import { MaterialList } from './MaterialList';
 import { BearingList } from './BearingList';
+import { DiaphragmList } from './DiaphragmList';
 import { LoadList } from './LoadList';
 import { GroundMotionList } from './GroundMotionList';
 
@@ -19,6 +20,7 @@ export function ModelEditor() {
       <SectionList />
       <MaterialList />
       <BearingList />
+      <DiaphragmList />
       <LoadList />
       <GroundMotionList />
     </Accordion.Root>

@@ -1605,5 +1605,9 @@
       "mz": 0
     }
   ],
-  "groundMotions": []
+  "groundMotions": [],
+  "diaphragms": [
+    { "id": 1, "masterNodeId": 10, "constrainedNodeIds": [11, 12, 13, 14, 15, 16, 17, 18], "perpDirection": 2, "label": "Floor 1" },
+    { "id": 2, "masterNodeId": 19, "constrainedNodeIds": [20, 21, 22, 23, 24, 25, 26, 27], "perpDirection": 2, "label": "Roof" }
+  ]
 }

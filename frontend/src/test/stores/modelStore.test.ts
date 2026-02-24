@@ -7,7 +7,13 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useModelStore } from '@/stores/modelStore';
-import type { Node, Element, TFPBearing, FrictionSurface } from '@/stores/modelStore';
+import type {
+  Node,
+  Element,
+  TFPBearing,
+  FrictionSurface,
+  RigidDiaphragm,
+} from '@/stores/modelStore';
 import type { ModelJSON } from '@/types/modelJSON';
 
 // Helper: get a fresh snapshot of the store state.
@@ -371,5 +377,59 @@ describe('modelStore — loadModelFromJSON', () => {
     const load = getState().loads.get(1)!;
     expect(load.nodeId).toBe(2);
     expect(load.fy).toBe(-100);
+  });
+
+  it('loads diaphragms from JSON when present', () => {
+    const json = makeTestJSON();
+    json.diaphragms = [{ id: 1, masterNodeId: 1, constrainedNodeIds: [2], perpDirection: 2 }];
+    getState().loadModelFromJSON(json);
+    expect(getState().diaphragms.size).toBe(1);
+    expect(getState().diaphragms.get(1)!.masterNodeId).toBe(1);
+  });
+
+  it('defaults to empty diaphragms when JSON has no diaphragms key', () => {
+    getState().loadModelFromJSON(makeTestJSON());
+    expect(getState().diaphragms.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Diaphragm CRUD
+// ---------------------------------------------------------------------------
+
+describe('modelStore — diaphragm CRUD', () => {
+  const sampleDiaphragm: RigidDiaphragm = {
+    id: 1,
+    masterNodeId: 10,
+    constrainedNodeIds: [11, 12, 13],
+    perpDirection: 2,
+    label: 'Floor 1',
+  };
+
+  it('addDiaphragm inserts into the diaphragms map', () => {
+    getState().addDiaphragm(sampleDiaphragm);
+    expect(getState().diaphragms.size).toBe(1);
+    expect(getState().diaphragms.get(1)).toEqual(sampleDiaphragm);
+  });
+
+  it('updateDiaphragm merges updates', () => {
+    getState().addDiaphragm(sampleDiaphragm);
+    getState().updateDiaphragm(1, { label: 'Updated', constrainedNodeIds: [11, 12] });
+    const d = getState().diaphragms.get(1)!;
+    expect(d.label).toBe('Updated');
+    expect(d.constrainedNodeIds).toEqual([11, 12]);
+    expect(d.masterNodeId).toBe(10); // unchanged
+  });
+
+  it('removeDiaphragm deletes from the map', () => {
+    getState().addDiaphragm(sampleDiaphragm);
+    getState().removeDiaphragm(1);
+    expect(getState().diaphragms.size).toBe(0);
+  });
+
+  it('clearModel resets diaphragms', () => {
+    getState().addDiaphragm(sampleDiaphragm);
+    getState().clearModel();
+    expect(getState().diaphragms.size).toBe(0);
   });
 });

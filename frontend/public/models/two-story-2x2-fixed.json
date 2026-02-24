@@ -113,5 +113,9 @@
     { "id": 17, "nodeId": 26, "fx": 0, "fy": -15.0, "fz": 0, "mx": 0, "my": 0, "mz": 0 },
     { "id": 18, "nodeId": 27, "fx": 0, "fy": -7.5, "fz": 0, "mx": 0, "my": 0, "mz": 0 }
   ],
-  "groundMotions": []
+  "groundMotions": [],
+  "diaphragms": [
+    { "id": 1, "masterNodeId": 10, "constrainedNodeIds": [11, 12, 13, 14, 15, 16, 17, 18], "perpDirection": 2, "label": "Floor 1" },
+    { "id": 2, "masterNodeId": 19, "constrainedNodeIds": [20, 21, 22, 23, 24, 25, 26, 27], "perpDirection": 2, "label": "Roof" }
+  ]
 }

@@ -181,6 +181,7 @@ export interface StructuralModel {
   sections: Section[];
   elements: Element[];
   bearings: TFPBearing[];
+  diaphragms: { master_node_id: number; constrained_node_ids: number[]; perp_direction: number }[];
   loads: Load[];
   groundMotions: GroundMotion[];
 }

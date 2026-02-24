@@ -70,6 +70,7 @@ describe('api -- submitModel', () => {
       sections: [],
       elements: [],
       bearings: [],
+      diaphragms: [],
       loads: [],
       groundMotions: [],
     };
