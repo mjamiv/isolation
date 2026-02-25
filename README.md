@@ -119,7 +119,19 @@ Phases 1 through 5 are complete. The app provides:
 - **Preset models** — both 2-Story 2x2 models (fixed + isolated) ship with 2 diaphragms: Floor 1 (nodes 10-18) and Roof (nodes 19-27)
 - **Backend schema validation** — `RigidDiaphragmSchema` Pydantic model with node reference validation in `validate_model_integrity`
 
+### Bay Build — Parametric Frame Generator
+- **Real-time parametric building** — "Bay Build" button in toolbar opens a dialog with 6 sliders and 3 option controls to generate 3D moment frames on the fly
+- **Grid configuration** — X Bays (1-5), Z Bays (1-5), Bay Width X (10-40 ft), Bay Width Z (10-40 ft), Stories (1-10), Story Height (10-20 ft)
+- **Material selection** — Steel (A992 Gr50) or Concrete (f'c=4 ksi) with auto-sized sections from lookup tables
+- **Auto-sizing** — steel columns (W14x90 through W14x370) sized by stories below, beams (W18x50 through W30x116) sized by span; concrete columns (16" through 32" square) and beams (depth=span/16)
+- **Base type** — Fixed (fully restrained base) or Isolated (TFP bearings at every base column with tributary-weighted properties)
+- **Rigid diaphragms** — optional per-floor diaphragm constraints
+- **Live 3D preview** — model regenerates in real-time as any slider is dragged, updating the 3D viewer instantly
+- **Gravity loads** — 120 psf composite dead+live load distributed by tributary area (corner/edge/interior pattern)
+- **67 unit tests** — comprehensive test coverage for node counts, element connectivity, auto-sizing, loads, bearings, diaphragms, and edge cases
+
 ### 3D Viewer Enhancements
+- **Dynamic scene sizing** — grid, floor plane, camera, orbit controls, fog, and shadows all scale dynamically based on model bounding box via `useModelBounds` hook; models from small 2-story frames to 20-story towers and 3-span bridges always fit cleanly
 - **Scene environments** — 4 selectable environment presets (Studio, Outdoor, Dark, Blueprint) with procedural lighting, backgrounds, and ground treatments; no external HDR files
 - **Node visibility** — nodes render with bright gold color and emissive glow, clearly visible against all backgrounds
 - **Bearing orbit overlay** — collapsible plan-view panel showing real-time isolation bearing displacement orbits during time-history playback with amplification presets (1x-50x), prev/next navigation, and capacity circles
@@ -186,6 +198,7 @@ isolation/
         viewer-3d/   # 3D canvas, NodePoints, MemberLines (wireframe/extruded/solid), SupportSymbols, BearingSymbols, DiaphragmPlanes, Labels, ElementPropertyLabels, DeformedShape, ModeShapeAnimation, PlasticHinges, PlaybackDriver, BearingDisplacementView, SceneEnvironment
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
+        bay-build/   # BayBuildDialog, generateBayFrame, sectionTables, bayBuildTypes
         controls/    # ViewerControls (display toggles, scale, color map)
         analysis/    # AnalysisDialog, useRunAnalysis, useRunComparison, useRunAsync hooks
         results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults, PushoverResults, PlaybackControls
@@ -248,7 +261,7 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (220 tests across 19 suites)
+# Frontend tests (287 tests across 20 suites)
 cd frontend && npm test
 
 # Frontend lint

@@ -5,6 +5,9 @@
  * Each preset defines background, lighting, ground treatment, and atmosphere
  * to present the gold/yellow structural model at industry-standard visual quality.
  *
+ * All sizing (ground planes, grids, shadows, fog, lights) adapts dynamically
+ * to the loaded model's bounding box via the `bounds` prop from useModelBounds.
+ *
  * Presets:
  *   - Studio:    Clean product-photography lighting, gradient backdrop, reflective floor
  *   - Outdoor:   Natural sky, soft shadows, sunlit ground plane
@@ -20,11 +23,17 @@ import { useThree } from '@react-three/fiber';
 import { Environment, Lightformer, ContactShadows, Grid, Sky, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import type { EnvironmentPreset } from '../../stores/displayStore';
+import type { ModelBounds } from './useModelBounds';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface SceneEnvironmentProps {
   environment: EnvironmentPreset;
+  bounds: ModelBounds;
+}
+
+interface EnvironmentSubProps {
+  bounds: ModelBounds;
 }
 
 // ── Invalidation hook ────────────────────────────────────────────────────────
@@ -122,34 +131,48 @@ function SceneFog({ color, near, far }: { color: string; near: number; far: numb
 // grounding plane. Environment with inline Lightformers gives soft reflections
 // on the structural members without loading an external HDR.
 
-function StudioEnvironment() {
+function StudioEnvironment({ bounds }: EnvironmentSubProps) {
+  const [cx, , cz] = bounds.center;
+  const s = bounds.shadowExtent;
+  const gs = bounds.gridSize;
+  const planeSize = gs * 2;
+  const fogNear = bounds.fogFar * 0.4;
+
   return (
     <>
       <SceneBackground topColor="#2d2d30" bottomColor="#18181b" />
-      <SceneFog color="#18181b" near={3000} far={8000} />
+      <SceneFog color="#18181b" near={fogNear} far={bounds.fogFar} />
 
       {/* Primary key light — warm, upper-right */}
       <directionalLight
-        position={[600, 900, 400]}
+        position={[cx + s * 0.4, s * 0.6, cz + s * 0.3]}
         intensity={1.8}
         color="#fff5e6"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
-        shadow-camera-far={5000}
+        shadow-camera-far={s * 3}
         shadow-camera-near={10}
-        shadow-camera-left={-1500}
-        shadow-camera-right={1500}
-        shadow-camera-top={1500}
-        shadow-camera-bottom={-1500}
+        shadow-camera-left={-s}
+        shadow-camera-right={s}
+        shadow-camera-top={s}
+        shadow-camera-bottom={-s}
         shadow-bias={-0.001}
       />
 
       {/* Fill light — cooler, left side */}
-      <directionalLight position={[-500, 500, -200]} intensity={0.5} color="#e0e8f0" />
+      <directionalLight
+        position={[cx - s * 0.35, s * 0.35, cz - s * 0.15]}
+        intensity={0.5}
+        color="#e0e8f0"
+      />
 
       {/* Rim / back light — pushes edge highlights */}
-      <directionalLight position={[-200, 300, -600]} intensity={0.6} color="#d4d4d8" />
+      <directionalLight
+        position={[cx - s * 0.15, s * 0.2, cz - s * 0.4]}
+        intensity={0.6}
+        color="#d4d4d8"
+      />
 
       {/* Ambient base — low to preserve directionality */}
       <ambientLight intensity={0.35} color="#e8e8e8" />
@@ -182,19 +205,19 @@ function StudioEnvironment() {
 
       {/* Ground plane — soft shadow catcher */}
       <ContactShadows
-        position={[288, -1, 0]}
+        position={[cx, -1, cz]}
         opacity={0.4}
-        scale={3000}
+        scale={gs * 1.5}
         blur={2.5}
-        far={2000}
+        far={s * 1.5}
         resolution={512}
         color="#000000"
         frames={1}
       />
 
       {/* Reflective ground plane */}
-      <mesh rotation-x={-Math.PI / 2} position={[288, -2, 0]} receiveShadow>
-        <planeGeometry args={[4000, 4000]} />
+      <mesh rotation-x={-Math.PI / 2} position={[cx, -2, cz]} receiveShadow>
+        <planeGeometry args={[planeSize, planeSize]} />
         <meshStandardMaterial
           color="#1a1a1e"
           roughness={0.85}
@@ -214,13 +237,19 @@ function StudioEnvironment() {
 // direction. Ground plane catches soft shadows. The overall feel is "structure
 // sitting outdoors for context" — clean and readable, not photorealistic.
 
-function OutdoorEnvironment() {
+function OutdoorEnvironment({ bounds }: EnvironmentSubProps) {
+  const [cx, , cz] = bounds.center;
+  const s = bounds.shadowExtent;
+  const gs = bounds.gridSize;
+  const planeSize = gs * 3;
+  const fogNear = bounds.fogFar * 0.5;
+
   return (
     <>
       {/* Sky dome — low turbidity for clean, stylized look */}
       <Sky
         distance={450000}
-        sunPosition={[400, 600, 200]}
+        sunPosition={[cx + s * 0.3, s * 0.4, cz + s * 0.15]}
         inclination={0.52}
         azimuth={0.25}
         mieCoefficient={0.005}
@@ -229,27 +258,31 @@ function OutdoorEnvironment() {
         turbidity={2}
       />
 
-      <SceneFog color="#87a4c4" near={4000} far={10000} />
+      <SceneFog color="#87a4c4" near={fogNear} far={bounds.fogFar * 1.25} />
 
       {/* Sun — warm directional */}
       <directionalLight
-        position={[400, 600, 200]}
+        position={[cx + s * 0.3, s * 0.4, cz + s * 0.15]}
         intensity={2.0}
         color="#fff0d4"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
-        shadow-camera-far={5000}
+        shadow-camera-far={s * 3}
         shadow-camera-near={10}
-        shadow-camera-left={-1500}
-        shadow-camera-right={1500}
-        shadow-camera-top={1500}
-        shadow-camera-bottom={-1500}
+        shadow-camera-left={-s}
+        shadow-camera-right={s}
+        shadow-camera-top={s}
+        shadow-camera-bottom={-s}
         shadow-bias={-0.001}
       />
 
       {/* Sky fill — cool blue bounce light */}
-      <directionalLight position={[-300, 400, -400]} intensity={0.4} color="#a0c4e8" />
+      <directionalLight
+        position={[cx - s * 0.2, s * 0.3, cz - s * 0.3]}
+        intensity={0.4}
+        color="#a0c4e8"
+      />
 
       {/* Hemisphere light for sky/ground ambient */}
       <hemisphereLight args={['#87ceeb', '#4a6741', 0.4]} />
@@ -277,19 +310,19 @@ function OutdoorEnvironment() {
 
       {/* Ground shadow plane */}
       <ContactShadows
-        position={[288, -1, 0]}
+        position={[cx, -1, cz]}
         opacity={0.5}
-        scale={3000}
+        scale={gs * 1.5}
         blur={2}
-        far={2000}
+        far={s * 1.5}
         resolution={512}
         color="#2a3a24"
         frames={1}
       />
 
       {/* Ground surface — subtle green-gray */}
-      <mesh rotation-x={-Math.PI / 2} position={[288, -3, 0]} receiveShadow>
-        <planeGeometry args={[6000, 6000]} />
+      <mesh rotation-x={-Math.PI / 2} position={[cx, -3, cz]} receiveShadow>
+        <planeGeometry args={[planeSize, planeSize]} />
         <meshStandardMaterial color="#5a6b52" roughness={0.95} metalness={0} />
       </mesh>
     </>
@@ -303,23 +336,40 @@ function OutdoorEnvironment() {
 // the model feeling like it's floating in a void. Gold/yellow members pop hard
 // against the darkness. Ideal for presentations and hero screenshots.
 
-function DarkEnvironment() {
+function DarkEnvironment({ bounds }: EnvironmentSubProps) {
+  const [cx, , cz] = bounds.center;
+  const s = bounds.shadowExtent;
+  const gs = bounds.gridSize;
+  const fogNear = bounds.fogFar * 0.3;
+
   return (
     <>
       <SolidBackground color="#0a0a0a" />
-      <SceneFog color="#0a0a0a" near={2500} far={6000} />
+      <SceneFog color="#0a0a0a" near={fogNear} far={bounds.fogFar * 0.75} />
 
       {/* Subtle star field — adds depth without distraction */}
-      <Stars radius={3000} depth={200} count={800} factor={6} saturation={0} fade speed={0} />
+      <Stars radius={gs * 1.5} depth={200} count={800} factor={6} saturation={0} fade speed={0} />
 
       {/* Strong rim light — upper back, creates edge highlights on gold members */}
-      <directionalLight position={[-400, 500, -500]} intensity={1.2} color="#e0e0ff" />
+      <directionalLight
+        position={[cx - s * 0.3, s * 0.35, cz - s * 0.35]}
+        intensity={1.2}
+        color="#e0e0ff"
+      />
 
       {/* Counter rim — opposite side, slightly warmer */}
-      <directionalLight position={[500, 300, -400]} intensity={0.8} color="#fff0dd" />
+      <directionalLight
+        position={[cx + s * 0.35, s * 0.2, cz - s * 0.3]}
+        intensity={0.8}
+        color="#fff0dd"
+      />
 
       {/* Subtle front fill — very low to keep drama */}
-      <directionalLight position={[200, 600, 400]} intensity={0.5} color="#ffffff" />
+      <directionalLight
+        position={[cx + s * 0.15, s * 0.4, cz + s * 0.3]}
+        intensity={0.5}
+        color="#ffffff"
+      />
 
       {/* Minimal ambient — just enough to read geometry */}
       <ambientLight intensity={0.12} color="#c0c0d0" />
@@ -354,11 +404,11 @@ function DarkEnvironment() {
 
       {/* No ground plane — model floats. Only a very faint shadow hint */}
       <ContactShadows
-        position={[288, -1, 0]}
+        position={[cx, -1, cz]}
         opacity={0.15}
-        scale={2000}
+        scale={gs}
         blur={3}
-        far={1500}
+        far={s}
         resolution={256}
         color="#000000"
         frames={1}
@@ -374,7 +424,11 @@ function DarkEnvironment() {
 // even flat lighting that minimizes shadows. Clean and technical — feels like
 // a CAD viewport or technical drawing come to life.
 
-function BlueprintEnvironment() {
+function BlueprintEnvironment({ bounds }: EnvironmentSubProps) {
+  const [cx, , cz] = bounds.center;
+  const s = bounds.shadowExtent;
+  const gs = bounds.gridSize;
+
   return (
     <>
       <SolidBackground color="#0c1525" />
@@ -383,11 +437,19 @@ function BlueprintEnvironment() {
       <ambientLight intensity={0.6} color="#c8d8f0" />
 
       {/* Soft directional — provides just enough shape definition */}
-      <directionalLight position={[400, 700, 400]} intensity={0.6} color="#dce8ff" />
-      <directionalLight position={[-300, 500, -300]} intensity={0.4} color="#c0d0e8" />
+      <directionalLight
+        position={[cx + s * 0.3, s * 0.5, cz + s * 0.3]}
+        intensity={0.6}
+        color="#dce8ff"
+      />
+      <directionalLight
+        position={[cx - s * 0.2, s * 0.35, cz - s * 0.2]}
+        intensity={0.4}
+        color="#c0d0e8"
+      />
 
       {/* Front fill to reduce shadow contrast */}
-      <directionalLight position={[0, 200, 600]} intensity={0.3} color="#d0d8e8" />
+      <directionalLight position={[cx, s * 0.15, cz + s * 0.4]} intensity={0.3} color="#d0d8e8" />
 
       {/* Environment — cold blue tones for technical feel */}
       <Environment resolution={64} frames={1}>
@@ -409,22 +471,22 @@ function BlueprintEnvironment() {
 
       {/* Blueprint grid — fine engineering grid with labeled-feel spacing */}
       <Grid
-        args={[4000, 4000]}
-        cellSize={24}
+        args={[gs * 1.5, gs * 1.5]}
+        cellSize={bounds.cellSize / 2}
         cellThickness={0.3}
         cellColor="#1a2a42"
-        sectionSize={288}
+        sectionSize={bounds.sectionSize}
         sectionThickness={0.8}
         sectionColor="#243858"
-        fadeDistance={4000}
+        fadeDistance={gs * 1.5}
         fadeStrength={1.5}
         followCamera={false}
-        position={[288, -1, 0]}
+        position={[cx, -1, cz]}
         side={THREE.DoubleSide}
       />
 
       {/* Axis lines rendered as thin colored lines at the origin */}
-      <BlueprintAxes />
+      <BlueprintAxes bounds={bounds} />
     </>
   );
 }
@@ -433,10 +495,23 @@ function BlueprintEnvironment() {
 // Draws X (red) and Z (blue) axis lines on the ground plane to reinforce
 // the engineering coordinate system — subtle but visible.
 
-function BlueprintAxes() {
-  const xPoints = useMemo(() => [new THREE.Vector3(-500, 0, 0), new THREE.Vector3(2500, 0, 0)], []);
-  const zPoints = useMemo(() => [new THREE.Vector3(0, 0, -500), new THREE.Vector3(0, 0, 2500)], []);
-  const yPoints = useMemo(() => [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 500, 0)], []);
+function BlueprintAxes({ bounds }: EnvironmentSubProps) {
+  const axisLen = bounds.gridSize * 0.6;
+  const axisNeg = bounds.gridSize * 0.15;
+  const yLen = bounds.maxDimension * 0.5;
+
+  const xPoints = useMemo(
+    () => [new THREE.Vector3(-axisNeg, 0, 0), new THREE.Vector3(axisLen, 0, 0)],
+    [axisNeg, axisLen],
+  );
+  const zPoints = useMemo(
+    () => [new THREE.Vector3(0, 0, -axisNeg), new THREE.Vector3(0, 0, axisLen)],
+    [axisNeg, axisLen],
+  );
+  const yPoints = useMemo(
+    () => [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, yLen, 0)],
+    [yLen],
+  );
 
   return (
     <group>
@@ -480,19 +555,19 @@ function BlueprintAxes() {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function SceneEnvironment({ environment }: SceneEnvironmentProps) {
+export function SceneEnvironment({ environment, bounds }: SceneEnvironmentProps) {
   useInvalidateOnChange(environment);
 
   switch (environment) {
     case 'studio':
-      return <StudioEnvironment />;
+      return <StudioEnvironment bounds={bounds} />;
     case 'outdoor':
-      return <OutdoorEnvironment />;
+      return <OutdoorEnvironment bounds={bounds} />;
     case 'dark':
-      return <DarkEnvironment />;
+      return <DarkEnvironment bounds={bounds} />;
     case 'blueprint':
-      return <BlueprintEnvironment />;
+      return <BlueprintEnvironment bounds={bounds} />;
     default:
-      return <StudioEnvironment />;
+      return <StudioEnvironment bounds={bounds} />;
   }
 }

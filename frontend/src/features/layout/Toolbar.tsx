@@ -7,6 +7,7 @@ import { useToastStore } from '../../stores/toastStore';
 import { PRESET_MODELS } from '../../types/modelJSON';
 import type { ModelJSON } from '../../types/modelJSON';
 import { AnalysisDialog } from '../analysis/AnalysisDialog';
+import { BayBuildDialog } from '../bay-build/BayBuildDialog';
 
 const DISPLAY_MODES: { value: DisplayMode; label: string }[] = [
   { value: 'wireframe', label: 'Wireframe' },
@@ -30,6 +31,7 @@ export function Toolbar() {
   const addToast = useToastStore((state) => state.addToast);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bayBuildOpen, setBayBuildOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleModelSelect = async (value: string) => {
@@ -109,6 +111,13 @@ export function Toolbar() {
 
       {/* Center: Action buttons */}
       <div className="flex items-center gap-2">
+        <button
+          onClick={() => setBayBuildOpen(true)}
+          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500"
+        >
+          Bay Build
+        </button>
+
         <select
           defaultValue=""
           onChange={(e) => {
@@ -175,6 +184,7 @@ export function Toolbar() {
       </div>
 
       <AnalysisDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <BayBuildDialog open={bayBuildOpen} onOpenChange={setBayBuildOpen} />
     </div>
   );
 }
