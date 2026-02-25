@@ -8,6 +8,7 @@ import { PRESET_MODELS } from '../../types/modelJSON';
 import type { ModelJSON } from '../../types/modelJSON';
 import { AnalysisDialog } from '../analysis/AnalysisDialog';
 import { BayBuildDialog } from '../bay-build/BayBuildDialog';
+import { BentBuildDialog } from '../bent-build/BentBuildDialog';
 
 const DISPLAY_MODES: { value: DisplayMode; label: string }[] = [
   { value: 'wireframe', label: 'Wireframe' },
@@ -32,6 +33,7 @@ export function Toolbar() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bayBuildOpen, setBayBuildOpen] = useState(false);
+  const [bentBuildOpen, setBentBuildOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleModelSelect = async (value: string) => {
@@ -118,6 +120,13 @@ export function Toolbar() {
           Bay Build
         </button>
 
+        <button
+          onClick={() => setBentBuildOpen(true)}
+          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500"
+        >
+          Bent Build
+        </button>
+
         <select
           defaultValue=""
           onChange={(e) => {
@@ -185,6 +194,7 @@ export function Toolbar() {
 
       <AnalysisDialog open={dialogOpen} onOpenChange={setDialogOpen} />
       <BayBuildDialog open={bayBuildOpen} onOpenChange={setBayBuildOpen} />
+      <BentBuildDialog open={bentBuildOpen} onOpenChange={setBentBuildOpen} />
     </div>
   );
 }

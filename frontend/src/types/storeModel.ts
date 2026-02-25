@@ -93,6 +93,14 @@ export interface RigidDiaphragm {
   label?: string;
 }
 
+export interface EqualDOFConstraint {
+  id: number;
+  retainedNodeId: number; // pier cap node
+  constrainedNodeId: number; // deck girder node
+  dofs: number[]; // e.g. [2] vertical, [2,3] vertical+transverse
+  label?: string;
+}
+
 export interface StructuralModel {
   name: string;
   units: string;

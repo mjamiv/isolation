@@ -9,6 +9,7 @@ import { BearingSymbols } from './BearingSymbols';
 import { DiaphragmPlanes } from './DiaphragmPlanes';
 import { NodeLabels, ElementLabels } from './Labels';
 import { ElementPropertyLabels } from './ElementPropertyLabels';
+import { BaseShearLabels } from './BaseShearLabels';
 import { DeformedShape } from './DeformedShape';
 import { ModeShapeAnimation } from './ModeShapeAnimation';
 import { PlasticHinges } from './PlasticHinges';
@@ -48,6 +49,7 @@ export function StructuralModel3D() {
       <NodeLabels />
       <ElementLabels />
       <ElementPropertyLabels />
+      <BaseShearLabels />
       {showDeformed && <DeformedShape />}
       {showForces && forceType !== 'none' && hasForceResults && <ForceDiagrams />}
       {hasModalResults && <ModeShapeAnimation />}

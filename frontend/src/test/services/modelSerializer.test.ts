@@ -17,6 +17,7 @@ import type {
   PointLoad,
   GroundMotionRecord,
   RigidDiaphragm,
+  EqualDOFConstraint,
 } from '@/types/storeModel';
 
 function makeStore(overrides: Partial<Parameters<typeof serializeModel>[0]> = {}) {
@@ -28,6 +29,7 @@ function makeStore(overrides: Partial<Parameters<typeof serializeModel>[0]> = {}
     materials: new Map<number, Material>(),
     bearings: new Map<number, TFPBearing>(),
     diaphragms: new Map<number, RigidDiaphragm>(),
+    equalDofConstraints: new Map<number, EqualDOFConstraint>(),
     loads: new Map<number, PointLoad>(),
     groundMotions: new Map<number, GroundMotionRecord>(),
     ...overrides,

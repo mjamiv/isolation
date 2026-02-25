@@ -390,6 +390,9 @@ def build_model(model_data: dict) -> None:
     # --- Rigid Diaphragms ---
     _define_rigid_diaphragms(model_data.get("diaphragms", []))
 
+    # --- equalDOF Constraints ---
+    _define_equal_dof_constraints(model_data.get("equal_dof_constraints", []))
+
     logger.info("Model build complete")
 
 
@@ -1455,6 +1458,27 @@ def _define_rigid_diaphragms(diaphragms: list[dict]) -> None:
         ops.rigidDiaphragm(perp, master, *slaves)
         logger.info(
             "rigidDiaphragm: perpDirn=%d master=%d slaves=%s", perp, master, slaves
+        )
+
+
+def _define_equal_dof_constraints(constraints: list[dict]) -> None:
+    """Apply equalDOF constraints between node pairs.
+
+    Each constraint links specified DOFs of a constrained node to match
+    those of a retained node using ``ops.equalDOF``.
+
+    Args:
+        constraints: List of dicts with ``retained_node_id``,
+            ``constrained_node_id``, and ``dofs``.
+    """
+    for c in constraints:
+        retained = c["retained_node_id"]
+        constrained = c["constrained_node_id"]
+        dofs = c["dofs"]
+        ops.equalDOF(retained, constrained, *dofs)
+        logger.info(
+            "equalDOF: retained=%d constrained=%d dofs=%s",
+            retained, constrained, dofs
         )
 
 

@@ -269,6 +269,7 @@ export const sampleModel: StructuralModel = {
   elements,
   bearings,
   diaphragms: [],
+  equalDofConstraints: [],
   loads,
   groundMotions,
 };

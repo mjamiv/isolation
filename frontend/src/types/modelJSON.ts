@@ -7,6 +7,7 @@ import type {
   PointLoad,
   GroundMotionRecord,
   RigidDiaphragm,
+  EqualDOFConstraint,
 } from './storeModel';
 
 /** Shape of an importable model JSON file (arrays, not Maps). */
@@ -24,6 +25,7 @@ export interface ModelJSON {
   loads: PointLoad[];
   groundMotions: GroundMotionRecord[];
   diaphragms?: RigidDiaphragm[];
+  equalDofConstraints?: EqualDOFConstraint[];
 }
 
 export interface PresetModel {

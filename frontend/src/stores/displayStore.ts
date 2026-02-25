@@ -21,6 +21,7 @@ interface DisplayState {
   showAxes: boolean;
   showMassLabels: boolean;
   showStiffnessLabels: boolean;
+  showBaseShearLabels: boolean;
   showDiaphragms: boolean;
 
   // Force diagrams
@@ -56,6 +57,7 @@ interface DisplayState {
   setShowAxes: (show: boolean) => void;
   setShowMassLabels: (show: boolean) => void;
   setShowStiffnessLabels: (show: boolean) => void;
+  setShowBaseShearLabels: (show: boolean) => void;
   setShowDiaphragms: (show: boolean) => void;
   setShowForces: (show: boolean) => void;
   setForceType: (type: ForceType) => void;
@@ -90,6 +92,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   showAxes: true,
   showMassLabels: false,
   showStiffnessLabels: false,
+  showBaseShearLabels: false,
   showDiaphragms: true,
   showForces: false,
   forceType: 'none',
@@ -123,6 +126,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   setShowAxes: (show) => set({ showAxes: show }),
   setShowMassLabels: (show) => set({ showMassLabels: show }),
   setShowStiffnessLabels: (show) => set({ showStiffnessLabels: show }),
+  setShowBaseShearLabels: (show) => set({ showBaseShearLabels: show }),
   setShowDiaphragms: (show) => set({ showDiaphragms: show }),
   setShowForces: (show) => set({ showForces: show }),
   setForceType: (type) => set({ forceType: type }),

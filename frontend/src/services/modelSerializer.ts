@@ -13,6 +13,7 @@ import type {
   PointLoad,
   GroundMotionRecord,
   RigidDiaphragm,
+  EqualDOFConstraint,
 } from '@/types/storeModel';
 
 // ---------------------------------------------------------------------------
@@ -135,6 +136,19 @@ function serializeDiaphragm(
   };
 }
 
+function serializeEqualDofConstraint(
+  c: EqualDOFConstraint,
+  zUp: boolean,
+): { retained_node_id: number; constrained_node_id: number; dofs: number[] } {
+  // DOF swap: frontend Y-up DOF 2 (Y) <-> backend Z-up DOF 3 (Z)
+  const dofs = zUp ? c.dofs.map((d) => (d === 2 ? 3 : d === 3 ? 2 : d)) : [...c.dofs];
+  return {
+    retained_node_id: c.retainedNodeId,
+    constrained_node_id: c.constrainedNodeId,
+    dofs,
+  };
+}
+
 function serializeBearing(bearing: TFPBearing): StructuralModel['bearings'][number] {
   return {
     id: bearing.id,
@@ -170,6 +184,7 @@ interface StoreSnapshot {
   loads: Map<number, PointLoad>;
   groundMotions: Map<number, GroundMotionRecord>;
   diaphragms: Map<number, RigidDiaphragm>;
+  equalDofConstraints: Map<number, EqualDOFConstraint>;
 }
 
 export function serializeModel(store: StoreSnapshot): StructuralModel {
@@ -195,5 +210,8 @@ export function serializeModel(store: StoreSnapshot): StructuralModel {
       serializeGroundMotion(gm, zUp),
     ),
     diaphragms: Array.from(store.diaphragms.values()).map((d) => serializeDiaphragm(d, zUp)),
+    equalDofConstraints: Array.from(store.equalDofConstraints.values()).map((c) =>
+      serializeEqualDofConstraint(c, zUp),
+    ),
   };
 }

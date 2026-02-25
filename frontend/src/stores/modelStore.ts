@@ -10,6 +10,7 @@ import type {
   PointLoad,
   GroundMotionRecord,
   RigidDiaphragm,
+  EqualDOFConstraint,
   StructuralModel,
 } from '@/types/storeModel';
 import type { ModelJSON } from '@/types/modelJSON';
@@ -26,6 +27,7 @@ export type {
   PointLoad,
   GroundMotionRecord,
   RigidDiaphragm,
+  EqualDOFConstraint,
   StructuralModel,
 };
 
@@ -191,6 +193,7 @@ interface ModelState {
   materials: Map<number, Material>;
   bearings: Map<number, TFPBearing>;
   diaphragms: Map<number, RigidDiaphragm>;
+  equalDofConstraints: Map<number, EqualDOFConstraint>;
   loads: Map<number, PointLoad>;
   groundMotions: Map<number, GroundMotionRecord>;
 
@@ -227,6 +230,11 @@ interface ModelState {
   updateDiaphragm: (id: number, updates: Partial<RigidDiaphragm>) => void;
   removeDiaphragm: (id: number) => void;
 
+  // EqualDOF CRUD
+  addEqualDofConstraint: (constraint: EqualDOFConstraint) => void;
+  updateEqualDofConstraint: (id: number, updates: Partial<EqualDOFConstraint>) => void;
+  removeEqualDofConstraint: (id: number) => void;
+
   // Load CRUD
   addLoad: (load: PointLoad) => void;
   updateLoad: (id: number, updates: Partial<PointLoad>) => void;
@@ -253,6 +261,7 @@ export const useModelStore = create<ModelState>((set) => ({
   materials: new Map(),
   bearings: new Map(),
   diaphragms: new Map(),
+  equalDofConstraints: new Map(),
   loads: new Map(),
   groundMotions: new Map(),
 
@@ -409,6 +418,31 @@ export const useModelStore = create<ModelState>((set) => ({
       return { diaphragms };
     }),
 
+  // ── EqualDOF CRUD ────────────────────────────────
+  addEqualDofConstraint: (constraint) =>
+    set((state) => {
+      const equalDofConstraints = new Map(state.equalDofConstraints);
+      equalDofConstraints.set(constraint.id, constraint);
+      return { equalDofConstraints };
+    }),
+
+  updateEqualDofConstraint: (id, updates) =>
+    set((state) => {
+      const equalDofConstraints = new Map(state.equalDofConstraints);
+      const existing = equalDofConstraints.get(id);
+      if (existing) {
+        equalDofConstraints.set(id, { ...existing, ...updates });
+      }
+      return { equalDofConstraints };
+    }),
+
+  removeEqualDofConstraint: (id) =>
+    set((state) => {
+      const equalDofConstraints = new Map(state.equalDofConstraints);
+      equalDofConstraints.delete(id);
+      return { equalDofConstraints };
+    }),
+
   // ── Load CRUD ─────────────────────────────────
   addLoad: (load) =>
     set((state) => {
@@ -487,6 +521,7 @@ export const useModelStore = create<ModelState>((set) => ({
       materials: toMap(json.materials),
       bearings: toMap(json.bearings),
       diaphragms: json.diaphragms ? toMap(json.diaphragms) : new Map(),
+      equalDofConstraints: json.equalDofConstraints ? toMap(json.equalDofConstraints) : new Map(),
       loads: toMap(json.loads),
       groundMotions: gmMap,
     });
@@ -502,6 +537,7 @@ export const useModelStore = create<ModelState>((set) => ({
       materials: new Map(),
       bearings: new Map(),
       diaphragms: new Map(),
+      equalDofConstraints: new Map(),
       loads: new Map(),
       groundMotions: new Map(),
     }),

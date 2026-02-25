@@ -187,6 +187,34 @@ class RigidDiaphragmSchema(BaseModel):
     perp_direction: int = Field(..., ge=2, le=3, description="Perpendicular direction (2=Y, 3=Z)")
 
 
+class EqualDOFSchema(BaseModel):
+    """equalDOF constraint between two nodes.
+
+    Constrains specified DOFs of the constrained node to match
+    those of the retained node using OpenSeesPy's equalDOF command.
+
+    Attributes:
+        retained_node_id: Retained (master) node tag.
+        constrained_node_id: Constrained (slave) node tag.
+        dofs: List of DOF indices to constrain (1-based: 1=X, 2=Y, 3=Z, 4=Rx, 5=Ry, 6=Rz).
+    """
+
+    model_config = ConfigDict(strict=False)
+
+    retained_node_id: int = Field(..., gt=0, description="Retained (master) node tag")
+    constrained_node_id: int = Field(..., gt=0, description="Constrained (slave) node tag")
+    dofs: list[int] = Field(
+        ..., min_length=1, max_length=6, description="DOF indices to constrain (1-based)"
+    )
+
+    @field_validator("dofs", mode="after")
+    @classmethod
+    def validate_dofs(cls, v: list[int]) -> list[int]:
+        if not all(1 <= d <= 6 for d in v):
+            raise ValueError("DOF indices must be between 1 and 6")
+        return v
+
+
 class LoadSchema(BaseModel):
     """A load applied to the structural model.
 
@@ -317,6 +345,9 @@ class StructuralModelSchema(BaseModel):
     elements: list[ElementSchema] = Field(default_factory=list, max_length=10000, description="Structural elements")
     bearings: list[TFPBearingSchema] = Field(default_factory=list, max_length=1000, description="TFP bearing elements")
     diaphragms: list[RigidDiaphragmSchema] = Field(default_factory=list, max_length=1000, description="Rigid diaphragm constraints")
+    equal_dof_constraints: list[EqualDOFSchema] = Field(
+        default_factory=list, max_length=10000, description="equalDOF constraints"
+    )
     loads: list[LoadSchema] = Field(default_factory=list, max_length=10000, description="Applied loads")
 
     @model_validator(mode="after")
@@ -351,6 +382,17 @@ class StructuralModelSchema(BaseModel):
                     raise ValueError(
                         f"Diaphragm constrained node {nid} does not exist"
                     )
+
+        # Validate equalDOF constraint node references
+        for eq in self.equal_dof_constraints:
+            if eq.retained_node_id not in node_ids:
+                raise ValueError(
+                    f"equalDOF retained node {eq.retained_node_id} does not exist"
+                )
+            if eq.constrained_node_id not in node_ids:
+                raise ValueError(
+                    f"equalDOF constrained node {eq.constrained_node_id} does not exist"
+                )
 
         # Validate material references in sections
         mat_ids = {m.id for m in self.materials}

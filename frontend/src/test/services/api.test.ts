@@ -71,6 +71,7 @@ describe('api -- submitModel', () => {
       elements: [],
       bearings: [],
       diaphragms: [],
+      equalDofConstraints: [],
       loads: [],
       groundMotions: [],
     };
