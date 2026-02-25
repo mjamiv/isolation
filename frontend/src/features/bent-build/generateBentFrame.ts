@@ -129,6 +129,7 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     isolationLevel,
     deadLoads,
     aashtoLLPercent,
+    slopePercent = 0,
   } = params;
 
   const numPiers = numSpans - 1;
@@ -154,21 +155,13 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   }
 
   // Deck elevation at each support line
+  // Reference deck elevation: max column height (in inches), minimum 240" (20 ft)
+  const referenceDeckY = numPiers > 0 ? Math.max(240, ...columnHeights.map((h) => h * 12)) : 240;
+  const slopeRatio = slopePercent / 100;
+
   const deckY: number[] = [];
   for (let sli = 0; sli < numSupportLines; sli++) {
-    if (numPiers === 0) {
-      // Single span: default 20 ft
-      deckY.push(240);
-    } else if (sli === 0) {
-      // Abt1: match first pier height
-      deckY.push(columnHeights[0]! * 12);
-    } else if (sli === numSupportLines - 1) {
-      // Abt2: match last pier height
-      deckY.push(columnHeights[numPiers - 1]! * 12);
-    } else {
-      // Pier
-      deckY.push(columnHeights[sli - 1]! * 12);
-    }
+    deckY.push(referenceDeckY + supportX[sli]! * slopeRatio);
   }
 
   // Column Z positions within each bent
@@ -263,18 +256,21 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   const girderMatId = girderType === 'steel' ? steelMatId! : concreteMatId;
   const crossBeamMatId = girderType === 'steel' ? steelMatId! : concreteMatId;
 
+  // ── Section depth offsets for realistic node geometry ─────────────────
+
+  const girderDepth = girderSectionData.d;
+  const pierCapDepth = pierCapData.d;
+  const halfGirder = girderDepth / 2;
+  const halfCap = pierCapDepth / 2;
+
   // ── 4. Determine which support lines need cap nodes ─────────────────
   // Cap nodes are separate from deck nodes for:
   // - EXP piers (conventional mode)
   // - Bearing-level isolation (all support lines)
 
-  function pierNeedsSeparateCap(pi: number): boolean {
-    if (supportMode === 'isolated' && isolationLevel === 'bearing') return true;
-    if (supportMode === 'conventional') {
-      const cfg = pierSupports[pi]!;
-      return cfg.type === 'EXP';
-    }
-    return false;
+  function pierNeedsSeparateCap(_pi: number): boolean {
+    // All piers get separate cap nodes so pier cap beams are always concrete
+    return true;
   }
 
   function abutmentNeedsSeparateCap(): boolean {
@@ -288,7 +284,6 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   // Deck nodes at every support line
   for (let sli = 0; sli < numSupportLines; sli++) {
     const isAbutment = sli === 0 || sli === numSupportLines - 1;
-    const pierIdx = sli - 1; // only valid for non-abutments
 
     for (let gi = 0; gi < numGirders; gi++) {
       let restraint: [boolean, boolean, boolean, boolean, boolean, boolean];
@@ -302,26 +297,12 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
           restraint = [...ROLLER];
         }
       } else {
-        // Pier support line
-        if (supportMode === 'isolated' && isolationLevel === 'bearing') {
-          // Bearing-level isolation: deck nodes free
-          restraint = [...FREE];
-        } else if (supportMode === 'conventional' && pierSupports[pierIdx]!.type === 'EXP') {
-          // EXP pier: deck nodes free (constrained via equalDOF)
-          restraint = [...FREE];
-        } else {
-          // FIX pier or col-base isolation: deck shared with cap, free
-          restraint = [...FREE];
-        }
+        // All pier support lines: deck nodes are free (constrained via equalDOF or bearing)
+        restraint = [...FREE];
       }
 
-      // For bearing-level: deck nodes sit 1" above cap
-      const nodeY =
-        !isAbutment && pierNeedsSeparateCap(pierIdx)
-          ? deckY[sli]! + 1
-          : isAbutment && abutmentNeedsSeparateCap()
-            ? deckY[sli]!
-            : deckY[sli]!;
+      // All deck nodes at girder centroid elevation (deckY + halfGirder)
+      const nodeY = deckY[sli]! + halfGirder;
 
       nodes.push({
         id: deckNodeId(sli, gi, numGirders),
@@ -339,7 +320,7 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   for (let pi = 0; pi < numPiers; pi++) {
     if (!pierNeedsSeparateCap(pi)) continue;
     const sli = pi + 1;
-    const capY = deckY[sli]!;
+    const capY = deckY[sli]! - halfCap;
     for (let gi = 0; gi < numGirders; gi++) {
       nodes.push({
         id: capNodeId(pi, gi, numGirders),
@@ -389,10 +370,11 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
-  // Base nodes for piers
+  // Base nodes for piers — base extends DOWN from deck elevation
   for (let pi = 0; pi < numPiers; pi++) {
     const sli = pi + 1;
     const isColBaseIsolation = supportMode === 'isolated' && isolationLevel === 'base';
+    const baseY = deckY[sli]! - (columnHeights[pi] ?? 20) * 12;
 
     for (let ci = 0; ci < numBentColumns; ci++) {
       const colZ = columnZPositions[ci]!;
@@ -403,7 +385,7 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
       nodes.push({
         id: baseNodeId(pi, ci, numBentColumns),
         x: supportX[sli]!,
-        y: 0,
+        y: baseY,
         z: colZ,
         restraint,
         mass: 0,
@@ -416,12 +398,13 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   if (supportMode === 'isolated' && isolationLevel === 'base') {
     for (let pi = 0; pi < numPiers; pi++) {
       const sli = pi + 1;
+      const baseY = deckY[sli]! - (columnHeights[pi] ?? 20) * 12;
       for (let ci = 0; ci < numBentColumns; ci++) {
         const colZ = columnZPositions[ci]!;
         nodes.push({
           id: groundNodeId(pi, ci, numBentColumns),
           x: supportX[sli]!,
-          y: -1,
+          y: baseY - 1,
           z: colZ,
           restraint: [...FIXED],
           mass: 0,
@@ -474,7 +457,7 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     for (let gi = 0; gi < numGirders - 1; gi++) {
       elements.push({
         id: nextElementId++,
-        type: 'beam',
+        type: 'pierCap',
         nodeI: capNodeId(pi, gi, numGirders),
         nodeJ: capNodeId(pi, gi + 1, numGirders),
         sectionId: pierCapSectionId,
@@ -683,17 +666,24 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
-  // ── 9. Generate equalDOF Constraints (conventional EXP only) ────────
+  // ── 9. Generate equalDOF Constraints ────────────────────────────────
 
   const equalDofConstraints: EqualDOFConstraint[] = [];
 
   if (supportMode === 'conventional') {
     let eqId = 1;
     for (let pi = 0; pi < numPiers; pi++) {
-      const cfg = pierSupports[pi]!;
-      if (cfg.type !== 'EXP') continue;
+      const cfg = pierSupports[pi] ?? { type: 'FIX' as const, guided: false };
       const sli = pi + 1;
-      const dofs = cfg.guided ? [2, 3] : [2];
+
+      let dofs: number[];
+      if (cfg.type === 'FIX') {
+        // Rigid connection: all 6 DOFs (monolithic cap-to-deck)
+        dofs = [1, 2, 3, 4, 5, 6];
+      } else {
+        // EXP: vertical only, or vertical + transverse if guided
+        dofs = cfg.guided ? [2, 3] : [2];
+      }
 
       for (let gi = 0; gi < numGirders; gi++) {
         equalDofConstraints.push({

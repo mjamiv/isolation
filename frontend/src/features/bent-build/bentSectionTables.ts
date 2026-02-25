@@ -205,11 +205,13 @@ export function selectConcreteColumnSection(heightFt: number): SteelSectionData 
 }
 
 export function computePierCapSection(spacingIn: number, colDiaIn: number): SteelSectionData {
-  const depth = Math.max(36, spacingIn / 3);
-  const width = Math.max(36, colDiaIn + 12);
+  const dimA = Math.max(36, spacingIn / 3);
+  const dimB = Math.max(36, colDiaIn + 12);
+  const depth = Math.max(dimA, dimB); // larger → vertical (strong axis for gravity)
+  const width = Math.min(dimA, dimB); // smaller → longitudinal
   const area = width * depth;
-  const Ix = (width * Math.pow(depth, 3)) / 12;
-  const Iy = (depth * Math.pow(width, 3)) / 12;
+  const Ix = (width * Math.pow(depth, 3)) / 12; // strong axis (vertical bending)
+  const Iy = (depth * Math.pow(width, 3)) / 12; // weak axis
   const Zx = (width * Math.pow(depth, 2)) / 4;
   return {
     name: `${Math.round(width)}x${Math.round(depth)} RC Cap`,

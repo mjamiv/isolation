@@ -39,6 +39,7 @@ function serializeElement(element: Element): StructuralModel['elements'][number]
   const typeMap: Record<string, string> = {
     column: 'elasticBeamColumn',
     beam: 'elasticBeamColumn',
+    pierCap: 'elasticBeamColumn',
     brace: 'elasticBeamColumn',
     bearing: 'TripleFrictionPendulum',
   };

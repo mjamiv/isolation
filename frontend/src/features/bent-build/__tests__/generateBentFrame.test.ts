@@ -17,6 +17,11 @@ import {
   aashtoLaneLoadKlf,
   computeGirderNodeLoad,
 } from '../bentLoadCalc';
+import {
+  selectSteelGirderSection,
+  selectConcreteColumnSection,
+  computePierCapSection,
+} from '../bentSectionTables';
 import type { ModelJSON } from '@/types/modelJSON';
 
 // ---------------------------------------------------------------------------
@@ -91,8 +96,8 @@ describe('basic generation', () => {
 
     // 3 support lines * 6 girders = 18 deck nodes
     // 1 pier * 2 bent columns = 2 base nodes
-    // FIX: no separate cap nodes
-    expect(model.nodes).toHaveLength(20);
+    // 1 pier * 6 girders = 6 cap nodes (all piers have separate cap)
+    expect(model.nodes).toHaveLength(26);
   });
 
   it('3-span default bridge has correct node count', () => {
@@ -100,8 +105,8 @@ describe('basic generation', () => {
 
     // 4 support lines * 6 girders = 24 deck nodes
     // 2 piers * 2 bent columns = 4 base nodes
-    // FIX piers: no separate cap
-    expect(model.nodes).toHaveLength(28);
+    // 2 piers * 6 girders = 12 cap nodes (all piers have separate cap)
+    expect(model.nodes).toHaveLength(40);
   });
 
   it('model name includes span count', () => {
@@ -181,15 +186,17 @@ describe('node coordinates', () => {
     }
   });
 
-  it('deck Y elevation matches column heights', () => {
-    const model = gen(); // columnHeights [20, 20] -> 240 in
-    const expectedY = 20 * 12; // 240
+  it('deck Y elevation at reference height + halfGirder', () => {
+    const model = gen(); // columnHeights [20, 20] -> referenceDeckY = max(240, 240) = 240
+    // maxSpanFt=100 -> W40x183 (d=39.74), halfGirder=19.87
+    const halfGirder = selectSteelGirderSection(100).d / 2;
+    const expectedY = 240 + halfGirder;
 
     const pier1DeckNodes = model.nodes.filter((n) => n.label?.startsWith('Deck SL2'));
     pier1DeckNodes.forEach((n) => expect(n.y).toBe(expectedY));
   });
 
-  it('single-span abutments at default 240" height', () => {
+  it('single-span abutments at default 240" + halfGirder', () => {
     const model = gen({
       numSpans: 1,
       spanLengths: [80],
@@ -197,11 +204,13 @@ describe('node coordinates', () => {
       pierSupports: [],
     });
 
+    // maxSpanFt=80 -> W36x150 (d=35.85), halfGirder=17.925
+    const halfGirder = selectSteelGirderSection(80).d / 2;
     const deckNodes = model.nodes.filter((n) => n.label?.includes('Deck'));
-    deckNodes.forEach((n) => expect(n.y).toBe(240));
+    deckNodes.forEach((n) => expect(n.y).toBe(240 + halfGirder));
   });
 
-  it('variable column heights produce correct Y elevations', () => {
+  it('variable column heights: deck at reference elevation, bases differ', () => {
     const model = gen({
       numSpans: 3,
       spanLengths: [80, 100, 80],
@@ -212,11 +221,24 @@ describe('node coordinates', () => {
       ],
     });
 
+    // referenceDeckY = max(240, 25*12, 30*12) = max(240, 300, 360) = 360
+    const refDeckY = 360;
+    // maxSpanFt=100 -> W40x183 (d=39.74), halfGirder=19.87
+    const halfGirder = selectSteelGirderSection(100).d / 2;
+
     const pier1Deck = model.nodes.filter((n) => n.label?.startsWith('Deck SL2'));
     const pier2Deck = model.nodes.filter((n) => n.label?.startsWith('Deck SL3'));
 
-    pier1Deck.forEach((n) => expect(n.y).toBe(25 * 12));
-    pier2Deck.forEach((n) => expect(n.y).toBe(30 * 12));
+    // Deck nodes at girder centroid (refDeckY + halfGirder)
+    pier1Deck.forEach((n) => expect(n.y).toBe(refDeckY + halfGirder));
+    pier2Deck.forEach((n) => expect(n.y).toBe(refDeckY + halfGirder));
+
+    // Base nodes extend DOWN: baseY = refDeckY - colHeight*12
+    const pier1Base = model.nodes.filter((n) => n.label?.startsWith('Base P1'));
+    const pier2Base = model.nodes.filter((n) => n.label?.startsWith('Base P2'));
+
+    pier1Base.forEach((n) => expect(n.y).toBe(refDeckY - 25 * 12)); // 360 - 300 = 60
+    pier2Base.forEach((n) => expect(n.y).toBe(refDeckY - 30 * 12)); // 360 - 360 = 0
   });
 
   it('variable span lengths produce correct X positions', () => {
@@ -358,7 +380,7 @@ describe('element connectivity', () => {
     });
   });
 
-  it('columns connect base to deck/cap nodes', () => {
+  it('columns connect base to cap nodes', () => {
     const model = gen();
     const nodeMap = new Map(model.nodes.map((n) => [n.id, n]));
 
@@ -366,9 +388,10 @@ describe('element connectivity', () => {
     columns.forEach((col) => {
       const ni = nodeMap.get(col.nodeI)!;
       const nj = nodeMap.get(col.nodeJ)!;
-      // One end at y=0 (base), other end at deck/cap level
-      expect(ni.y).toBe(0);
-      expect(nj.y).toBeGreaterThan(0);
+      // One end is base, other end is cap; cap Y > base Y
+      expect(ni.label).toContain('Base');
+      expect(nj.label).toContain('Cap');
+      expect(nj.y).toBeGreaterThan(ni.y);
     });
   });
 
@@ -396,11 +419,12 @@ describe('element connectivity', () => {
     expect(pierCaps).toHaveLength(10);
   });
 
-  it('FIX piers have no pier cap beams (shared nodes)', () => {
+  it('FIX piers have concrete pier cap beams (always separate cap)', () => {
     const model = gen(); // Default: all FIX piers
 
     const pierCaps = model.elements.filter((e) => e.label?.startsWith('PierCap'));
-    expect(pierCaps).toHaveLength(0);
+    // 2 piers * (6-1) = 10 pier cap elements
+    expect(pierCaps).toHaveLength(10);
   });
 });
 
@@ -686,18 +710,22 @@ describe('diaphragms', () => {
 // ===========================================================================
 
 describe('conventional FIX', () => {
-  it('FIX pier: deck and cap share same node IDs (no separate cap nodes)', () => {
+  it('FIX pier: separate cap nodes with concrete pier cap beams', () => {
     const model = gen(); // Default all FIX
 
     const capNodes = model.nodes.filter((n) => n.label?.startsWith('Cap P'));
-    expect(capNodes).toHaveLength(0);
+    // 2 piers * 6 girders = 12 cap nodes
+    expect(capNodes).toHaveLength(12);
   });
 
-  it('FIX pier: no equalDOF constraints', () => {
+  it('FIX pier: equalDOF with all 6 DOFs (monolithic connection)', () => {
     const model = gen();
-    expect(model.equalDofConstraints === undefined || model.equalDofConstraints.length === 0).toBe(
-      true,
-    );
+    expect(model.equalDofConstraints).toBeDefined();
+    // 2 FIX piers * 6 girders = 12 equalDOF constraints
+    expect(model.equalDofConstraints!).toHaveLength(12);
+    model.equalDofConstraints!.forEach((eq) => {
+      expect(eq.dofs).toEqual([1, 2, 3, 4, 5, 6]);
+    });
   });
 
   it('FIX pier: no bearings', () => {
@@ -720,7 +748,7 @@ describe('conventional FIX', () => {
     expect(model.bearings).toHaveLength(0);
   });
 
-  it('all-FIX bridge has 0 equalDOF constraints', () => {
+  it('all-FIX bridge has equalDOF constraints with 6 DOFs each', () => {
     const model = gen({
       numSpans: 4,
       spanLengths: [80, 100, 100, 80],
@@ -732,9 +760,12 @@ describe('conventional FIX', () => {
       ],
     });
 
-    expect(model.equalDofConstraints === undefined || model.equalDofConstraints.length === 0).toBe(
-      true,
-    );
+    expect(model.equalDofConstraints).toBeDefined();
+    // 3 piers * 6 girders = 18
+    expect(model.equalDofConstraints!).toHaveLength(18);
+    model.equalDofConstraints!.forEach((eq) => {
+      expect(eq.dofs).toEqual([1, 2, 3, 4, 5, 6]);
+    });
   });
 });
 
@@ -758,16 +789,23 @@ describe('conventional EXP', () => {
     expect(capNodes).toHaveLength(12);
   });
 
-  it('EXP pier cap nodes at capY, deck nodes at capY+1', () => {
+  it('EXP pier cap nodes at deckY-halfCap, deck nodes at deckY+halfGirder', () => {
     const model = gen(expParams);
 
-    // Pier 1 (sli=1): deckY = 20*12 = 240
+    // referenceDeckY = max(240, 20*12=240) = 240
+    // maxSpanFt=100 -> W40x183 (d=39.74), halfGirder=19.87
+    const halfGirder = selectSteelGirderSection(100).d / 2;
+    // girderSpacing=81.6, colDia=36 -> cap depth=48, halfCap=24
+    const girderSpacingIn = (40 * 12 - 2 * 3 * 12) / (6 - 1);
+    const colDia = selectConcreteColumnSection(20).d;
+    const halfCap = computePierCapSection(girderSpacingIn, colDia).d / 2;
+
     const pier1Cap = model.nodes.filter((n) => n.label?.startsWith('Cap P1'));
     const pier1Deck = model.nodes.filter((n) => n.label?.startsWith('Deck SL2'));
 
-    // Cap at 240, deck at 241
-    pier1Cap.forEach((n) => expect(n.y).toBe(240));
-    pier1Deck.forEach((n) => expect(n.y).toBe(241));
+    // Cap at deckY - halfCap, deck at deckY + halfGirder
+    pier1Cap.forEach((n) => expect(n.y).toBe(240 - halfCap));
+    pier1Deck.forEach((n) => expect(n.y).toBe(240 + halfGirder));
   });
 
   it('EXP unguided: equalDOF dofs=[2]', () => {
@@ -804,7 +842,7 @@ describe('conventional EXP', () => {
     expect(model.equalDofConstraints!).toHaveLength(12);
   });
 
-  it('mixed FIX/EXP: only EXP piers have equalDOF', () => {
+  it('mixed FIX/EXP: FIX gets 6 DOFs, EXP gets 2 DOFs', () => {
     const model = gen({
       pierSupports: [
         { type: 'FIX', guided: false },
@@ -813,12 +851,21 @@ describe('conventional EXP', () => {
     });
 
     expect(model.equalDofConstraints).toBeDefined();
-    // Only pier 2 (pi=1) is EXP -> 6 constraints
-    expect(model.equalDofConstraints!).toHaveLength(6);
+    // Both piers get equalDOF: 2 piers * 6 girders = 12 constraints
+    expect(model.equalDofConstraints!).toHaveLength(12);
 
-    // All constraints should reference pier 2 cap nodes
-    model.equalDofConstraints!.forEach((eq) => {
-      expect(eq.label).toContain('P2');
+    // P1 (FIX) gets 6 DOFs, P2 (EXP) gets [2]
+    const p1Constraints = model.equalDofConstraints!.filter((eq) => eq.label?.includes('P1'));
+    const p2Constraints = model.equalDofConstraints!.filter((eq) => eq.label?.includes('P2'));
+
+    expect(p1Constraints).toHaveLength(6);
+    p1Constraints.forEach((eq) => {
+      expect(eq.dofs).toEqual([1, 2, 3, 4, 5, 6]);
+    });
+
+    expect(p2Constraints).toHaveLength(6);
+    p2Constraints.forEach((eq) => {
+      expect(eq.dofs).toEqual([2]);
     });
   });
 });
@@ -954,22 +1001,30 @@ describe('variable spans/heights', () => {
     expect(xPositions).toContain(3120); // (60+120+80)*12
   });
 
-  it('different column heights per pier', () => {
+  it('different column heights per pier: bases extend down, deck at reference', () => {
     const model = gen({
       numSpans: 3,
       spanLengths: [80, 100, 80],
       columnHeights: [15, 35],
     });
 
+    // referenceDeckY = max(240, 15*12=180, 35*12=420) = 420
+    const refDeckY = 420;
+    // maxSpanFt=100 -> W40x183 (d=39.74), halfGirder=19.87
+    const halfGirder = selectSteelGirderSection(100).d / 2;
+
     const pier1Base = model.nodes.filter((n) => n.label?.startsWith('Base P1'));
     const pier2Base = model.nodes.filter((n) => n.label?.startsWith('Base P2'));
     const pier1Deck = model.nodes.filter((n) => n.label?.startsWith('Deck SL2'));
     const pier2Deck = model.nodes.filter((n) => n.label?.startsWith('Deck SL3'));
 
-    pier1Base.forEach((n) => expect(n.y).toBe(0));
-    pier2Base.forEach((n) => expect(n.y).toBe(0));
-    pier1Deck.forEach((n) => expect(n.y).toBe(15 * 12));
-    pier2Deck.forEach((n) => expect(n.y).toBe(35 * 12));
+    // Bases extend down: baseY = refDeckY - colHeight*12
+    pier1Base.forEach((n) => expect(n.y).toBe(refDeckY - 15 * 12)); // 420 - 180 = 240
+    pier2Base.forEach((n) => expect(n.y).toBe(refDeckY - 35 * 12)); // 420 - 420 = 0
+
+    // Deck at girder centroid (refDeckY + halfGirder)
+    pier1Deck.forEach((n) => expect(n.y).toBe(refDeckY + halfGirder));
+    pier2Deck.forEach((n) => expect(n.y).toBe(refDeckY + halfGirder));
   });
 
   it('single very long span (150ft) uses largest girder', () => {
@@ -998,12 +1053,14 @@ describe('variable spans/heights', () => {
 
     // 9 support lines * 6 girders = 54 deck nodes
     // 7 piers * 2 columns = 14 base nodes
-    expect(model.nodes).toHaveLength(68);
+    // 7 piers * 6 girders = 42 cap nodes (all piers have separate cap)
+    expect(model.nodes).toHaveLength(110);
 
     // Girders: 6 * 8 = 48
     // XBeams: 5 * 9 = 45
     // Columns: 2 * 7 = 14
-    expect(model.elements).toHaveLength(48 + 45 + 14);
+    // PierCap: 5 * 7 = 35 (all piers have concrete pier cap beams)
+    expect(model.elements).toHaveLength(48 + 45 + 14 + 35);
   });
 });
 
@@ -1250,5 +1307,279 @@ describe('cross-configuration integrity', () => {
 
     const allIds = model.nodes.map((n) => n.id);
     expect(new Set(allIds).size).toBe(allIds.length);
+  });
+
+  it('FIX pier equalDOF node references point to existing nodes', () => {
+    const model = gen(); // Default FIX piers
+
+    const nodeIdSet = new Set(model.nodes.map((n) => n.id));
+
+    model.equalDofConstraints!.forEach((eq) => {
+      expect(nodeIdSet.has(eq.retainedNodeId)).toBe(true);
+      expect(nodeIdSet.has(eq.constrainedNodeId)).toBe(true);
+    });
+  });
+});
+
+// ===========================================================================
+// 18. SLOPE PERCENT
+// ===========================================================================
+
+describe('slope percent', () => {
+  it('zero slope produces constant deck elevation', () => {
+    const model = gen({ slopePercent: 0 });
+
+    const deckNodes = model.nodes.filter((n) => n.label?.startsWith('Deck SL1'));
+    const abt2Nodes = model.nodes.filter((n) => n.label?.startsWith('Deck SL4'));
+
+    // Both abutments at same Y
+    expect(deckNodes[0]!.y).toBe(abt2Nodes[0]!.y);
+  });
+
+  it('positive slope raises far-end deck elevation', () => {
+    const model = gen({ slopePercent: 2 });
+
+    const abt1 = model.nodes.find((n) => n.label === 'Deck SL1 G1')!;
+    const abt2 = model.nodes.find((n) => n.label === 'Deck SL4 G1')!;
+
+    // Abt2 at X=3120 (260ft*12) with 2% slope -> should be higher
+    expect(abt2.y).toBeGreaterThan(abt1.y);
+  });
+
+  it('slope changes deck elevation linearly', () => {
+    const model = gen({
+      numSpans: 2,
+      spanLengths: [80, 80],
+      columnHeights: [20],
+      pierSupports: [{ type: 'FIX', guided: false }],
+      slopePercent: 5,
+    });
+
+    const abt1 = model.nodes.find((n) => n.label === 'Deck SL1 G1')!;
+    const pier1 = model.nodes.find((n) => n.label === 'Deck SL2 G1')!;
+    const abt2 = model.nodes.find((n) => n.label === 'Deck SL3 G1')!;
+
+    // maxSpanFt=80 -> W36x150 (d=35.85), halfGirder=17.925
+    const halfGirder = selectSteelGirderSection(80).d / 2;
+    // Pier at X=960, Abt2 at X=1920
+    // slopeRatio = 0.05
+    // deckY[0] = 240, deckY[1] = 240 + 960*0.05 = 288, deckY[2] = 240 + 1920*0.05 = 336
+    // All deck nodes at deckY + halfGirder
+    expect(abt1.y).toBe(240 + halfGirder);
+    expect(pier1.y).toBe(288 + halfGirder);
+    expect(abt2.y).toBe(336 + halfGirder);
+  });
+
+  it('negative slope lowers far-end deck elevation', () => {
+    const model = gen({ slopePercent: -2 });
+
+    const abt1 = model.nodes.find((n) => n.label === 'Deck SL1 G1')!;
+    const abt2 = model.nodes.find((n) => n.label === 'Deck SL4 G1')!;
+
+    expect(abt2.y).toBeLessThan(abt1.y);
+  });
+
+  it('slopePercent defaults to 0', () => {
+    const model = gen(); // No slopePercent in overrides -> default from params
+    const abt1 = model.nodes.find((n) => n.label === 'Deck SL1 G1')!;
+    const abt2 = model.nodes.find((n) => n.label === 'Deck SL4 G1')!;
+
+    // With 0 slope, both abutments at same Y
+    expect(abt1.y).toBe(abt2.y);
+  });
+});
+
+// ===========================================================================
+// 19. COLUMN HEIGHT — BASE EXTENDS DOWN
+// ===========================================================================
+
+describe('column height — base extends down', () => {
+  it('default 20ft columns: cap at deckY-halfCap, base at 0', () => {
+    const model = gen(); // columnHeights [20, 20], slope=0
+
+    const baseNodes = model.nodes.filter((n) => n.label?.startsWith('Base'));
+    const capNodes = model.nodes.filter((n) => n.label?.startsWith('Cap P'));
+
+    // referenceDeckY = max(240, 240) = 240
+    // girderSpacing=81.6, colDia=36 -> cap depth=48, halfCap=24
+    const girderSpacingIn = (40 * 12 - 2 * 3 * 12) / (6 - 1);
+    const colDia = selectConcreteColumnSection(20).d;
+    const halfCap = computePierCapSection(girderSpacingIn, colDia).d / 2;
+
+    capNodes.forEach((n) => expect(n.y).toBe(240 - halfCap));
+    baseNodes.forEach((n) => expect(n.y).toBe(0)); // 240 - 20*12 = 0
+  });
+
+  it('taller column: cap at refDeckY-halfCap, base goes down', () => {
+    const model = gen({
+      numSpans: 2,
+      spanLengths: [80, 80],
+      columnHeights: [30],
+      pierSupports: [{ type: 'FIX', guided: false }],
+    });
+
+    // referenceDeckY = max(240, 30*12=360) = 360
+    // colHeight=30 -> 42in Circular RC
+    const girderSpacingIn = (40 * 12 - 2 * 3 * 12) / (6 - 1);
+    const colDia = selectConcreteColumnSection(30).d;
+    const halfCap = computePierCapSection(girderSpacingIn, colDia).d / 2;
+
+    const capNodes = model.nodes.filter((n) => n.label?.startsWith('Cap P'));
+    const baseNodes = model.nodes.filter((n) => n.label?.startsWith('Base'));
+
+    capNodes.forEach((n) => expect(n.y).toBe(360 - halfCap));
+    baseNodes.forEach((n) => expect(n.y).toBe(360 - 360)); // 0
+  });
+
+  it('mixed column heights: taller pier sets reference, shorter base is elevated', () => {
+    const model = gen({
+      numSpans: 3,
+      spanLengths: [80, 100, 80],
+      columnHeights: [10, 30],
+      pierSupports: [
+        { type: 'FIX', guided: false },
+        { type: 'FIX', guided: false },
+      ],
+    });
+
+    // referenceDeckY = max(240, 120, 360) = 360
+    const pier1Base = model.nodes.filter((n) => n.label?.startsWith('Base P1'));
+    const pier2Base = model.nodes.filter((n) => n.label?.startsWith('Base P2'));
+
+    // Pier1: baseY = 360 - 10*12 = 240
+    pier1Base.forEach((n) => expect(n.y).toBe(240));
+    // Pier2: baseY = 360 - 30*12 = 0
+    pier2Base.forEach((n) => expect(n.y).toBe(0));
+  });
+
+  it('col-base isolation: ground nodes at baseY - 1', () => {
+    const model = gen({
+      supportMode: 'isolated',
+      isolationLevel: 'base',
+      columnHeights: [25, 25],
+    });
+
+    // referenceDeckY = max(240, 300) = 300
+    // baseY = 300 - 25*12 = 0
+    const groundNodes = model.nodes.filter((n) => n.label?.startsWith('Ground'));
+    groundNodes.forEach((n) => expect(n.y).toBe(-1)); // 0 - 1
+  });
+});
+
+// ===========================================================================
+// 20. CONCRETE PIER CAPS (always concrete material)
+// ===========================================================================
+
+describe('concrete pier caps', () => {
+  it('pier cap beams use concrete material even for steel bridges', () => {
+    const model = gen({ girderType: 'steel' });
+
+    const concreteMat = model.materials.find((m) => m.E === 3600);
+    expect(concreteMat).toBeDefined();
+
+    const pierCaps = model.elements.filter((e) => e.label?.startsWith('PierCap'));
+    expect(pierCaps.length).toBeGreaterThan(0);
+    pierCaps.forEach((e) => {
+      expect(e.materialId).toBe(concreteMat!.id);
+    });
+  });
+
+  it('pier cap beams use concrete material for concrete bridges', () => {
+    const model = gen({ girderType: 'concrete' });
+
+    const concreteMat = model.materials.find((m) => m.E === 3600);
+    expect(concreteMat).toBeDefined();
+
+    const pierCaps = model.elements.filter((e) => e.label?.startsWith('PierCap'));
+    expect(pierCaps.length).toBeGreaterThan(0);
+    pierCaps.forEach((e) => {
+      expect(e.materialId).toBe(concreteMat!.id);
+    });
+  });
+
+  it('all piers have pier cap beams regardless of FIX/EXP mode', () => {
+    const model = gen({
+      pierSupports: [
+        { type: 'FIX', guided: false },
+        { type: 'EXP', guided: false },
+      ],
+    });
+
+    // Both piers get cap beams: 2 * (6-1) = 10
+    const pierCaps = model.elements.filter((e) => e.label?.startsWith('PierCap'));
+    expect(pierCaps).toHaveLength(10);
+  });
+});
+
+// ===========================================================================
+// 21. PIER CAP ELEMENT TYPE & SECTION ORIENTATION
+// ===========================================================================
+
+describe('pier cap element type and section orientation', () => {
+  it('pier cap elements have type pierCap (not beam)', () => {
+    const model = gen();
+    const pierCaps = model.elements.filter((e) => e.label?.startsWith('PierCap'));
+    expect(pierCaps.length).toBeGreaterThan(0);
+    pierCaps.forEach((e) => {
+      expect(e.type).toBe('pierCap');
+    });
+  });
+
+  it('pier cap section has Ix > Iy (strong axis vertical for gravity)', () => {
+    const girderSpacingIn = (40 * 12 - 2 * 3 * 12) / (6 - 1);
+    const colDia = selectConcreteColumnSection(20).d;
+    const capSection = computePierCapSection(girderSpacingIn, colDia);
+    expect(capSection.Ix).toBeGreaterThan(capSection.Iy);
+  });
+
+  it('deck-to-cap vertical offset equals (girderDepth + capDepth) / 2', () => {
+    const model = gen(); // default 3-span steel
+
+    const girderSpacingIn = (40 * 12 - 2 * 3 * 12) / (6 - 1);
+    const colDia = selectConcreteColumnSection(20).d;
+    const capDepth = computePierCapSection(girderSpacingIn, colDia).d;
+    const girderDepth = selectSteelGirderSection(100).d;
+
+    const deckNode = model.nodes.find((n) => n.label === 'Deck SL2 G1')!;
+    const capNode = model.nodes.find((n) => n.label === 'Cap P1 G1')!;
+
+    const verticalGap = deckNode.y - capNode.y;
+    expect(verticalGap).toBeCloseTo((girderDepth + capDepth) / 2, 5);
+  });
+});
+
+// ===========================================================================
+// 22. 1-SPAN BRIDGE SAFETY
+// ===========================================================================
+
+describe('1-span bridge safety', () => {
+  it('1-span bridge with empty pierSupports does not crash', () => {
+    const model = gen({
+      numSpans: 1,
+      spanLengths: [100],
+      columnHeights: [],
+      pierSupports: [],
+    });
+
+    expect(model.nodes.length).toBeGreaterThan(0);
+    expect(model.elements.length).toBeGreaterThan(0);
+    expect(model.bearings).toHaveLength(0);
+    expect(model.equalDofConstraints === undefined || model.equalDofConstraints.length === 0).toBe(
+      true,
+    );
+  });
+
+  it('1-span bridge deck at default 240" + halfGirder', () => {
+    const model = gen({
+      numSpans: 1,
+      spanLengths: [80],
+      columnHeights: [],
+      pierSupports: [],
+    });
+
+    // maxSpanFt=80 -> W36x150 (d=35.85), halfGirder=17.925
+    const halfGirder = selectSteelGirderSection(80).d / 2;
+    const deckNodes = model.nodes.filter((n) => n.label?.includes('Deck'));
+    deckNodes.forEach((n) => expect(n.y).toBe(240 + halfGirder));
   });
 });

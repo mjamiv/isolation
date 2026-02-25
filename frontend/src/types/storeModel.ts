@@ -10,7 +10,7 @@ export interface Node {
 
 export interface Element {
   id: number;
-  type: 'column' | 'beam' | 'brace' | 'bearing';
+  type: 'column' | 'beam' | 'pierCap' | 'brace' | 'bearing';
   nodeI: number;
   nodeJ: number;
   sectionId: number;

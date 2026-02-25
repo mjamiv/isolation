@@ -10,13 +10,15 @@ import { Pencil1Icon, TrashIcon, CheckIcon, Cross2Icon } from '@radix-ui/react-i
 const ELEMENT_TYPES: { value: string; label: string }[] = [
   { value: 'column', label: 'Column' },
   { value: 'beam', label: 'Beam' },
+  { value: 'pierCap', label: 'Pier Cap' },
   { value: 'brace', label: 'Brace' },
   { value: 'bearing', label: 'Bearing' },
 ];
 
 const TYPE_COLORS: Record<Element['type'], string> = {
-  column: 'text-yellow-400',
+  column: 'text-stone-400',
   beam: 'text-yellow-400',
+  pierCap: 'text-stone-400',
   brace: 'text-orange-400',
   bearing: 'text-purple-400',
 };

@@ -7,16 +7,18 @@ import { useDisplayStore, type DisplayMode } from '../../stores/displayStore';
 
 // Colors by element type
 const ELEMENT_COLORS: Record<Element['type'], string> = {
-  column: '#facc15', // yellow-400
-  beam: '#fde047', // yellow-300
+  column: '#a8a29e', // stone-400 (substructure)
+  beam: '#facc15', // yellow-400 (superstructure)
+  pierCap: '#a8a29e', // stone-400 (substructure)
   brace: '#fb923c', // orange-400
   bearing: '#c084fc', // purple-400
 };
 
 // Slightly darker/saturated colors for solid mode to distinguish from extruded
 const SOLID_COLORS: Record<Element['type'], string> = {
-  column: '#eab308', // yellow-500
-  beam: '#ca8a04', // yellow-600
+  column: '#78716c', // stone-500 (substructure)
+  beam: '#eab308', // yellow-500 (superstructure)
+  pierCap: '#78716c', // stone-500 (substructure)
   brace: '#f97316', // orange-500
   bearing: '#a855f7', // purple-500
 };
