@@ -130,6 +130,17 @@ Phases 1 through 5 are complete. The app provides:
 - **Gravity loads** — 120 psf composite dead+live load distributed by tributary area (corner/edge/interior pattern)
 - **67 unit tests** — comprehensive test coverage for node counts, element connectivity, auto-sizing, loads, bearings, diaphragms, and edge cases
 
+### Bent Build — Parametric Bridge Generator
+- **Real-time parametric bridge** — "Bent Build" button in toolbar opens a dialog to generate multi-span girder bridges with per-pier support configuration
+- **Span/girder layout** — 1-8 spans with per-span lengths, 3-10 girders, steel (W30-W44) or concrete (AASHTO Type II-VI) girder sections, adjustable roadway width and overhang
+- **Pier configuration** — 1-4 bent columns per pier with independent heights, concrete circular RC columns (36-60in) auto-sized by height
+- **Support modes** — Conventional (FIX monolithic or EXP expansion with equalDOF constraints), Isolated (bearing-level TFP at all girder support points, or column-base TFP)
+- **Pier cap beams** — distinct `pierCap` element type rendered in stone/gray (substructure) vs gold girders (superstructure); strong-axis section orientation for gravity bending (Ix > Iy); section depth offsets place deck nodes at girder centroid and cap nodes at cap centroid for realistic rigid end geometry
+- **AASHTO loads** — dead load components (deck slab, overlay, barriers, utilities, future wearing surface, misc), AASHTO lane live load with multi-presence factors
+- **Rigid diaphragms** — one per support line, perpDirection=2
+- **Live 3D preview** — model regenerates as any parameter changes
+- **113 unit tests** — full coverage of node topology, element connectivity, section sizing, loads, bearings, equalDOF, diaphragms, section orientation, and deck/cap offsets
+
 ### 3D Viewer Enhancements
 - **Dynamic scene sizing** — grid, floor plane, camera, orbit controls, fog, and shadows all scale dynamically based on model bounding box via `useModelBounds` hook; models from small 2-story frames to 20-story towers and 3-span bridges always fit cleanly
 - **Scene environments** — 4 selectable environment presets (Studio, Outdoor, Dark, Blueprint) with procedural lighting, backgrounds, and ground treatments; no external HDR files
@@ -199,6 +210,7 @@ isolation/
         model-editor/# Accordion-based model tree with inline editing (loads, ground motions, bearings)
         property-inspector/ # Read-only property panel for selections
         bay-build/   # BayBuildDialog, generateBayFrame, sectionTables, bayBuildTypes
+        bent-build/  # BentBuildDialog, generateBentFrame, bentSectionTables, bentBuildTypes, bentLoadCalc
         controls/    # ViewerControls (display toggles, scale, color map)
         analysis/    # AnalysisDialog, useRunAnalysis, useRunComparison, useRunAsync hooks
         results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults, PushoverResults, PlaybackControls
@@ -261,13 +273,13 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (287 tests across 20 suites)
+# Frontend tests (400 tests across 21 suites)
 cd frontend && npm test
 
 # Frontend lint
 cd frontend && npm run lint
 
-# Backend unit tests (85 tests with mocked OpenSeesPy)
+# Backend unit tests (124 tests with mocked OpenSeesPy)
 cd backend && pytest
 
 # Integration tests (23 tests, requires running backend)
