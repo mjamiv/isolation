@@ -7,6 +7,7 @@ import { MemberLines } from './MemberLines';
 import { SupportSymbols } from './SupportSymbols';
 import { BearingSymbols } from './BearingSymbols';
 import { DiaphragmPlanes } from './DiaphragmPlanes';
+import { ConstraintLinks } from './ConstraintLinks';
 import { NodeLabels, ElementLabels } from './Labels';
 import { ElementPropertyLabels } from './ElementPropertyLabels';
 import { BaseShearLabels } from './BaseShearLabels';
@@ -46,6 +47,7 @@ export function StructuralModel3D() {
       <SupportSymbols />
       <BearingSymbols />
       <DiaphragmPlanes />
+      <ConstraintLinks />
       <NodeLabels />
       <ElementLabels />
       <ElementPropertyLabels />

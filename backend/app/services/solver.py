@@ -163,6 +163,12 @@ def _discretize_elements(
         coords_j = node_lookup.get(node_j_id, [0.0, 0.0, 0.0])
         ndm = len(coords_i)
 
+        # Skip zero-length elements (e.g. transverse pier caps in 2D)
+        elem_len = sum((ci - cj) ** 2 for ci, cj in zip(coords_i, coords_j)) ** 0.5
+        if elem_len < 1.0e-6:
+            new_elements.append(elem)
+            continue
+
         # Create internal nodes via linear interpolation
         chain_node_ids: list[int] = [node_i_id]
         for k in range(1, ratio):
@@ -636,7 +642,9 @@ def run_time_history(
     """
     ops.wipe()
     try:
-        model_data, disc_map, int_coords = _discretize_elements(model_data)
+        # Use lighter discretization for time-history to keep DOF count manageable.
+        # Hermite interpolation on the frontend handles deformed-shape smoothing.
+        model_data, disc_map, int_coords = _discretize_elements(model_data, ratio=2)
         build_model(model_data)
         _assign_mass(model_data)
 

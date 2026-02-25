@@ -154,6 +154,7 @@ export function ViewerControls() {
   const showMassLabels = useDisplayStore((state) => state.showMassLabels);
   const showStiffnessLabels = useDisplayStore((state) => state.showStiffnessLabels);
   const showDiaphragms = useDisplayStore((state) => state.showDiaphragms);
+  const showConstraintLinks = useDisplayStore((state) => state.showConstraintLinks);
 
   const setDisplayMode = useDisplayStore((state) => state.setDisplayMode);
   const setShowGrid = useDisplayStore((state) => state.setShowGrid);
@@ -162,6 +163,7 @@ export function ViewerControls() {
   const setShowMassLabels = useDisplayStore((state) => state.setShowMassLabels);
   const setShowStiffnessLabels = useDisplayStore((state) => state.setShowStiffnessLabels);
   const setShowDiaphragms = useDisplayStore((state) => state.setShowDiaphragms);
+  const setShowConstraintLinks = useDisplayStore((state) => state.setShowConstraintLinks);
 
   const showDeformed = useDisplayStore((state) => state.showDeformed);
   const hideUndeformed = useDisplayStore((state) => state.hideUndeformed);
@@ -209,6 +211,11 @@ export function ViewerControls() {
         <Toggle label="Grid" checked={showGrid} onChange={setShowGrid} />
         <Toggle label="Axes" checked={showAxes} onChange={setShowAxes} />
         <Toggle label="Diaphragms" checked={showDiaphragms} onChange={setShowDiaphragms} />
+        <Toggle
+          label="Constraint Links"
+          checked={showConstraintLinks}
+          onChange={setShowConstraintLinks}
+        />
         <Toggle label="Node / Element Labels" checked={showLabels} onChange={setShowLabels} />
       </ControlSection>
 

@@ -1,7 +1,14 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Cross2Icon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
-import type { BentBuildParams, PierSupportConfig, DeadLoadComponents } from './bentBuildTypes';
+import type {
+  BentBuildParams,
+  PierSupportConfig,
+  DeadLoadComponents,
+  HorizontalPI,
+  VerticalPVI,
+  AlignmentParams,
+} from './bentBuildTypes';
 import { DEFAULT_BENT_BUILD_PARAMS, DEFAULT_DEAD_LOADS } from './bentBuildTypes';
 import { generateBentFrame } from './generateBentFrame';
 import { aashtoLaneCount, aashtoMPF, aashtoLaneLoadKlf } from './bentLoadCalc';
@@ -113,7 +120,20 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
     ...DEFAULT_DEAD_LOADS,
   });
   const [aashtoLLPercent, setAashtoLLPercent] = useState(DEFAULT_BENT_BUILD_PARAMS.aashtoLLPercent);
+  const [slopePercent, setSlopePercent] = useState(DEFAULT_BENT_BUILD_PARAMS.slopePercent);
   const [showDeadLoads, setShowDeadLoads] = useState(false);
+
+  // Alignment state
+  const [showAlignment, setShowAlignment] = useState(false);
+  const [enableHCurve, setEnableHCurve] = useState(false);
+  const [horizontalPIs, setHorizontalPIs] = useState<HorizontalPI[]>([
+    { station: 50, deflectionAngle: 15, radius: 2000, direction: 'R' as const },
+  ]);
+  const [enableVCurve, setEnableVCurve] = useState(false);
+  const [verticalPVIs, setVerticalPVIs] = useState<VerticalPVI[]>([
+    { station: 130, elevation: 0, exitGrade: -1, curveLength: 50 },
+  ]);
+  const [chordsPerSpan, setChordsPerSpan] = useState(1);
 
   const loadModelFromJSON = useModelStore((s) => s.loadModelFromJSON);
   const resetAnalysis = useAnalysisStore((s) => s.resetAnalysis);
@@ -141,14 +161,12 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
     return parsed.slice(0, Math.max(0, numPiers));
   }, [columnHeightsStr, numPiers]);
 
-  // Auto-resize pier supports array when numPiers changes
-  useEffect(() => {
-    setPierSupports((prev) => {
-      const next = [...prev];
-      while (next.length < numPiers) next.push({ type: 'FIX', guided: false });
-      return next.slice(0, Math.max(0, numPiers));
-    });
-  }, [numPiers]);
+  // Synchronously derive pier supports sized to numPiers (avoids render-before-effect crash)
+  const syncedPierSupports = useMemo(() => {
+    const next = [...pierSupports];
+    while (next.length < numPiers) next.push({ type: 'FIX', guided: false });
+    return next.slice(0, Math.max(0, numPiers));
+  }, [pierSupports, numPiers]);
 
   // Auto-resize span lengths text when numSpans changes
   useEffect(() => {
@@ -173,6 +191,19 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numPiers]);
 
+  // Build alignment param (undefined = straight bridge, backward compat)
+  const alignmentParam = useMemo<AlignmentParams | undefined>(() => {
+    if (!enableHCurve && !enableVCurve && chordsPerSpan <= 1) return undefined;
+    return {
+      refElevation: 0,
+      entryBearing: 0,
+      entryGrade: slopePercent,
+      horizontalPIs: enableHCurve ? horizontalPIs : [],
+      verticalPVIs: enableVCurve ? verticalPVIs : [],
+      chordsPerSpan,
+    };
+  }, [enableHCurve, enableVCurve, horizontalPIs, verticalPVIs, chordsPerSpan, slopePercent]);
+
   // Build params
   const params = useMemo<BentBuildParams>(
     () => ({
@@ -185,10 +216,12 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
       numBentColumns,
       columnHeights,
       supportMode,
-      pierSupports,
+      pierSupports: syncedPierSupports,
       isolationLevel,
       deadLoads,
       aashtoLLPercent,
+      slopePercent,
+      alignment: alignmentParam,
     }),
     [
       numSpans,
@@ -200,10 +233,12 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
       numBentColumns,
       columnHeights,
       supportMode,
-      pierSupports,
+      syncedPierSupports,
       isolationLevel,
       deadLoads,
       aashtoLLPercent,
+      slopePercent,
+      alignmentParam,
     ],
   );
 
@@ -318,7 +353,226 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
                 onChange={setOverhang}
                 suffix="ft"
               />
+              <SliderRow
+                label="Grade Slope"
+                min={-8}
+                max={8}
+                step={0.5}
+                value={slopePercent}
+                onChange={setSlopePercent}
+                suffix="%"
+              />
             </Section>
+
+            {/* Alignment (collapsible) */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAlignment(!showAlignment)}
+                className="flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wider text-gray-400"
+              >
+                <span>Alignment (Advanced)</span>
+                {showAlignment ? (
+                  <ChevronUpIcon className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronDownIcon className="h-3.5 w-3.5" />
+                )}
+              </button>
+              {showAlignment && (
+                <div className="mt-2 space-y-3">
+                  {/* Horizontal Curve */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={enableHCurve}
+                        onChange={(e) => setEnableHCurve(e.target.checked)}
+                        className="accent-yellow-500"
+                      />
+                      <span className="text-xs font-medium text-gray-300">Horizontal Curve</span>
+                    </label>
+                    {enableHCurve &&
+                      horizontalPIs.map((pi, i) => (
+                        <div
+                          key={i}
+                          className="ml-4 space-y-1 rounded border border-gray-700/50 p-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-500">PI {i + 1}</span>
+                            {horizontalPIs.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setHorizontalPIs(horizontalPIs.filter((_, j) => j !== i))
+                                }
+                                className="text-[10px] text-red-400 hover:text-red-300"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          <NumberInputRow
+                            label="PC Station"
+                            value={String(pi.station)}
+                            onChange={(v) => {
+                              const next = [...horizontalPIs];
+                              next[i] = { ...next[i]!, station: Number(v) || 0 };
+                              setHorizontalPIs(next);
+                            }}
+                            suffix="ft"
+                          />
+                          <NumberInputRow
+                            label="Defl. Angle"
+                            value={String(pi.deflectionAngle)}
+                            onChange={(v) => {
+                              const next = [...horizontalPIs];
+                              next[i] = { ...next[i]!, deflectionAngle: Number(v) || 0 };
+                              setHorizontalPIs(next);
+                            }}
+                            suffix="deg"
+                          />
+                          <NumberInputRow
+                            label="Radius"
+                            value={String(pi.radius)}
+                            onChange={(v) => {
+                              const next = [...horizontalPIs];
+                              next[i] = { ...next[i]!, radius: Number(v) || 0 };
+                              setHorizontalPIs(next);
+                            }}
+                            suffix="ft"
+                          />
+                          <SelectRow
+                            label="Direction"
+                            value={pi.direction}
+                            onChange={(v) => {
+                              const next = [...horizontalPIs];
+                              next[i] = { ...next[i]!, direction: v as 'L' | 'R' };
+                              setHorizontalPIs(next);
+                            }}
+                            options={[
+                              { value: 'L', label: 'Left' },
+                              { value: 'R', label: 'Right' },
+                            ]}
+                          />
+                        </div>
+                      ))}
+                    {enableHCurve && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setHorizontalPIs([
+                            ...horizontalPIs,
+                            { station: 100, deflectionAngle: 15, radius: 2000, direction: 'R' },
+                          ])
+                        }
+                        className="ml-4 text-[10px] text-yellow-500 hover:text-yellow-400"
+                      >
+                        + Add PI
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Vertical Curve */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={enableVCurve}
+                        onChange={(e) => setEnableVCurve(e.target.checked)}
+                        className="accent-yellow-500"
+                      />
+                      <span className="text-xs font-medium text-gray-300">Vertical Curve</span>
+                    </label>
+                    {enableVCurve &&
+                      verticalPVIs.map((pvi, i) => (
+                        <div
+                          key={i}
+                          className="ml-4 space-y-1 rounded border border-gray-700/50 p-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-500">PVI {i + 1}</span>
+                            {verticalPVIs.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setVerticalPVIs(verticalPVIs.filter((_, j) => j !== i))
+                                }
+                                className="text-[10px] text-red-400 hover:text-red-300"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          <NumberInputRow
+                            label="PVI Station"
+                            value={String(pvi.station)}
+                            onChange={(v) => {
+                              const next = [...verticalPVIs];
+                              next[i] = { ...next[i]!, station: Number(v) || 0 };
+                              setVerticalPVIs(next);
+                            }}
+                            suffix="ft"
+                          />
+                          <NumberInputRow
+                            label="PVI Elevation"
+                            value={String(pvi.elevation)}
+                            onChange={(v) => {
+                              const next = [...verticalPVIs];
+                              next[i] = { ...next[i]!, elevation: Number(v) || 0 };
+                              setVerticalPVIs(next);
+                            }}
+                            suffix="ft"
+                          />
+                          <NumberInputRow
+                            label="Exit Grade"
+                            value={String(pvi.exitGrade)}
+                            onChange={(v) => {
+                              const next = [...verticalPVIs];
+                              next[i] = { ...next[i]!, exitGrade: Number(v) || 0 };
+                              setVerticalPVIs(next);
+                            }}
+                            suffix="%"
+                          />
+                          <NumberInputRow
+                            label="Curve Length"
+                            value={String(pvi.curveLength)}
+                            onChange={(v) => {
+                              const next = [...verticalPVIs];
+                              next[i] = { ...next[i]!, curveLength: Number(v) || 0 };
+                              setVerticalPVIs(next);
+                            }}
+                            suffix="ft"
+                          />
+                        </div>
+                      ))}
+                    {enableVCurve && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVerticalPVIs([
+                            ...verticalPVIs,
+                            { station: 200, elevation: 0, exitGrade: -1, curveLength: 50 },
+                          ])
+                        }
+                        className="ml-4 text-[10px] text-yellow-500 hover:text-yellow-400"
+                      >
+                        + Add PVI
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Chords per span */}
+                  <SliderRow
+                    label="Chords/Span"
+                    min={1}
+                    max={10}
+                    step={1}
+                    value={chordsPerSpan}
+                    onChange={setChordsPerSpan}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Bent Configuration */}
             {numPiers > 0 && (
@@ -359,13 +613,13 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
 
               {supportMode === 'conventional' && numPiers > 0 && (
                 <div className="mt-2 space-y-1.5">
-                  {pierSupports.slice(0, numPiers).map((ps, i) => (
+                  {syncedPierSupports.map((ps, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="w-16 text-xs text-gray-500">Pier {i + 1}</span>
                       <select
                         value={ps.type}
                         onChange={(e) => {
-                          const next = [...pierSupports];
+                          const next = [...syncedPierSupports];
                           next[i] = {
                             ...next[i]!,
                             type: e.target.value as 'FIX' | 'EXP',
@@ -384,7 +638,7 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
                             type="checkbox"
                             checked={ps.guided}
                             onChange={(e) => {
-                              const next = [...pierSupports];
+                              const next = [...syncedPierSupports];
                               next[i] = {
                                 ...next[i]!,
                                 guided: e.target.checked,

@@ -985,14 +985,14 @@ class TestDiscretizeFixityPropagation:
             "bearings": [],
         }
 
-        result_data, disc_map, int_coords = _discretize_elements(model, ratio=5)
+        result_data, disc_map, int_coords = _discretize_elements(model, ratio=10)
 
-        # 4 internal nodes should be created (ratio=5 -> 4 internal)
+        # 9 internal nodes should be created (ratio=10 -> 9 internal)
         internal_nodes = [
             n for n in result_data["nodes"]
             if n["id"] not in (1, 2)
         ]
-        assert len(internal_nodes) == 4
+        assert len(internal_nodes) == 9
 
         # Each internal node should have fixity [0,0,1,1,1,0]
         for node in internal_nodes:

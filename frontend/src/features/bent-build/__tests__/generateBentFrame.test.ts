@@ -9,8 +9,12 @@
 
 import { describe, it, expect } from 'vitest';
 import { generateBentFrame } from '../generateBentFrame';
-import type { BentBuildParams, PierSupportConfig } from '../bentBuildTypes';
-import { DEFAULT_BENT_BUILD_PARAMS, DEFAULT_DEAD_LOADS } from '../bentBuildTypes';
+import type { BentBuildParams, PierSupportConfig, AlignmentParams } from '../bentBuildTypes';
+import {
+  DEFAULT_BENT_BUILD_PARAMS,
+  DEFAULT_DEAD_LOADS,
+  DEFAULT_ALIGNMENT,
+} from '../bentBuildTypes';
 import {
   aashtoLaneCount,
   aashtoMPF,
@@ -1581,5 +1585,179 @@ describe('1-span bridge safety', () => {
     const halfGirder = selectSteelGirderSection(80).d / 2;
     const deckNodes = model.nodes.filter((n) => n.label?.includes('Deck'));
     deckNodes.forEach((n) => expect(n.y).toBe(240 + halfGirder));
+  });
+});
+
+// ===========================================================================
+// 21. COGO ALIGNMENT INTEGRATION
+// ===========================================================================
+
+describe('alignment integration', () => {
+  it('undefined alignment produces identical output to no-alignment default', () => {
+    const withoutAlignment = gen();
+    const withExplicitDefault = gen({
+      alignment: { ...DEFAULT_ALIGNMENT, entryGrade: 0 },
+    });
+
+    // Node count should match
+    expect(withExplicitDefault.nodes).toHaveLength(withoutAlignment.nodes.length);
+    expect(withExplicitDefault.elements).toHaveLength(withoutAlignment.elements.length);
+  });
+
+  it('horizontal curve produces non-collinear deck nodes in plan view', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      horizontalPIs: [{ station: 50, deflectionAngle: 30, radius: 2000, direction: 'R' }],
+      chordsPerSpan: 1,
+    };
+    const model = gen({ alignment });
+
+    // Deck nodes at different support lines should not all have the same Z
+    const deckNodes = model.nodes.filter((n) => n.label?.startsWith('Deck'));
+    const zValues = [...new Set(deckNodes.map((n) => Math.round(n.z)))];
+    expect(zValues.length).toBeGreaterThan(1);
+  });
+
+  it('horizontal curve: bearing deflects correctly at far end', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      horizontalPIs: [{ station: 30, deflectionAngle: 20, radius: 1500, direction: 'R' }],
+      chordsPerSpan: 1,
+    };
+    const model = gen({ alignment });
+
+    // Last abutment deck nodes should have negative Z (right curve deflects in -Z)
+    const lastSL = model.nodes.filter((n) => n.label?.startsWith('Deck SL4'));
+    expect(lastSL.length).toBeGreaterThan(0);
+    // At least some nodes should have non-zero Z
+    const hasNonZeroZ = lastSL.some((n) => Math.abs(n.z) > 1);
+    expect(hasNonZeroZ).toBe(true);
+  });
+
+  it('chordsPerSpan > 1 creates intermediate chord nodes', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      horizontalPIs: [{ station: 30, deflectionAngle: 15, radius: 2000, direction: 'L' }],
+      chordsPerSpan: 5,
+    };
+    const model = gen({ alignment });
+
+    // Each span should have (chordsPerSpan - 1) * numGirders chord nodes
+    const chordNodes = model.nodes.filter((n) => n.label?.startsWith('Chord'));
+    // 3 spans * 4 interior points * 6 girders = 72
+    expect(chordNodes).toHaveLength(3 * 4 * 6);
+  });
+
+  it('chord discretization creates correct element connectivity', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      chordsPerSpan: 3,
+    };
+    const model = gen({ alignment });
+
+    // Each girder per span should now have 3 elements (3 chords)
+    const girderElements = model.elements.filter((e) => e.label?.startsWith('Girder'));
+    // 3 spans * 6 girders * 3 chords = 54 girder elements
+    expect(girderElements).toHaveLength(3 * 6 * 3);
+  });
+
+  it('all chord node IDs are unique', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      horizontalPIs: [{ station: 30, deflectionAngle: 20, radius: 1000, direction: 'R' }],
+      chordsPerSpan: 5,
+    };
+    const model = gen({ alignment });
+
+    const allIds = model.nodes.map((n) => n.id);
+    expect(new Set(allIds).size).toBe(allIds.length);
+  });
+
+  it('all element references are valid with chord discretization', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      horizontalPIs: [{ station: 50, deflectionAngle: 25, radius: 1500, direction: 'L' }],
+      chordsPerSpan: 5,
+    };
+    const model = gen({ alignment });
+
+    const nodeIdSet = new Set(model.nodes.map((n) => n.id));
+    model.elements.forEach((e) => {
+      expect(nodeIdSet.has(e.nodeI)).toBe(true);
+      expect(nodeIdSet.has(e.nodeJ)).toBe(true);
+    });
+  });
+
+  it('vertical curve changes deck elevations', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      entryGrade: 3,
+      verticalPVIs: [{ station: 130, elevation: 3.9, exitGrade: -2, curveLength: 0 }],
+      chordsPerSpan: 1,
+    };
+    const model = gen({ alignment });
+
+    const abt1 = model.nodes.find((n) => n.label === 'Deck SL1 G1')!;
+    const abt2 = model.nodes.find((n) => n.label === 'Deck SL4 G1')!;
+
+    // With positive then negative grade, far end should be different from near end
+    expect(abt2.y).not.toBe(abt1.y);
+  });
+
+  it('diaphragms still reference valid nodes with alignment', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      horizontalPIs: [{ station: 50, deflectionAngle: 15, radius: 3000, direction: 'R' }],
+      chordsPerSpan: 3,
+    };
+    const model = gen({ alignment });
+
+    const nodeIdSet = new Set(model.nodes.map((n) => n.id));
+    model.diaphragms!.forEach((d) => {
+      expect(nodeIdSet.has(d.masterNodeId)).toBe(true);
+      d.constrainedNodeIds.forEach((cid) => {
+        expect(nodeIdSet.has(cid)).toBe(true);
+      });
+    });
+  });
+
+  it('bearings still reference valid nodes with curved alignment', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      horizontalPIs: [{ station: 30, deflectionAngle: 20, radius: 2000, direction: 'L' }],
+      chordsPerSpan: 3,
+    };
+    const model = gen({
+      alignment,
+      supportMode: 'isolated',
+      isolationLevel: 'bearing',
+    });
+
+    const nodeIdSet = new Set(model.nodes.map((n) => n.id));
+    model.bearings.forEach((b) => {
+      expect(nodeIdSet.has(b.nodeI)).toBe(true);
+      expect(nodeIdSet.has(b.nodeJ)).toBe(true);
+    });
+  });
+
+  it('equalDOF constraints valid with curved alignment', () => {
+    const alignment: AlignmentParams = {
+      ...DEFAULT_ALIGNMENT,
+      horizontalPIs: [{ station: 40, deflectionAngle: 10, radius: 5000, direction: 'R' }],
+      chordsPerSpan: 1,
+    };
+    const model = gen({
+      alignment,
+      pierSupports: [
+        { type: 'EXP', guided: true },
+        { type: 'FIX', guided: false },
+      ],
+    });
+
+    const nodeIdSet = new Set(model.nodes.map((n) => n.id));
+    model.equalDofConstraints!.forEach((eq) => {
+      expect(nodeIdSet.has(eq.retainedNodeId)).toBe(true);
+      expect(nodeIdSet.has(eq.constrainedNodeId)).toBe(true);
+    });
   });
 });

@@ -13,7 +13,10 @@ import type {
   EqualDOFConstraint,
 } from '@/types/storeModel';
 import type { ModelJSON } from '@/types/modelJSON';
-import type { BentBuildParams } from './bentBuildTypes';
+import type { BentBuildParams, AlignmentParams } from './bentBuildTypes';
+import { DEFAULT_ALIGNMENT } from './bentBuildTypes';
+import { evaluateAlignment, applyTransverseOffset, spanStations } from './alignmentGeometry';
+import type { AlignmentPoint3D } from './alignmentGeometry';
 import {
   selectSteelGirderSection,
   selectConcreteGirderSection,
@@ -39,6 +42,17 @@ function capNodeId(pi: number, gi: number, numGirders: number): number {
 
 function groundNodeId(pi: number, ci: number, maxCols: number): number {
   return 2000 + pi * maxCols + ci + 1;
+}
+
+/** Node IDs for intermediate chord points within a span. */
+function chordNodeId(
+  span: number,
+  chord: number,
+  gi: number,
+  maxChordsPerSpan: number,
+  numGirders: number,
+): number {
+  return 3000 + span * (maxChordsPerSpan - 1) * numGirders + chord * numGirders + gi + 1;
 }
 
 // ── Restraint Constants ───────────────────────────────────────────────
@@ -85,12 +99,12 @@ function toSection(id: number, data: SteelSectionData): Section {
   };
 }
 
-/** Find the cap node closest in Z to a given column Z position. */
-function closestCapNodeGi(colZ: number, girderZPositions: number[]): number {
+/** Find the girder index whose transverse offset is closest to a column offset. */
+function closestGirderIndex(colOffset: number, girderOffsets: number[]): number {
   let bestGi = 0;
   let bestDist = Infinity;
-  for (let gi = 0; gi < girderZPositions.length; gi++) {
-    const dist = Math.abs(girderZPositions[gi]! - colZ);
+  for (let gi = 0; gi < girderOffsets.length; gi++) {
+    const dist = Math.abs(girderOffsets[gi]! - colOffset);
     if (dist < bestDist) {
       bestDist = dist;
       bestGi = gi;
@@ -99,8 +113,21 @@ function closestCapNodeGi(colZ: number, girderZPositions: number[]): number {
   return bestGi;
 }
 
-/** Compute column Z positions for a given number of bent columns. */
-function computeColumnZPositions(numBentColumns: number, totalGirderWidth: number): number[] {
+/** Compute column transverse offsets centered on alignment (in inches). */
+function computeColumnOffsets(numBentColumns: number, totalGirderWidth: number): number[] {
+  const offsets: number[] = [];
+  if (numBentColumns === 1) {
+    offsets.push(0); // centered on alignment
+  } else {
+    for (let ci = 0; ci < numBentColumns; ci++) {
+      offsets.push((ci * totalGirderWidth) / (numBentColumns - 1) - totalGirderWidth / 2);
+    }
+  }
+  return offsets;
+}
+
+/** Legacy column Z positions (absolute, starting from 0) for backward compat. */
+function computeColumnOffsetsLegacy(numBentColumns: number, totalGirderWidth: number): number[] {
   const positions: number[] = [];
   if (numBentColumns === 1) {
     positions.push(totalGirderWidth / 2);
@@ -130,42 +157,68 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     deadLoads,
     aashtoLLPercent,
     slopePercent = 0,
+    alignment,
   } = params;
 
   const numPiers = numSpans - 1;
   const numSupportLines = numSpans + 1; // abutments + piers
 
-  // ── 1. Unit conversions (ft -> in) ──────────────────────────────────
+  // ── 1. Unit conversions (ft -> in) & Alignment setup ────────────────
 
-  const spanLengthsIn = spanLengths.map((s) => s * 12);
   const girderSpacingIn = (roadwayWidth * 12 - 2 * overhang * 12) / (numGirders - 1);
   const girderSpacingFt = girderSpacingIn / 12;
   const totalGirderWidth = girderSpacingIn * (numGirders - 1);
 
-  // Support X positions (cumulative span lengths)
-  const supportX: number[] = [0];
+  // Build effective alignment: backward-compatible with slopePercent when undefined
+  const effectiveAlignment: AlignmentParams = alignment
+    ? alignment
+    : {
+        ...DEFAULT_ALIGNMENT,
+        entryGrade: slopePercent,
+      };
+
+  const chordsPerSpan = effectiveAlignment.chordsPerSpan || 1;
+
+  // Support stations (cumulative span lengths in feet, arc-length along alignment)
+  const supportStationsFt: number[] = [0];
   for (let i = 0; i < numSpans; i++) {
-    supportX.push(supportX[i]! + spanLengthsIn[i]!);
+    supportStationsFt.push(supportStationsFt[i]! + spanLengths[i]!);
   }
 
-  // Girder Z positions
-  const girderZ: number[] = [];
-  for (let gi = 0; gi < numGirders; gi++) {
-    girderZ.push(gi * girderSpacingIn);
-  }
-
-  // Deck elevation at each support line
   // Reference deck elevation: max column height (in inches), minimum 240" (20 ft)
   const referenceDeckY = numPiers > 0 ? Math.max(240, ...columnHeights.map((h) => h * 12)) : 240;
-  const slopeRatio = slopePercent / 100;
 
-  const deckY: number[] = [];
+  // Evaluate alignment at each support line
+  const alignmentPoints: AlignmentPoint3D[] = [];
   for (let sli = 0; sli < numSupportLines; sli++) {
-    deckY.push(referenceDeckY + supportX[sli]! * slopeRatio);
+    alignmentPoints.push(evaluateAlignment(supportStationsFt[sli]!, effectiveAlignment));
   }
 
-  // Column Z positions within each bent
-  const columnZPositions = computeColumnZPositions(numBentColumns, totalGirderWidth);
+  // Girder transverse offsets (in inches)
+  // When alignment is active, center on alignment (offset from CL).
+  // When no alignment, use legacy positions starting from 0 for backward compat.
+  const girderOffsets: number[] = [];
+  if (alignment) {
+    for (let gi = 0; gi < numGirders; gi++) {
+      girderOffsets.push(gi * girderSpacingIn - totalGirderWidth / 2);
+    }
+  } else {
+    for (let gi = 0; gi < numGirders; gi++) {
+      girderOffsets.push(gi * girderSpacingIn);
+    }
+  }
+
+  // Deck elevation at each support line (alignment Y + reference height)
+  const deckY: number[] = [];
+  for (let sli = 0; sli < numSupportLines; sli++) {
+    deckY.push(referenceDeckY + alignmentPoints[sli]!.y);
+  }
+
+  // Column transverse offsets (in inches)
+  // When alignment is active, center on alignment. When legacy, use old absolute positions.
+  const columnOffsets = alignment
+    ? computeColumnOffsets(numBentColumns, totalGirderWidth)
+    : computeColumnOffsetsLegacy(numBentColumns, totalGirderWidth);
 
   // Determine the max column height for section sizing
   const maxColHeightFt = numPiers > 0 ? Math.max(...columnHeights) : 20;
@@ -277,6 +330,26 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     return supportMode === 'isolated' && isolationLevel === 'bearing';
   }
 
+  // ── Helper: compute XZ coords for a node at a given support line + offset ──
+
+  function deckNodeCoords(sli: number, gi: number): { x: number; z: number } {
+    if (!alignment) {
+      // Legacy path: direct coords for backward compat (no floating-point noise)
+      return { x: supportStationsFt[sli]! * 12, z: girderOffsets[gi]! };
+    }
+    const ap = alignmentPoints[sli]!;
+    return applyTransverseOffset(ap, girderOffsets[gi]!);
+  }
+
+  function colNodeCoords(pi: number, ci: number): { x: number; z: number } {
+    const sli = pi + 1;
+    if (!alignment) {
+      return { x: supportStationsFt[sli]! * 12, z: columnOffsets[ci]! };
+    }
+    const ap = alignmentPoints[sli]!;
+    return applyTransverseOffset(ap, columnOffsets[ci]!);
+  }
+
   // ── 5. Generate Nodes ───────────────────────────────────────────────
 
   const nodes: Node[] = [];
@@ -290,29 +363,54 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
 
       if (isAbutment) {
         if (abutmentNeedsSeparateCap()) {
-          // Isolated bearing at abutment: deck nodes are free
           restraint = [...FREE];
         } else {
-          // Conventional: abutment deck nodes are rollers
           restraint = [...ROLLER];
         }
       } else {
-        // All pier support lines: deck nodes are free (constrained via equalDOF or bearing)
         restraint = [...FREE];
       }
 
-      // All deck nodes at girder centroid elevation (deckY + halfGirder)
       const nodeY = deckY[sli]! + halfGirder;
+      const { x, z } = deckNodeCoords(sli, gi);
 
       nodes.push({
         id: deckNodeId(sli, gi, numGirders),
-        x: supportX[sli]!,
+        x,
         y: nodeY,
-        z: girderZ[gi]!,
+        z,
         restraint,
         mass: 0,
         label: `Deck SL${sli + 1} G${gi + 1}`,
       });
+    }
+  }
+
+  // Intermediate chord nodes for curved spans
+  if (chordsPerSpan > 1) {
+    for (let span = 0; span < numSpans; span++) {
+      const startFt = supportStationsFt[span]!;
+      const endFt = supportStationsFt[span + 1]!;
+      const interiorStations = spanStations(startFt, endFt, chordsPerSpan);
+
+      for (let ci = 0; ci < interiorStations.length; ci++) {
+        const stFt = interiorStations[ci]!;
+        const ap = evaluateAlignment(stFt, effectiveAlignment);
+        const chordY = referenceDeckY + ap.y + halfGirder;
+
+        for (let gi = 0; gi < numGirders; gi++) {
+          const { x, z } = applyTransverseOffset(ap, girderOffsets[gi]!);
+          nodes.push({
+            id: chordNodeId(span, ci, gi, chordsPerSpan, numGirders),
+            x,
+            y: chordY,
+            z,
+            restraint: [...FREE],
+            mass: 0,
+            label: `Chord Span${span + 1} C${ci + 1} G${gi + 1}`,
+          });
+        }
+      }
     }
   }
 
@@ -322,11 +420,12 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     const sli = pi + 1;
     const capY = deckY[sli]! - halfCap;
     for (let gi = 0; gi < numGirders; gi++) {
+      const { x, z } = deckNodeCoords(sli, gi);
       nodes.push({
         id: capNodeId(pi, gi, numGirders),
-        x: supportX[sli]!,
+        x,
         y: capY,
-        z: girderZ[gi]!,
+        z,
         restraint: [...FREE],
         mass: 0,
         label: `Cap P${pi + 1} G${gi + 1}`,
@@ -336,20 +435,16 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
 
   // Abutment cap nodes for bearing-level isolation
   if (abutmentNeedsSeparateCap()) {
-    // Abt1 cap nodes (use pi index = numPiers for abt1, numPiers+1 for abt2 in capNodeId space)
-    // But capNodeId uses pi. For abutments we use a different approach:
-    // Abt1 cap nodes: 1000 + numPiers * numGirders + gi + 1
-    // Abt2 cap nodes: 1000 + (numPiers+1) * numGirders + gi + 1
-    const abt1CapPi = numPiers; // virtual pier index for abt1
-    const abt2CapPi = numPiers + 1; // virtual pier index for abt2
+    const abt1CapPi = numPiers;
+    const abt2CapPi = numPiers + 1;
 
     for (let gi = 0; gi < numGirders; gi++) {
-      // Abt1 cap: 1" below deck
+      const { x, z } = deckNodeCoords(0, gi);
       nodes.push({
         id: capNodeId(abt1CapPi, gi, numGirders),
-        x: supportX[0]!,
+        x,
         y: deckY[0]! - 1,
-        z: girderZ[gi]!,
+        z,
         restraint: [...ROLLER],
         mass: 0,
         label: `Cap Abt1 G${gi + 1}`,
@@ -357,12 +452,12 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
 
     for (let gi = 0; gi < numGirders; gi++) {
-      // Abt2 cap: 1" below deck
+      const { x, z } = deckNodeCoords(numSupportLines - 1, gi);
       nodes.push({
         id: capNodeId(abt2CapPi, gi, numGirders),
-        x: supportX[numSupportLines - 1]!,
+        x,
         y: deckY[numSupportLines - 1]! - 1,
-        z: girderZ[gi]!,
+        z,
         restraint: [...ROLLER],
         mass: 0,
         label: `Cap Abt2 G${gi + 1}`,
@@ -377,16 +472,16 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     const baseY = deckY[sli]! - (columnHeights[pi] ?? 20) * 12;
 
     for (let ci = 0; ci < numBentColumns; ci++) {
-      const colZ = columnZPositions[ci]!;
+      const { x, z } = colNodeCoords(pi, ci);
       const restraint: [boolean, boolean, boolean, boolean, boolean, boolean] = isColBaseIsolation
         ? [...FREE]
         : [...FIXED];
 
       nodes.push({
         id: baseNodeId(pi, ci, numBentColumns),
-        x: supportX[sli]!,
+        x,
         y: baseY,
-        z: colZ,
+        z,
         restraint,
         mass: 0,
         label: `Base P${pi + 1} C${ci + 1}`,
@@ -400,12 +495,12 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
       const sli = pi + 1;
       const baseY = deckY[sli]! - (columnHeights[pi] ?? 20) * 12;
       for (let ci = 0; ci < numBentColumns; ci++) {
-        const colZ = columnZPositions[ci]!;
+        const { x, z } = colNodeCoords(pi, ci);
         nodes.push({
           id: groundNodeId(pi, ci, numBentColumns),
-          x: supportX[sli]!,
+          x,
           y: baseY - 1,
-          z: colZ,
+          z,
           restraint: [...FIXED],
           mass: 0,
           label: `Ground P${pi + 1} C${ci + 1}`,
@@ -419,20 +514,56 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   const elements: Element[] = [];
   let nextElementId = 1;
 
-  // 6a. Girders: numGirders per span, connecting consecutive support-line deck nodes
+  // 6a. Girders: numGirders per span, with optional chord discretization
   for (let span = 0; span < numSpans; span++) {
-    const sliI = span;
-    const sliJ = span + 1;
     for (let gi = 0; gi < numGirders; gi++) {
-      elements.push({
-        id: nextElementId++,
-        type: 'beam',
-        nodeI: deckNodeId(sliI, gi, numGirders),
-        nodeJ: deckNodeId(sliJ, gi, numGirders),
-        sectionId: girderSectionId,
-        materialId: girderMatId,
-        label: `Girder Span${span + 1} G${gi + 1}`,
-      });
+      if (chordsPerSpan <= 1) {
+        // Single element per span per girder
+        elements.push({
+          id: nextElementId++,
+          type: 'beam',
+          nodeI: deckNodeId(span, gi, numGirders),
+          nodeJ: deckNodeId(span + 1, gi, numGirders),
+          sectionId: girderSectionId,
+          materialId: girderMatId,
+          label: `Girder Span${span + 1} G${gi + 1}`,
+        });
+      } else {
+        // Chord-discretized: connect support → chord₁ → chord₂ → ... → support
+        const numInterior = chordsPerSpan - 1;
+        // First chord: support line → first intermediate node
+        elements.push({
+          id: nextElementId++,
+          type: 'beam',
+          nodeI: deckNodeId(span, gi, numGirders),
+          nodeJ: chordNodeId(span, 0, gi, chordsPerSpan, numGirders),
+          sectionId: girderSectionId,
+          materialId: girderMatId,
+          label: `Girder Span${span + 1} G${gi + 1} C1`,
+        });
+        // Interior chords
+        for (let ci = 0; ci < numInterior - 1; ci++) {
+          elements.push({
+            id: nextElementId++,
+            type: 'beam',
+            nodeI: chordNodeId(span, ci, gi, chordsPerSpan, numGirders),
+            nodeJ: chordNodeId(span, ci + 1, gi, chordsPerSpan, numGirders),
+            sectionId: girderSectionId,
+            materialId: girderMatId,
+            label: `Girder Span${span + 1} G${gi + 1} C${ci + 2}`,
+          });
+        }
+        // Last chord: last intermediate → next support line
+        elements.push({
+          id: nextElementId++,
+          type: 'beam',
+          nodeI: chordNodeId(span, numInterior - 1, gi, chordsPerSpan, numGirders),
+          nodeJ: deckNodeId(span + 1, gi, numGirders),
+          sectionId: girderSectionId,
+          materialId: girderMatId,
+          label: `Girder Span${span + 1} G${gi + 1} C${chordsPerSpan}`,
+        });
+      }
     }
   }
 
@@ -472,19 +603,17 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     const hasSeparateCap = pierNeedsSeparateCap(pi);
 
     for (let ci = 0; ci < numBentColumns; ci++) {
-      const colZ = columnZPositions[ci]!;
+      const colOffset = columnOffsets[ci]!;
       const bNodeId = baseNodeId(pi, ci, numBentColumns);
 
       // Find the top node to connect to
       let topNodeId: number;
       if (hasSeparateCap) {
-        // Connect to the closest cap node in Z
-        const closestGi = closestCapNodeGi(colZ, girderZ);
+        const closestGi = closestGirderIndex(colOffset, girderOffsets);
         topNodeId = capNodeId(pi, closestGi, numGirders);
       } else {
-        // FIX pier or col-base isolation: connect base to deck (shared)
         const sli = pi + 1;
-        const closestGi = closestCapNodeGi(colZ, girderZ);
+        const closestGi = closestGirderIndex(colOffset, girderOffsets);
         topNodeId = deckNodeId(sli, closestGi, numGirders);
       }
 

@@ -12,6 +12,42 @@ export interface DeadLoadComponents {
   miscPsf: number; // default 5
 }
 
+// ── COGO Alignment Types ─────────────────────────────────────────────
+
+export interface HorizontalPI {
+  station: number; // ft — station of PC (point of curvature)
+  deflectionAngle: number; // degrees — total deflection through curve
+  radius: number; // ft — curve radius
+  direction: 'L' | 'R'; // curve turns left or right
+}
+
+export interface VerticalPVI {
+  station: number; // ft — station of PVI
+  elevation: number; // ft — elevation at PVI
+  exitGrade: number; // % — grade after this PVI
+  curveLength: number; // ft — parabolic curve length (0 = sharp grade break)
+}
+
+export interface AlignmentParams {
+  refElevation: number; // ft — elevation at station 0
+  entryBearing: number; // degrees from +X axis (default 0 = due East)
+  entryGrade: number; // % — initial grade
+  horizontalPIs: HorizontalPI[];
+  verticalPVIs: VerticalPVI[];
+  chordsPerSpan: number; // 1 = straight chords (default), 5-10 = smooth curve
+}
+
+export const DEFAULT_ALIGNMENT: AlignmentParams = {
+  refElevation: 0,
+  entryBearing: 0,
+  entryGrade: 0,
+  horizontalPIs: [],
+  verticalPVIs: [],
+  chordsPerSpan: 1,
+};
+
+// ── Main Params ──────────────────────────────────────────────────────
+
 export interface BentBuildParams {
   numSpans: number; // 1-8
   spanLengths: number[]; // feet, one per span
@@ -26,6 +62,8 @@ export interface BentBuildParams {
   isolationLevel: 'bearing' | 'base'; // (isolated mode)
   deadLoads: DeadLoadComponents;
   aashtoLLPercent: number; // 0-100
+  slopePercent: number; // -8 to 8, grade slope %
+  alignment?: AlignmentParams; // COGO alignment (undefined = straight)
 }
 
 export const DEFAULT_DEAD_LOADS: DeadLoadComponents = {
@@ -54,4 +92,5 @@ export const DEFAULT_BENT_BUILD_PARAMS: BentBuildParams = {
   isolationLevel: 'bearing',
   deadLoads: { ...DEFAULT_DEAD_LOADS },
   aashtoLLPercent: 0,
+  slopePercent: 0,
 };
