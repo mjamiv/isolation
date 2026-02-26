@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { useDisplayStore } from '../../stores/displayStore';
 import { StructuralModel3D } from './StructuralModel3D';
 import { BearingDisplacementView } from './BearingDisplacementView';
+import { BaseShearSummary } from './BaseShearLabels';
 import { SceneEnvironment } from './SceneEnvironment';
 import { useModelBounds } from './useModelBounds';
 
@@ -133,6 +134,9 @@ export function Viewer3D() {
 
       {/* Bearing displacement orbit overlay (plan view) */}
       <BearingDisplacementView />
+
+      {/* Base shear total summary overlay */}
+      <BaseShearSummary />
     </div>
   );
 }

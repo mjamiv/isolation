@@ -1450,23 +1450,79 @@ def _define_sections(
 
 
 def _define_rigid_diaphragms(diaphragms: list[dict]) -> None:
-    """Apply rigid diaphragm constraints.
+    """Apply rigid diaphragm constraints, merging overlapping panels.
 
-    Each diaphragm constrains its slave nodes to move in-plane with
-    the master node using ``ops.rigidDiaphragm``.
+    Panel-based diaphragms (e.g., bridge deck quads) may share edge nodes.
+    This function uses union-find to merge connected panels into single
+    constraints, avoiding OpenSeesPy errors from constraining a node twice.
 
     Args:
         diaphragms: List of dicts with ``perp_direction``, ``master_node_id``,
             and ``constrained_node_ids``.
     """
+    if not diaphragms:
+        return
+
+    # Group diaphragms by perpendicular direction
+    by_perp: dict[int, list[dict]] = {}
     for d in diaphragms:
         perp = d["perp_direction"]
-        master = d["master_node_id"]
-        slaves = d["constrained_node_ids"]
-        ops.rigidDiaphragm(perp, master, *slaves)
-        logger.info(
-            "rigidDiaphragm: perpDirn=%d master=%d slaves=%s", perp, master, slaves
-        )
+        by_perp.setdefault(perp, []).append(d)
+
+    for perp, group in by_perp.items():
+        # Union-Find to merge connected diaphragm nodes
+        parent: dict[int, int] = {}
+
+        def find(x: int) -> int:
+            while parent.get(x, x) != x:
+                parent[x] = parent.get(parent[x], parent[x])
+                x = parent[x]
+            return x
+
+        def union(a: int, b: int) -> None:
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[ra] = rb
+
+        # Track original masters and union all connected nodes
+        original_masters: set[int] = set()
+        for d in group:
+            master = d["master_node_id"]
+            original_masters.add(master)
+            for s in d["constrained_node_ids"]:
+                union(master, s)
+
+        # Build connected components
+        all_nodes: set[int] = set()
+        for d in group:
+            all_nodes.add(d["master_node_id"])
+            all_nodes.update(d["constrained_node_ids"])
+
+        components: dict[int, set[int]] = {}
+        for node in all_nodes:
+            root = find(node)
+            components.setdefault(root, set()).add(node)
+
+        # Create one rigidDiaphragm per connected component
+        for _root, nodes in components.items():
+            # Prefer the smallest original master as the retained node
+            master = None
+            for n in sorted(nodes):
+                if n in original_masters:
+                    master = n
+                    break
+            if master is None:
+                master = min(nodes)
+
+            slaves = sorted(nodes - {master})
+            if slaves:
+                ops.rigidDiaphragm(perp, master, *slaves)
+                logger.info(
+                    "rigidDiaphragm: perpDirn=%d master=%d slaves=%s",
+                    perp,
+                    master,
+                    slaves,
+                )
 
 
 def _define_equal_dof_constraints(constraints: list[dict]) -> None:

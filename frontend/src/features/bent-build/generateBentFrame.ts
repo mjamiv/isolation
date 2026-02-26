@@ -831,29 +831,48 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   const diaphragms: RigidDiaphragm[] = [];
   let diaId = 1;
 
-  for (let sli = 0; sli < numSupportLines; sli++) {
-    const masterNodeId = deckNodeId(sli, 0, numGirders);
-    const constrainedNodeIds: number[] = [];
-    for (let gi = 1; gi < numGirders; gi++) {
-      constrainedNodeIds.push(deckNodeId(sli, gi, numGirders));
-    }
+  // 10a. Deck-level panel diaphragms — one per quad between adjacent girders
+  // and consecutive longitudinal node positions.
+  // With N girders and M segments per span (chordsPerSpan),
+  // creates (N-1) × numSpans × chordsPerSpan panel quads.
+  // The solver merges connected panels into single rigid bodies.
+  if (numGirders >= 2) {
+    for (let span = 0; span < numSpans; span++) {
+      // Build ordered longitudinal node IDs for each girder in this span
+      const girderNodeIds: number[][] = [];
+      for (let gi = 0; gi < numGirders; gi++) {
+        const ids: number[] = [];
+        ids.push(deckNodeId(span, gi, numGirders));
+        if (chordsPerSpan > 1) {
+          for (let ci = 0; ci < chordsPerSpan - 1; ci++) {
+            ids.push(chordNodeId(span, ci, gi, chordsPerSpan, numGirders));
+          }
+        }
+        ids.push(deckNodeId(span + 1, gi, numGirders));
+        girderNodeIds.push(ids);
+      }
 
-    let label: string;
-    if (sli === 0) {
-      label = 'Abt1';
-    } else if (sli === numSupportLines - 1) {
-      label = 'Abt2';
-    } else {
-      label = `Pier ${sli}`;
-    }
+      const numSegments = girderNodeIds[0]!.length - 1;
 
-    diaphragms.push({
-      id: diaId++,
-      masterNodeId,
-      constrainedNodeIds,
-      perpDirection: 2 as const,
-      label,
-    });
+      for (let seg = 0; seg < numSegments; seg++) {
+        for (let gi = 0; gi < numGirders - 1; gi++) {
+          const masterNodeId = girderNodeIds[gi]![seg]!;
+          const constrainedNodeIds = [
+            girderNodeIds[gi + 1]![seg]!,
+            girderNodeIds[gi]![seg + 1]!,
+            girderNodeIds[gi + 1]![seg + 1]!,
+          ];
+
+          diaphragms.push({
+            id: diaId++,
+            masterNodeId,
+            constrainedNodeIds,
+            perpDirection: 2 as const,
+            label: `Deck S${span + 1} G${gi + 1}-${gi + 2}${numSegments > 1 ? ` P${seg + 1}` : ''}`,
+          });
+        }
+      }
+    }
   }
 
   // ── 11. Build Model Name ────────────────────────────────────────────

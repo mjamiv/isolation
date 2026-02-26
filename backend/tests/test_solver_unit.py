@@ -1169,6 +1169,39 @@ class TestDefineRigidDiaphragms:
         build_model(model)
         _mock_ops.rigidDiaphragm.assert_called_once_with(3, 10, 11, 12)
 
+    def test_overlapping_panels_merged_into_single_call(self):
+        """Panel diaphragms sharing edge nodes should merge into one constraint."""
+        # Two panels sharing nodes 2 and 4:
+        #   Panel A: master=1, constrained=[2,3,4]
+        #   Panel B: master=2, constrained=[4,5,6]
+        # Should merge into one call: master=1, slaves=[2,3,4,5,6]
+        diaphragms = [
+            {"perp_direction": 3, "master_node_id": 1, "constrained_node_ids": [2, 3, 4]},
+            {"perp_direction": 3, "master_node_id": 2, "constrained_node_ids": [4, 5, 6]},
+        ]
+        _define_rigid_diaphragms(diaphragms)
+        _mock_ops.rigidDiaphragm.assert_called_once_with(3, 1, 2, 3, 4, 5, 6)
+
+    def test_disjoint_panels_stay_separate(self):
+        """Non-overlapping diaphragms should each produce their own call."""
+        diaphragms = [
+            {"perp_direction": 3, "master_node_id": 1, "constrained_node_ids": [2, 3]},
+            {"perp_direction": 3, "master_node_id": 10, "constrained_node_ids": [11, 12]},
+        ]
+        _define_rigid_diaphragms(diaphragms)
+        calls = _mock_ops.rigidDiaphragm.call_args_list
+        assert len(calls) == 2
+
+    def test_different_perp_directions_stay_separate(self):
+        """Diaphragms with different perpendicular directions should not merge."""
+        diaphragms = [
+            {"perp_direction": 2, "master_node_id": 1, "constrained_node_ids": [2, 3]},
+            {"perp_direction": 3, "master_node_id": 1, "constrained_node_ids": [2, 3]},
+        ]
+        _define_rigid_diaphragms(diaphragms)
+        calls = _mock_ops.rigidDiaphragm.call_args_list
+        assert len(calls) == 2
+
 
 class TestDiscretizationDiaphragmAugmentation:
     """Internal nodes from discretized floor beams should be added to diaphragm constraints."""

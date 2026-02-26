@@ -177,8 +177,10 @@ export function ViewerControls() {
   const forceScale = useDisplayStore((state) => state.forceScale);
   const colorMap = useDisplayStore((state) => state.colorMap);
   const showBearingDisplacement = useDisplayStore((state) => state.showBearingDisplacement);
+  const showBaseShearLabels = useDisplayStore((state) => state.showBaseShearLabels);
   const showComparisonOverlay = useDisplayStore((state) => state.showComparisonOverlay);
 
+  const setShowBaseShearLabels = useDisplayStore((state) => state.setShowBaseShearLabels);
   const setShowForces = useDisplayStore((state) => state.setShowForces);
   const setForceType = useDisplayStore((state) => state.setForceType);
   const setForceScale = useDisplayStore((state) => state.setForceScale);
@@ -272,6 +274,11 @@ export function ViewerControls() {
           value={colorMap}
           options={COLOR_MAP_OPTIONS}
           onChange={setColorMap}
+        />
+        <Toggle
+          label="Base Shear Arrows"
+          checked={showBaseShearLabels}
+          onChange={setShowBaseShearLabels}
         />
         <Toggle
           label="Bearing Displacement"

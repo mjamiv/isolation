@@ -661,13 +661,16 @@ describe('gravity loads', () => {
 // ===========================================================================
 
 describe('diaphragms', () => {
-  it('one diaphragm per support line', () => {
-    const model = gen(); // 4 support lines
+  // Deck panel diaphragms only: (numGirders-1) × numSpans × chordsPerSpan quads
+  // Default: (6-1) × 3 × 1 = 15 deck panels
+
+  it('deck panels for conventional 3-span', () => {
+    const model = gen(); // 6 girders, 3 spans
     expect(model.diaphragms).toBeDefined();
-    expect(model.diaphragms!).toHaveLength(4);
+    expect(model.diaphragms!).toHaveLength(15);
   });
 
-  it('diaphragm count = numSpans + 1', () => {
+  it('diaphragm count scales with spans', () => {
     const model5 = gen({
       numSpans: 5,
       spanLengths: [60, 80, 100, 80, 60],
@@ -680,25 +683,47 @@ describe('diaphragms', () => {
       ],
     });
 
-    expect(model5.diaphragms!).toHaveLength(6);
+    // (6-1) × 5 = 25 deck panels
+    expect(model5.diaphragms!).toHaveLength(25);
   });
 
-  it('master node is first girder at each support line', () => {
+  it('deck panel diaphragms have 4 nodes each (1 master + 3 constrained)', () => {
     const model = gen();
-
-    // Master should be gi=0 at each support line (deckNodeId(sli, 0, 6))
-    model.diaphragms!.forEach((d, sli) => {
-      const expectedMaster = sli * 6 + 0 + 1; // deckNodeId formula
-      expect(d.masterNodeId).toBe(expectedMaster);
+    model.diaphragms!.forEach((d) => {
+      expect(d.constrainedNodeIds).toHaveLength(3); // 4-node quad
     });
   });
 
-  it('constrained nodes are remaining girders', () => {
-    const model = gen(); // 6 girders per support line
+  it('first deck panel master is deckNodeId(0, 0)', () => {
+    const model = gen();
+    const firstDeck = model.diaphragms![0]!;
+    // deckNodeId(0, 0, 6) = 0*6 + 0 + 1 = 1
+    expect(firstDeck.masterNodeId).toBe(1);
+    // Constrained: deckNodeId(0,1)=2, deckNodeId(1,0)=7, deckNodeId(1,1)=8
+    expect(firstDeck.constrainedNodeIds).toEqual([2, 7, 8]);
+  });
 
-    model.diaphragms!.forEach((d) => {
-      expect(d.constrainedNodeIds).toHaveLength(5); // numGirders - 1
-    });
+  it('deck panels cover all girder pairs and spans', () => {
+    const model = gen(); // 6 girders, 3 spans
+    for (let span = 1; span <= 3; span++) {
+      for (let gi = 1; gi <= 5; gi++) {
+        const label = `Deck S${span} G${gi}-${gi + 1}`;
+        expect(model.diaphragms!.some((d) => d.label === label)).toBe(true);
+      }
+    }
+  });
+
+  it('no pier cap or abutment cap diaphragms', () => {
+    const model = gen();
+    const capDias = model.diaphragms!.filter((d) => d.label?.startsWith('Cap'));
+    expect(capDias).toHaveLength(0);
+  });
+
+  it('isolated modes have same deck-only diaphragm count', () => {
+    const bearing = gen({ supportMode: 'isolated', isolationLevel: 'bearing' });
+    const base = gen({ supportMode: 'isolated', isolationLevel: 'base' });
+    expect(bearing.diaphragms!).toHaveLength(15);
+    expect(base.diaphragms!).toHaveLength(15);
   });
 
   it('perpDirection is 2 for all diaphragms', () => {
@@ -706,6 +731,21 @@ describe('diaphragms', () => {
     model.diaphragms!.forEach((d) => {
       expect(d.perpDirection).toBe(2);
     });
+  });
+
+  it('chord-discretized spans multiply panel count', () => {
+    const model = gen({
+      alignment: {
+        refElevation: 0,
+        entryBearing: 0,
+        entryGrade: 0,
+        horizontalPIs: [],
+        verticalPVIs: [],
+        chordsPerSpan: 3,
+      },
+    });
+    // (6-1) × 3 spans × 3 segments = 45 deck panels
+    expect(model.diaphragms!).toHaveLength(45);
   });
 });
 
