@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hybrid AI-Human Development of a Seismic Isolation Analysis Platform</title>
+<style>
+  /* ======= PAGE & PRINT SETUP ======= */
+  @page {
+    size: letter;
+    margin: 1in 1in 1.2in 1in;
+    @bottom-center {
+      content: counter(page);
+      font-family: "Georgia", serif;
+      font-size: 9pt;
+      color: #1a1a1a;
+    }
+  }
+  @page :first {
+    @bottom-center { content: none; }
+  }
+
+  /* ======= BASE TYPOGRAPHY ======= */
+  :root {
+    --black: #0d0d0d;
+    --dark: #1a1a1a;
+    --gray-dark: #333333;
+    --gray-mid: #666666;
+    --gray-light: #999999;
+    --white: #ffffff;
+    --off-white: #fafafa;
+    --gold: #c8a415;
+    --gold-dark: #a8880e;
+    --gold-light: #e8c840;
+    --yellow: #f5d442;
+    --yellow-light: #fef3c7;
+    --yellow-pale: #fffbeb;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.55;
+    color: var(--dark);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ======= COVER PAGE ======= */
+  .cover {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+    background: linear-gradient(175deg, var(--black) 0%, var(--black) 62%, var(--gold-dark) 62%, var(--gold) 63%, var(--yellow) 100%);
+    color: var(--white);
+    padding: 2in 1.2in;
+    margin: -1in -1in -1.2in -1in;
+  }
+  .cover-rule {
+    width: 120px;
+    height: 3px;
+    background: var(--gold);
+    margin: 28px auto;
+    border: none;
+  }
+  .cover h1 {
+    font-size: 26pt;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 0;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .cover .subtitle {
+    font-size: 13pt;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--gold-light);
+    margin-top: 12px;
+    line-height: 1.4;
+  }
+  .cover .author-block {
+    margin-top: 48px;
+    font-size: 11pt;
+    line-height: 1.7;
+    color: #e0e0e0;
+  }
+  .cover .author-block strong {
+    color: var(--white);
+    font-size: 12pt;
+  }
+  .cover .date {
+    margin-top: 36px;
+    font-size: 10.5pt;
+    color: var(--gold-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .cover .cover-footer {
+    margin-top: auto;
+    padding-top: 48px;
+    font-size: 9pt;
+    color: #aaa;
+    line-height: 1.5;
+  }
+
+  /* ======= CONTENT PAGES ======= */
+  .content {
+    padding: 0;
+  }
+
+  /* ======= HEADINGS ======= */
+  h1, h2, h3, h4 {
+    font-family: "Georgia", serif;
+    color: var(--black);
+    page-break-after: avoid;
+  }
+  h1.section-title {
+    font-size: 18pt;
+    font-weight: 700;
+    margin-top: 36pt;
+    margin-bottom: 6pt;
+    padding-bottom: 6pt;
+    border-bottom: 2.5px solid var(--gold);
+    color: var(--black);
+  }
+  h1.section-title .section-num {
+    color: var(--gold-dark);
+    margin-right: 8px;
+  }
+  h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    margin-top: 22pt;
+    margin-bottom: 6pt;
+    color: var(--gray-dark);
+  }
+  h2 .sub-num {
+    color: var(--gold-dark);
+    margin-right: 6px;
+  }
+  h3 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    margin-top: 16pt;
+    margin-bottom: 4pt;
+    color: var(--gray-dark);
+  }
+
+  /* ======= BODY TEXT ======= */
+  p {
+    margin-bottom: 10pt;
+    text-align: justify;
+    hyphens: auto;
+  }
+  .abstract-text {
+    font-style: italic;
+    font-size: 10.5pt;
+    line-height: 1.6;
+    color: var(--gray-dark);
+    padding: 14pt 20pt;
+    background: var(--yellow-pale);
+    border-left: 4px solid var(--gold);
+    margin-bottom: 18pt;
+  }
+  .keywords {
+    font-size: 9.5pt;
+    color: var(--gray-mid);
+    margin-top: -8pt;
+    margin-bottom: 20pt;
+  }
+  .keywords strong {
+    color: var(--gray-dark);
+  }
+
+  /* ======= TABLES ======= */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14pt 0 18pt 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  table caption {
+    font-size: 9.5pt;
+    font-weight: 700;
+    text-align: left;
+    margin-bottom: 6pt;
+    color: var(--gray-dark);
+  }
+  thead th {
+    background: var(--black);
+    color: var(--white);
+    font-weight: 700;
+    padding: 7pt 10pt;
+    text-align: left;
+    font-size: 9.5pt;
+    letter-spacing: 0.3px;
+  }
+  tbody td {
+    padding: 6pt 10pt;
+    border-bottom: 1px solid #e5e5e5;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) {
+    background: var(--yellow-pale);
+  }
+  tbody tr:hover {
+    background: var(--yellow-light);
+  }
+  td.metric {
+    font-weight: 700;
+    color: var(--gray-dark);
+    white-space: nowrap;
+  }
+  td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  td.highlight {
+    color: var(--gold-dark);
+    font-weight: 700;
+  }
+
+  /* ======= FIGURES / CALLOUT BOXES ======= */
+  .callout {
+    background: var(--yellow-pale);
+    border: 1.5px solid var(--gold);
+    border-radius: 4px;
+    padding: 14pt 18pt;
+    margin: 16pt 0;
+    page-break-inside: avoid;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 10pt;
+    color: var(--gold-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6pt;
+  }
+  .callout p {
+    margin-bottom: 6pt;
+    font-size: 10pt;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12pt;
+    margin: 14pt 0 18pt 0;
+  }
+  .metric-card {
+    background: var(--black);
+    color: var(--white);
+    border-radius: 4px;
+    padding: 14pt 16pt;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+  .metric-card .metric-value {
+    font-size: 22pt;
+    font-weight: 700;
+    color: var(--gold-light);
+    line-height: 1.1;
+  }
+  .metric-card .metric-label {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #bbb;
+    margin-top: 4pt;
+  }
+
+  /* ======= LISTS ======= */
+  ul, ol {
+    margin: 6pt 0 12pt 22pt;
+  }
+  li {
+    margin-bottom: 4pt;
+  }
+  li::marker {
+    color: var(--gold-dark);
+  }
+
+  /* ======= INLINE CODE ======= */
+  code {
+    font-family: "Courier New", monospace;
+    font-size: 9.5pt;
+    background: #f0f0f0;
+    padding: 1pt 4pt;
+    border-radius: 2px;
+    color: var(--gray-dark);
+  }
+
+  /* ======= HORIZONTAL RULE ======= */
+  hr.section-break {
+    border: none;
+    height: 1.5px;
+    background: linear-gradient(90deg, var(--gold), var(--yellow-light), transparent);
+    margin: 24pt 0;
+  }
+
+  /* ======= FOOTNOTES / REFERENCES ======= */
+  .references {
+    font-size: 9.5pt;
+    line-height: 1.5;
+  }
+  .references p {
+    margin-bottom: 6pt;
+    padding-left: 24pt;
+    text-indent: -24pt;
+    text-align: left;
+  }
+  .ref-num {
+    color: var(--gold-dark);
+    font-weight: 700;
+  }
+
+  /* ======= PHASE TIMELINE ======= */
+  .timeline {
+    margin: 16pt 0;
+    padding: 0;
+    list-style: none;
+  }
+  .timeline li {
+    position: relative;
+    padding-left: 28pt;
+    padding-bottom: 14pt;
+    margin-bottom: 0;
+    border-left: 2px solid var(--gold);
+  }
+  .timeline li:last-child {
+    border-left: 2px solid transparent;
+    padding-bottom: 0;
+  }
+  .timeline li::before {
+    content: "";
+    position: absolute;
+    left: -5.5px;
+    top: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--white);
+    box-shadow: 0 0 0 1.5px var(--gold);
+  }
+  .timeline .phase-label {
+    font-weight: 700;
+    font-size: 10pt;
+    color: var(--black);
+  }
+  .timeline .phase-date {
+    font-size: 8.5pt;
+    color: var(--gray-light);
+    margin-left: 6pt;
+  }
+  .timeline .phase-desc {
+    font-size: 9.5pt;
+    color: var(--gray-mid);
+    margin-top: 2pt;
+  }
+
+  /* ======= COMPARISON BAR ======= */
+  .bar-chart {
+    margin: 14pt 0 18pt 0;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8pt;
+  }
+  .bar-label {
+    width: 140px;
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--gray-dark);
+    text-align: right;
+    padding-right: 10pt;
+    flex-shrink: 0;
+  }
+  .bar-track {
+    flex: 1;
+    height: 22px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .bar-fill.gold { background: linear-gradient(90deg, var(--gold-dark), var(--gold)); }
+  .bar-fill.black { background: linear-gradient(90deg, var(--gray-dark), var(--black)); }
+  .bar-annotation {
+    font-size: 8pt;
+    color: var(--gray-mid);
+    margin-left: 8pt;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ======= PAGE BREAK UTILITY ======= */
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- COVER PAGE                                                    -->
+<!-- ============================================================ -->
+<div class="cover">
+  <div style="margin-top: auto;">
+    <h1>Hybrid AI-Human Development<br>of a Seismic Isolation<br>Analysis Platform</h1>
+    <div class="subtitle">
+      A Case Study in Accelerated Engineering Software Development<br>
+      Using Large Language Model Collaboration
+    </div>
+    <hr class="cover-rule">
+    <div class="author-block">
+      <strong>Mounir Jamiv, P.E.</strong><br>
+      Structural Engineering &amp; Seismic Isolation Specialist<br>
+      <br>
+      <strong>Claude (Anthropic)</strong><br>
+      AI Implementation &amp; Software Development Agent
+    </div>
+    <div class="date">February 2026</div>
+  </div>
+  <div class="cover-footer">
+    IsoVis &mdash; Seismic Isolation Visualization &amp; Analysis Platform<br>
+    Technical Paper &bull; Version 1.0
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ABSTRACT                                                      -->
+<!-- ============================================================ -->
+<div class="content">
+
+<h1 class="section-title" style="margin-top: 0;"><span class="section-num"></span>Abstract</h1>
+
+<div class="abstract-text">
+This paper presents a case study in hybrid AI-human software development, documenting the creation of <strong>IsoVis</strong>&mdash;a comprehensive, web-based seismic isolation analysis platform built in 13 calendar days through collaboration between a licensed structural engineer and a large language model (LLM) agent. The platform encompasses 72,500 lines of code spanning a React/Three.js frontend, a Python/FastAPI/OpenSeesPy backend, four structural analysis types (static, modal, time-history, and pushover), Triple Friction Pendulum bearing simulation, ASCE&nbsp;7-22 and AASHTO code compliance automation, and 500+ automated tests. We analyze the division of labor between human domain expertise and AI code generation, quantify the development acceleration factor (25&ndash;40&times; compared to conventional approaches), and discuss implications for the future of specialized engineering software development. The results demonstrate that the hybrid model is most effective when irreplaceable human judgment&mdash;domain knowledge, physics intuition, and quality arbitration&mdash;is paired with AI capabilities in rapid code synthesis, cross-stack fluency, and parallel documentation generation.
+</div>
+
+<p class="keywords"><strong>Keywords:</strong> seismic isolation, Triple Friction Pendulum, AI-assisted development, large language models, structural analysis, OpenSeesPy, software engineering, hybrid workflow, ASCE 7-22, AASHTO</p>
+
+<!-- ============================================================ -->
+<!-- 1. INTRODUCTION                                               -->
+<!-- ============================================================ -->
+<h1 class="section-title"><span class="section-num">1.</span>Introduction</h1>
+
+<h2><span class="sub-num">1.1</span>Motivation</h2>
+
+<p>Seismic base isolation is one of the most effective technologies available for protecting essential facilities&mdash;hospitals, emergency operations centers, and critical infrastructure&mdash;during major earthquakes. By decoupling a structure from ground shaking through specialized bearings, isolation systems routinely achieve 40&ndash;70% reductions in base shear and 80&ndash;95% reductions in inter-story drift, upgrading structural performance from "Life Safety" to "Immediate Occupancy" under design-level events.</p>
+
+<p>Despite these benefits, the adoption of seismic isolation has been hampered by the complexity of the analysis and design workflow. Engineers must navigate nonlinear bearing mechanics, velocity-dependent friction models, multi-directional ground motion inputs, property modification factors for aging and contamination, and compliance requirements spanning ASCE&nbsp;7-22 Chapter&nbsp;17 and AASHTO Guide Specifications for Seismic Isolation Design. The commercial software tools capable of handling this workflow are expensive, require steep learning curves, and produce outputs that are difficult to visualize and communicate to stakeholders.</p>
+
+<p>This paper documents the development of <strong>IsoVis</strong>, an open-source platform designed to make seismic isolation analysis accessible, visual, and code-compliant. More significantly, it examines <em>how</em> IsoVis was built: through a hybrid workflow pairing a structural engineer with an AI agent, compressing what would conventionally require 12&ndash;20 person-months into 13 calendar days.</p>
+
+<h2><span class="sub-num">1.2</span>The Hybrid Development Thesis</h2>
+
+<p>Large language models (LLMs) have demonstrated remarkable capability in generating syntactically correct, functionally viable code across multiple programming languages and frameworks. However, generating code that is <em>physically correct</em>&mdash;that faithfully represents structural mechanics, material behavior, and code-mandated design criteria&mdash;requires domain expertise that no language model possesses intrinsically. The hypothesis underlying this project was that a carefully structured collaboration could exploit the complementary strengths of each participant:</p>
+
+<ul>
+  <li><strong>Human contribution:</strong> Domain knowledge (structural engineering theory, TFP bearing physics, seismic code requirements), architectural vision, quality arbitration, and physics validation.</li>
+  <li><strong>AI contribution:</strong> Rapid code synthesis across all stack layers (frontend, backend, solver, tests, documentation), cross-framework fluency (React, Three.js, FastAPI, OpenSeesPy simultaneously), and tireless execution of iterative debug-fix cycles.</li>
+</ul>
+
+<p>This paper evaluates whether this hypothesis held, what the actual division of labor looked like, and what lessons can be extracted for future projects at the intersection of AI and specialized engineering.</p>
+
+<h2><span class="sub-num">1.3</span>Scope of This Paper</h2>
+
+<p>Section&nbsp;2 describes the platform architecture and engineering capabilities. Section&nbsp;3 details the development timeline and methodology. Section&nbsp;4 presents the quantitative effort analysis and compression ratio. Section&nbsp;5 analyzes the roles and failure modes in the hybrid workflow. Section&nbsp;6 discusses implications and limitations. Section&nbsp;7 offers conclusions and recommendations.</p>
+
+<!-- ============================================================ -->
+<!-- 2. PLATFORM ARCHITECTURE                                      -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h1 class="section-title"><span class="section-num">2.</span>Platform Architecture &amp; Engineering Capabilities</h1>
+
+<h2><span class="sub-num">2.1</span>System Overview</h2>
+
+<p>IsoVis is a full-stack web application comprising a React/TypeScript frontend with real-time Three.js 3D visualization, a Python/FastAPI backend wrapping the OpenSeesPy finite element solver, and a Redis layer for caching and asynchronous task management. The system is containerized via Docker Compose for reproducible deployment.</p>
+
+<table>
+  <caption>Table 1. Technology Stack Summary</caption>
+  <thead>
+    <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">Frontend UI</td><td>React 18, TypeScript, Radix UI, Tailwind CSS</td><td>Model editor, results panels, analysis dialogs</td></tr>
+    <tr><td class="metric">3D Visualization</td><td>React Three Fiber, Drei</td><td>Interactive structural model rendering, mode shapes, deformed shapes, force diagrams</td></tr>
+    <tr><td class="metric">State Management</td><td>Zustand</td><td>Model store, display store, analysis store, comparison store</td></tr>
+    <tr><td class="metric">Charts</td><td>Plotly.js</td><td>Capacity curves, hysteresis loops, response spectra</td></tr>
+    <tr><td class="metric">API Server</td><td>FastAPI, Pydantic v2</td><td>REST endpoints, request validation, CORS</td></tr>
+    <tr><td class="metric">Solver Engine</td><td>OpenSeesPy</td><td>Finite element analysis (static, modal, transient, pushover)</td></tr>
+    <tr><td class="metric">Numerical</td><td>NumPy, SciPy</td><td>Matrix operations, eigenvalue decomposition, interpolation</td></tr>
+    <tr><td class="metric">Caching</td><td>Redis</td><td>Session result cache, async task queue</td></tr>
+    <tr><td class="metric">Infrastructure</td><td>Docker Compose, Vite, Vitest</td><td>Containerization, build tooling, test runner</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="sub-num">2.2</span>Structural Analysis Capabilities</h2>
+
+<p>The platform supports four analysis types, each implemented as a distinct solver pathway within the OpenSeesPy backend:</p>
+
+<p><strong>Static Analysis.</strong> Linear elastic analysis under gravity and applied loads. The solver applies loads in 50 incremental steps with sub-stepping fallback and multi-algorithm cascading (Newton &rarr; ModifiedNewton &rarr; KrylovNewton) for convergence robustness. Results include nodal displacements, support reactions, and element end forces.</p>
+
+<p><strong>Modal Analysis.</strong> Eigenvalue analysis computing natural periods, frequencies, mode shapes, and effective modal mass participation ratios. The frontend renders animated mode shapes with sinusoidal oscillation in 3D.</p>
+
+<p><strong>Time-History Analysis.</strong> Nonlinear dynamic analysis with multi-directional ground motion input (X, Y, Z independently scaled). Includes four built-in synthetic ground motions (El Centro 1940, Near-Fault Pulse, Harmonic Sweep, Long-Duration Subduction). For models with TFP bearings, automatic Z-up coordinate conversion is performed as required by the TripleFrictionPendulum element formulation. Time-history playback includes speed control (0.25&times;&ndash;4&times;) and scrubbing.</p>
+
+<p><strong>Pushover Analysis.</strong> Displacement-controlled nonlinear static analysis with linear or first-mode-proportional load patterns. Generates capacity curves (base shear vs. roof displacement), tracks plastic hinge formation with seven performance states (elastic through collapse), and computes ductility ratios and overstrength factors.</p>
+
+<h2><span class="sub-num">2.3</span>Triple Friction Pendulum Bearing Model</h2>
+
+<p>The platform implements a full four-surface TFP bearing model, the most advanced commercially available isolation device. Each bearing is defined by:</p>
+
+<ul>
+  <li><strong>Four friction surfaces</strong> with independently configurable friction models (constant Coulomb, velocity-dependent, or velocity-pressure-dependent)</li>
+  <li><strong>Effective pendulum radii</strong> for inner (low-friction) and outer (high-friction) surface pairs</li>
+  <li><strong>Displacement capacities</strong> per surface, enabling demand/capacity ratio checks</li>
+  <li><strong>Property modification factors</strong> (&lambda;<sub>min</sub> / &lambda;<sub>max</sub>) for ASCE&nbsp;7-22 bounding analysis</li>
+</ul>
+
+<p>The solver constructs OpenSeesPy <code>TripleFrictionPendulum</code> elements with appropriate friction material models, vertical load initialization, and geometric transformation handling. Bearing response is tracked as displacement orbits, force-displacement hysteresis loops, and per-surface activation histories.</p>
+
+<h2><span class="sub-num">2.4</span>Comparison Framework</h2>
+
+<p>A distinguishing feature of IsoVis is the automated comparison of isolated versus fixed-base designs. Given an isolated model, the platform automatically derives a fixed-base variant by removing bearings and fixing base nodes, then executes the selected analysis type on both variants. The comparison dashboard presents:</p>
+
+<ul>
+  <li>Capacity curve overlays (nominal + upper/lower &lambda;-bounds + fixed-base)</li>
+  <li>Base shear reduction percentage</li>
+  <li>Inter-story drift profiles (side-by-side horizontal bar chart)</li>
+  <li>Bearing demand/capacity ratios (color-coded green/yellow/red)</li>
+  <li>Plastic hinge distribution (IO/LS/CP counts)</li>
+  <li>Deformed shape overlay (blue for isolated, orange for fixed-base)</li>
+</ul>
+
+<h2><span class="sub-num">2.5</span>Code Compliance Automation</h2>
+
+<p>The platform automates 12 design checks per ASCE&nbsp;7-22 Chapter&nbsp;17 and AASHTO Guide Specifications for Seismic Isolation Design, 4th Edition. These include minimum restoring force, displacement capacity adequacy, effective period ratio (&ge;3&times; fixed-base), property modification factor bounding, vertical load stability, drift limits, MCE-level performance, redundancy/configuration, and energy dissipation verification. All checks are compiled into a self-contained HTML engineering report suitable for permitting.</p>
+
+<h2><span class="sub-num">2.6</span>Parametric Model Generators</h2>
+
+<p>Two parametric generators accelerate model creation:</p>
+
+<p><strong>Bay Build</strong> generates building frames with 1&ndash;5 bays, 1&ndash;10 stories, configurable span widths and story heights, steel or concrete material selection, auto-sized sections, and optional TFP bearing placement at every column. Accompanied by 67 unit tests.</p>
+
+<p><strong>Bent Build</strong> generates multi-span girder bridges with 1&ndash;8 spans, 3&ndash;10 girders, per-pier bent column configurations, steel or concrete deck options, conventional or isolated support modes, and AASHTO dead/live load generation. Accompanied by 113 unit tests.</p>
+
+<!-- ============================================================ -->
+<!-- 3. DEVELOPMENT TIMELINE                                       -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h1 class="section-title"><span class="section-num">3.</span>Development Timeline &amp; Methodology</h1>
+
+<h2><span class="sub-num">3.1</span>Phased Approach</h2>
+
+<p>Development followed a five-phase plan executed over 13 calendar days (February 13&ndash;25, 2026), with 8 active coding days:</p>
+
+<ul class="timeline">
+  <li>
+    <span class="phase-label">Phase 1: Scaffolding &amp; 3D Viewer</span>
+    <span class="phase-date">Feb 13</span>
+    <div class="phase-desc">Project initialization, React/Three.js frontend scaffolding, FastAPI backend, model editor with node/element/section/material CRUD, property inspector, 3D viewer with node points, member lines, support symbols, and interactive labels.</div>
+  </li>
+  <li>
+    <span class="phase-label">Phase 2: Analysis Runner &amp; Results</span>
+    <span class="phase-date">Feb 13</span>
+    <div class="phase-desc">Load editing UI, analysis dialog, API client, OpenSeesPy solver integration for static and modal analysis, results panels with tabular and chart displays.</div>
+  </li>
+  <li>
+    <span class="phase-label">Phase 3: TFP Bearing Model</span>
+    <span class="phase-date">Feb 13&ndash;14</span>
+    <div class="phase-desc">Four-surface friction model with velocity-dependent friction, bearing CRUD UI, 3D purple cylindrical symbols, serialization/deserialization, bearing connectivity and tributary weight assignment.</div>
+  </li>
+  <li>
+    <span class="phase-label">Phase 4: Pushover &amp; Time-History</span>
+    <span class="phase-date">Feb 14</span>
+    <div class="phase-desc">Pushover analysis with displacement control, capacity curves, plastic hinge tracking. Time-history analysis with ground motion input, playback controls, speed adjustment. Mode shape animation, deformed shape overlay.</div>
+  </li>
+  <li>
+    <span class="phase-label">Phase 5: Comparison &amp; Compliance</span>
+    <span class="phase-date">Feb 14&ndash;15</span>
+    <div class="phase-desc">Isolated vs. fixed-base comparison framework, lambda-factor bounding analysis, summary dashboards, ASCE 7-22 / AASHTO compliance checks, engineering report generation.</div>
+  </li>
+  <li>
+    <span class="phase-label">Hardening &amp; Polish</span>
+    <span class="phase-date">Feb 15&ndash;25</span>
+    <div class="phase-desc">Security review, accessibility improvements, solver hardening (gravity preload, sparse solver, sub-stepping), 5:1 member discretization, force diagram rendering, parametric generators (Bay Build, Bent Build), 13 preset models, 500+ test suite, integration tests, engineering documentation.</div>
+  </li>
+</ul>
+
+<h2><span class="sub-num">3.2</span>Daily Commit Distribution</h2>
+
+<table>
+  <caption>Table 2. Commits per Active Development Day</caption>
+  <thead>
+    <tr><th>Date</th><th>Commits</th><th>Primary Activity</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">Feb 13</td><td class="num">15</td><td>Phases 1&ndash;3 (scaffolding through TFP bearings)</td></tr>
+    <tr><td class="metric">Feb 14</td><td class="num">4</td><td>Phases 4&ndash;5 (pushover, time-history, comparison)</td></tr>
+    <tr><td class="metric">Feb 15</td><td class="num">1</td><td>Security hardening, theme, accessibility</td></tr>
+    <tr><td class="metric">Feb 16</td><td class="num">1</td><td>Engineering report &amp; deliverables</td></tr>
+    <tr><td class="metric">Feb 22</td><td class="num">3</td><td>Solver hardening, 3D force diagrams, integration tests</td></tr>
+    <tr><td class="metric">Feb 23</td><td class="num">2</td><td>Discretization, Hermite interpolation, force rendering</td></tr>
+    <tr><td class="metric">Feb 24</td><td class="num">13</td><td>Parametric generators, bridge models, diaphragms</td></tr>
+    <tr><td class="metric">Feb 25</td><td class="num">2</td><td>Deck diaphragms, solver merge, final refinements</td></tr>
+  </tbody>
+</table>
+
+<p>The bimodal distribution&mdash;two intense sprint days (15 and 13 commits) bookending a refinement period&mdash;reflects the hybrid workflow's characteristic pattern: rapid feature generation followed by human-directed quality iteration.</p>
+
+<h2><span class="sub-num">3.3</span>Workflow Mechanics</h2>
+
+<p>Each development cycle followed a consistent pattern:</p>
+
+<ol>
+  <li><strong>Human directive:</strong> The engineer specified the next feature or fix in natural language, often with domain-specific constraints (e.g., "TFP bearings require Z-up convention; swap Y and Z in the coordinate transform").</li>
+  <li><strong>AI implementation:</strong> The LLM agent generated code across all affected files&mdash;frontend components, backend routes, solver logic, Pydantic schemas, TypeScript types, and tests&mdash;in a single pass.</li>
+  <li><strong>Human review:</strong> The engineer evaluated outputs for physical correctness, catching errors that would be invisible to syntactic validation (e.g., incorrect friction coefficient ranges, wrong sign conventions in force diagrams, misapplied geometric transformations).</li>
+  <li><strong>Iterative refinement:</strong> Debug-fix cycles were executed rapidly, with the engineer diagnosing root causes and the AI implementing corrections across the full stack.</li>
+</ol>
+
+<!-- ============================================================ -->
+<!-- 4. QUANTITATIVE EFFORT ANALYSIS                               -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h1 class="section-title"><span class="section-num">4.</span>Quantitative Effort Analysis</h1>
+
+<h2><span class="sub-num">4.1</span>Deliverable Scope</h2>
+
+<div class="metric-grid">
+  <div class="metric-card">
+    <div class="metric-value">72,500</div>
+    <div class="metric-label">Total Lines of Code</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">150</div>
+    <div class="metric-label">Source Files</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">500+</div>
+    <div class="metric-label">Automated Tests</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">41</div>
+    <div class="metric-label">Git Commits</div>
+  </div>
+</div>
+
+<table>
+  <caption>Table 3. Codebase Composition by Category</caption>
+  <thead>
+    <tr><th>Category</th><th>Lines</th><th>Files</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">Frontend (TS/TSX)</td><td class="num">24,080</td><td class="num">118</td><td>React components, Three.js visualization, Zustand stores, API client</td></tr>
+    <tr><td class="metric">Backend (Python)</td><td class="num">6,373</td><td class="num">25</td><td>FastAPI routes, OpenSeesPy solver, Pydantic schemas</td></tr>
+    <tr><td class="metric">Test Suite</td><td class="num">9,497</td><td class="num">29</td><td>Vitest (frontend), Pytest (backend), integration tests</td></tr>
+    <tr><td class="metric">Model Presets (JSON)</td><td class="num">15,146</td><td class="num">13</td><td>Pre-built structural models (towers, frames, bridges)</td></tr>
+    <tr><td class="metric">Engineering Docs</td><td class="num">3,923</td><td class="num">3</td><td>Compliance report, calculations, HTML deliverable</td></tr>
+    <tr><td class="metric">Configuration</td><td class="num">~2,000</td><td class="num">12</td><td>Docker, Vite, TypeScript, ESLint, package.json, etc.</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="sub-num">4.2</span>Conventional Effort Estimate</h2>
+
+<p>To establish a baseline, we estimate the effort required to build an equivalent platform using a conventional development team without AI assistance. The estimate draws on industry benchmarks for engineering software development, adjusting for the specialized domain knowledge required.</p>
+
+<table>
+  <caption>Table 4. Conventional Development Effort Estimate</caption>
+  <thead>
+    <tr><th>Role</th><th>Scope</th><th>Estimate</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">Structural Engineer</td><td>TFP bearing physics, ASCE/AASHTO compliance logic, solver validation, domain modeling</td><td class="num highlight">3&ndash;4 months</td></tr>
+    <tr><td class="metric">Backend Engineer</td><td>OpenSeesPy solver integration, API design, discretization, gravity preload hardening</td><td class="num highlight">2&ndash;3 months</td></tr>
+    <tr><td class="metric">Frontend Engineer</td><td>React UI, model editor, results panels, analysis dialogs, state management</td><td class="num highlight">3&ndash;4 months</td></tr>
+    <tr><td class="metric">3D Visualization Specialist</td><td>Three.js renderer, mode shapes, deformed shapes, force diagrams, plastic hinges</td><td class="num highlight">2&ndash;3 months</td></tr>
+    <tr><td class="metric">QA Engineer</td><td>500+ tests, integration suite, cross-browser validation</td><td class="num highlight">1&ndash;2 months</td></tr>
+    <tr><td class="metric">Technical Writer</td><td>Engineering report, compliance documentation, calculation sheets</td><td class="num highlight">1 month</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Aggregate estimate:</strong> 12&ndash;20 person-months with a 3&ndash;4 person team, yielding a 4&ndash;6 month calendar timeline. A solo senior engineer with full-stack and structural analysis expertise would require 8&ndash;12 months.</p>
+
+<h2><span class="sub-num">4.3</span>Actual Hybrid Effort</h2>
+
+<table>
+  <caption>Table 5. Actual Development Metrics</caption>
+  <thead>
+    <tr><th>Metric</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">Calendar duration</td><td>13 days (Feb 13&ndash;25, 2026)</td></tr>
+    <tr><td class="metric">Active coding days</td><td>8 of 13 days</td></tr>
+    <tr><td class="metric">Human time investment</td><td>~0.5 person-months (estimated)</td></tr>
+    <tr><td class="metric">Peak throughput</td><td>15 commits / day (Feb 13); 13 commits / day (Feb 24)</td></tr>
+    <tr><td class="metric">Lines per active day</td><td>~9,060 lines/day average</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="sub-num">4.4</span>Compression Ratio</h2>
+
+<div class="bar-chart">
+  <div class="bar-row">
+    <div class="bar-label">Conventional</div>
+    <div class="bar-track">
+      <div class="bar-fill black" style="width: 100%;">12&ndash;20 person-months</div>
+    </div>
+    <div class="bar-annotation">4&ndash;6 month calendar</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-label">Hybrid AI-Human</div>
+    <div class="bar-track">
+      <div class="bar-fill gold" style="width: 4%;">~0.5</div>
+    </div>
+    <div class="bar-annotation">13 day calendar</div>
+  </div>
+</div>
+
+<div class="callout">
+  <div class="callout-title">Key Finding</div>
+  <p>The hybrid approach achieved a <strong>25&ndash;40&times; compression</strong> in total development effort (person-months) and a <strong>9&ndash;14&times; compression</strong> in calendar time compared to conventional team-based development. When compared to a solo engineer, the calendar compression reaches <strong>18&ndash;28&times;</strong>.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 5. ROLE ANALYSIS                                              -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h1 class="section-title"><span class="section-num">5.</span>Role Analysis: Human vs. AI Contributions</h1>
+
+<h2><span class="sub-num">5.1</span>The Human Role: Domain Authority &amp; Quality Gate</h2>
+
+<p>The structural engineer's contributions fell into four categories that proved irreplaceable:</p>
+
+<p><strong>Physics specification.</strong> Defining the four-surface TFP friction model, specifying velocity-dependent friction behavior, establishing that TFP elements require Z-up coordinate convention, setting reasonable friction coefficient ranges (0.01&ndash;0.12 for inner surfaces, 0.04&ndash;0.20 for outer), and validating that solver outputs matched expected structural behavior.</p>
+
+<p><strong>Code compliance expertise.</strong> Translating ASCE&nbsp;7-22 Chapter&nbsp;17 and AASHTO 4th Edition requirements into computable checks. This required interpretive judgment&mdash;for example, determining that the effective period ratio check should compare the isolated period to the fixed-base period (not to an arbitrary threshold), or that property modification factors should bound both friction and stiffness simultaneously.</p>
+
+<p><strong>Architectural direction.</strong> Deciding the phased development approach, selecting the comparison framework as a core differentiating feature, specifying the 5:1 member discretization for force diagram accuracy, and choosing which preset models would best validate the analysis pipeline.</p>
+
+<p><strong>Quality arbitration.</strong> Identifying non-obvious bugs that passed all syntactic and type-checking gates. Examples include: incorrect sign conventions in local-to-global force transformations, geometric transformation vector singularities for vertical elements, gravity preload convergence failures in models with many bearings, and Z/Y axis swapping errors in mode shape visualization for isolated models.</p>
+
+<h2><span class="sub-num">5.2</span>The AI Role: Synthesis Engine &amp; Cross-Stack Executor</h2>
+
+<p>The LLM agent's contributions were characterized by:</p>
+
+<p><strong>Parallel code generation.</strong> When directed to implement a feature (e.g., "add pushover analysis"), the AI simultaneously generated: the OpenSeesPy solver pathway (~200 lines), the FastAPI route handler (~50 lines), the Pydantic request/response schemas (~80 lines), the React analysis dialog modifications (~60 lines), the results panel component (~150 lines), the Plotly chart configuration (~80 lines), the Zustand store updates (~30 lines), and the TypeScript type definitions (~40 lines)&mdash;all in a single pass, maintaining type safety and API contract consistency across the stack.</p>
+
+<p><strong>Test generation at scale.</strong> The AI produced 500+ tests that covered topology validation, section auto-sizing, load generation, bearing placement, connectivity checks, coordinate transformation, and parametric generator edge cases. Test quality was generally high, with meaningful assertions (not just "runs without error") and good coverage of boundary conditions.</p>
+
+<p><strong>Documentation synthesis.</strong> Engineering documents (984-line calculation sheet, 1,029-line AASHTO compliance review, 1,910-line HTML report) were generated with correct structural engineering terminology, proper equation formatting, and accurate numerical results drawn from actual solver outputs.</p>
+
+<p><strong>Iterative debugging velocity.</strong> When the engineer identified a bug (e.g., "force diagrams are flipped for vertical elements"), the AI could trace the issue across the full stack&mdash;from solver output format through API serialization to frontend rendering&mdash;and apply a coordinated fix in minutes rather than the hours such cross-layer debugging typically requires.</p>
+
+<h2><span class="sub-num">5.3</span>Failure Modes &amp; Corrections</h2>
+
+<p>The hybrid workflow was not without friction. Twelve of 41 commits (29%) were explicitly labeled as fixes, indicating that the initial AI-generated code required correction. The most common failure modes were:</p>
+
+<table>
+  <caption>Table 6. Common AI Generation Failure Modes</caption>
+  <thead>
+    <tr><th>Failure Mode</th><th>Frequency</th><th>Detection Method</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">Coordinate convention errors</td><td class="num">4 instances</td><td>Human visual inspection of 3D outputs</td></tr>
+    <tr><td class="metric">Sign convention inversions</td><td class="num">3 instances</td><td>Human comparison with hand calculations</td></tr>
+    <tr><td class="metric">Solver convergence failures</td><td class="num">3 instances</td><td>Integration test failures</td></tr>
+    <tr><td class="metric">API contract mismatches</td><td class="num">2 instances</td><td>TypeScript type errors / runtime errors</td></tr>
+  </tbody>
+</table>
+
+<p>Notably, all coordinate and sign convention errors were caught by the human, not by automated tests. These errors are semantically invisible to type systems and test frameworks&mdash;the code runs correctly and produces plausible-looking numbers, but the numbers are physically wrong. This underscores the essential role of domain expertise in the hybrid workflow.</p>
+
+<!-- ============================================================ -->
+<!-- 6. DISCUSSION                                                 -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h1 class="section-title"><span class="section-num">6.</span>Discussion</h1>
+
+<h2><span class="sub-num">6.1</span>When the Hybrid Model Works Best</h2>
+
+<p>The results suggest that AI-human hybrid development is most effective when the following conditions are met:</p>
+
+<ol>
+  <li><strong>Deep domain expertise exists in the human participant.</strong> The engineer's ability to specify physically correct behavior, catch semantically invisible bugs, and validate outputs against engineering intuition was the quality bottleneck. Without this expertise, the AI would have produced a visually impressive but physically incorrect tool.</li>
+  <li><strong>The implementation space is well-defined by prior art.</strong> React, Three.js, FastAPI, and OpenSeesPy are mature, well-documented technologies. The AI's training data includes extensive examples of each, enabling high-quality code generation. For novel or poorly documented technologies, AI generation quality degrades significantly.</li>
+  <li><strong>The project requires cross-stack coordination.</strong> The AI's ability to maintain consistency across TypeScript types, Python schemas, API contracts, and solver output formats provided a significant advantage over human developers who typically specialize in one layer.</li>
+  <li><strong>Iteration speed matters more than perfection.</strong> The 29% fix rate would be unacceptable in a waterfall process, but in a rapid iteration model where fixes are applied within minutes, it is an acceptable trade-off for the speed of initial generation.</li>
+</ol>
+
+<h2><span class="sub-num">6.2</span>Limitations of This Study</h2>
+
+<p>Several caveats apply to the compression ratio estimates:</p>
+
+<ul>
+  <li><strong>Human time is underestimated.</strong> The 0.5 person-month estimate counts only active coding/review time. It excludes the engineer's years of accumulated domain knowledge, which is a prerequisite but not a project cost.</li>
+  <li><strong>Conventional time may be overestimated.</strong> A team with existing boilerplate, component libraries, or prior isolation analysis code could potentially reduce the conventional timeline by 30&ndash;40%.</li>
+  <li><strong>Maintainability is untested.</strong> The 72,500-line codebase was generated rapidly. Long-term maintainability, onboarding of new developers, and technical debt accumulation remain open questions.</li>
+  <li><strong>Single-project generalization risk.</strong> This case study involves one project, one engineer, and one AI system. The compression ratio may vary significantly for different domains, team compositions, and LLM capabilities.</li>
+</ul>
+
+<h2><span class="sub-num">6.3</span>Implications for Engineering Software Development</h2>
+
+<p>The results have several implications for the structural engineering and broader engineering software communities:</p>
+
+<p><strong>Democratization of specialized tools.</strong> The cost of building domain-specific analysis software has dropped by an order of magnitude. This enables individual engineers or small firms to build custom tools tailored to their specific practice areas, rather than depending on monolithic commercial software packages.</p>
+
+<p><strong>Shift in the value of engineering expertise.</strong> As code generation becomes commoditized, the differentiating value shifts further toward domain knowledge, physical intuition, and quality judgment. Engineers who can precisely specify what a tool should compute&mdash;and validate that it computes correctly&mdash;become more valuable, not less.</p>
+
+<p><strong>New quality assurance challenges.</strong> AI-generated code that is syntactically correct, type-safe, and passes generated tests can still be physically wrong. The field needs new validation methodologies that go beyond traditional software QA to include physics-based verification, benchmark comparisons, and domain expert review protocols.</p>
+
+<p><strong>Pace of innovation.</strong> The 13-day development timeline suggests that prototype-to-production cycles for engineering tools could shrink from years to weeks. This creates opportunities for rapid experimentation with new analysis methods, visualization techniques, and code compliance workflows.</p>
+
+<!-- ============================================================ -->
+<!-- 7. CONCLUSIONS & RECOMMENDATIONS                              -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h1 class="section-title"><span class="section-num">7.</span>Conclusions &amp; Recommendations</h1>
+
+<h2><span class="sub-num">7.1</span>Conclusions</h2>
+
+<p>This case study documented the development of IsoVis, a 72,500-line seismic isolation analysis platform, in 13 calendar days through hybrid AI-human collaboration. The key conclusions are:</p>
+
+<ol>
+  <li><strong>The hybrid model achieved a 25&ndash;40&times; effort compression</strong> compared to conventional development, reducing an estimated 12&ndash;20 person-months to approximately 0.5 person-months. Calendar time was compressed 9&ndash;14&times; versus a conventional team and 18&ndash;28&times; versus a solo developer.</li>
+
+  <li><strong>Domain expertise was the irreplaceable human contribution.</strong> The structural engineer's knowledge of TFP bearing physics, seismic code requirements, and structural analysis methodology could not be replicated by the AI. All physically significant bugs (coordinate conventions, sign conventions, convergence parameters) were identified by the human, not by automated tests or AI self-review.</li>
+
+  <li><strong>Cross-stack fluency was the AI's decisive advantage.</strong> The ability to simultaneously generate correct, consistent code across React, Three.js, FastAPI, OpenSeesPy, and Pydantic&mdash;maintaining type safety and API contracts throughout&mdash;eliminated the communication overhead and integration delays that dominate multi-developer projects.</li>
+
+  <li><strong>The 29% fix rate is acceptable within a rapid-iteration workflow.</strong> While initial AI outputs required corrections in roughly one-third of commits, the speed of the fix cycle (minutes, not hours) meant that the net throughput remained far above conventional rates.</li>
+
+  <li><strong>The platform is functionally complete and validated.</strong> With 500+ automated tests, 23 integration tests against a live OpenSeesPy solver, 12 automated AASHTO compliance checks, and a complete engineering case study (St. Claire Memorial Hospital: 64% base shear reduction, 93% drift reduction), IsoVis meets the standard of a production-grade analysis tool.</li>
+</ol>
+
+<h2><span class="sub-num">7.2</span>Recommendations</h2>
+
+<p>Based on the findings of this study, we offer the following recommendations for practitioners considering hybrid AI-human development workflows:</p>
+
+<h3>For Engineering Software Development</h3>
+
+<ol>
+  <li><strong>Invest in specification quality.</strong> The quality of AI-generated code is directly proportional to the precision of the human specification. Engineers should develop the skill of writing precise, physics-aware feature specifications that constrain the AI's solution space toward correct implementations.</li>
+
+  <li><strong>Implement physics-based validation gates.</strong> Traditional software QA (unit tests, type checking, linting) is necessary but insufficient for engineering software. Establish benchmark problems with known analytical solutions, and validate every solver pathway against these benchmarks before accepting AI-generated analysis code.</li>
+
+  <li><strong>Adopt a phased, iterative approach.</strong> The five-phase plan used in this project&mdash;scaffolding, basic analysis, advanced physics, nonlinear analysis, comparison/compliance&mdash;provided natural validation checkpoints. Each phase could be independently verified before building upon it.</li>
+
+  <li><strong>Maintain human ownership of coordinate conventions and sign conventions.</strong> These are the most common and most dangerous failure modes in AI-generated structural analysis code. Establish conventions explicitly at the start of the project and verify them at every integration boundary.</li>
+</ol>
+
+<h3>For the Research Community</h3>
+
+<ol start="5">
+  <li><strong>Develop domain-specific AI benchmarks.</strong> The field needs standardized benchmarks for evaluating AI-generated engineering code&mdash;not just for syntactic correctness, but for physical correctness. These benchmarks should include problems with known analytical solutions across multiple analysis types.</li>
+
+  <li><strong>Study long-term maintainability.</strong> The compression ratios reported here apply to initial development. Future work should assess whether AI-generated codebases are more or less maintainable than human-authored equivalents, and whether AI agents can effectively maintain and extend codebases they generated.</li>
+
+  <li><strong>Explore hybrid workflows for code compliance.</strong> The automated ASCE&nbsp;7-22 and AASHTO compliance checks in IsoVis suggest that AI can accelerate the tedious process of translating code provisions into computable checks. A systematic study of AI-assisted code compliance across multiple building codes would be valuable.</li>
+</ol>
+
+<h3>For Policy and Standards Bodies</h3>
+
+<ol start="8">
+  <li><strong>Develop guidelines for AI-assisted engineering analysis.</strong> As AI-generated analysis tools proliferate, professional engineering bodies should establish guidelines for validating, certifying, and taking professional responsibility for AI-assisted structural analysis results. The existing framework of independent design review and peer checking provides a foundation, but specific protocols for AI-generated solvers are needed.</li>
+
+  <li><strong>Consider the implications for engineering education.</strong> If domain expertise is the irreplaceable human contribution in AI-augmented workflows, engineering curricula should emphasize physical intuition, code literacy, and validation methodology alongside traditional analysis techniques.</li>
+</ol>
+
+<hr class="section-break">
+
+<div class="callout" style="margin-top: 24pt;">
+  <div class="callout-title">Summary Statement</div>
+  <p>The development of IsoVis demonstrates that hybrid AI-human collaboration can compress specialized engineering software development by more than an order of magnitude. The key to this compression is not the replacement of engineering expertise, but its <em>amplification</em>: a single domain expert, armed with an AI implementation agent, can produce in days what would previously require a multi-disciplinary team working for months. The engineer's irreplaceable role&mdash;knowing what to build, why it matters, and whether it is physically correct&mdash;becomes <em>more</em> valuable, not less, in this new paradigm.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- REFERENCES                                                    -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h1 class="section-title"><span class="section-num"></span>References</h1>
+
+<div class="references">
+<p><span class="ref-num">[1]</span> American Society of Civil Engineers. <em>Minimum Design Loads and Associated Criteria for Buildings and Other Structures</em>, ASCE/SEI 7-22. Reston, VA: ASCE, 2022. Chapter 17: Seismically Isolated Structures.</p>
+
+<p><span class="ref-num">[2]</span> American Association of State Highway and Transportation Officials. <em>Guide Specifications for Seismic Isolation Design</em>, 4th Edition. Washington, DC: AASHTO, 2014.</p>
+
+<p><span class="ref-num">[3]</span> Constantinou, M.C., Kalpakidis, I., Filiatrault, A., and Ecker Lay, R.A. <em>LRFD-Based Analysis and Design Procedures for Bridge Bearings and Seismic Isolators</em>, MCEER-11-0004. Buffalo, NY: MCEER, 2011.</p>
+
+<p><span class="ref-num">[4]</span> McKenna, F., Scott, M.H., and Fenves, G.L. "Nonlinear Finite-Element Analysis Software Architecture Using Object Composition." <em>Journal of Computing in Civil Engineering</em>, ASCE, 24(1):95&ndash;107, 2010.</p>
+
+<p><span class="ref-num">[5]</span> Zhu, M., McKenna, F., and Scott, M.H. "OpenSeesPy: Python Library for the OpenSees Finite Element Framework." <em>SoftwareX</em>, 7:6&ndash;11, 2018.</p>
+
+<p><span class="ref-num">[6]</span> Fenz, D.M. and Constantinou, M.C. "Spherical Sliding Isolation Bearings with Adaptive Behavior: Theory." <em>Earthquake Engineering &amp; Structural Dynamics</em>, 35(2):163&ndash;183, 2006.</p>
+
+<p><span class="ref-num">[7]</span> Fenz, D.M. and Constantinou, M.C. "Modeling Triple Friction Pendulum Bearings for Response-History Analysis." <em>Earthquake Spectra</em>, 24(4):1011&ndash;1028, 2008.</p>
+
+<p><span class="ref-num">[8]</span> Sarlis, A.A. and Constantinou, M.C. <em>Model of Triple Friction Pendulum Bearing for General Geometric and Frictional Parameters and for Uplift Conditions</em>, MCEER-13-0010. Buffalo, NY: MCEER, 2013.</p>
+
+<p><span class="ref-num">[9]</span> Naeim, F. and Kelly, J.M. <em>Design of Seismic Isolated Structures: From Theory to Practice</em>. New York: John Wiley &amp; Sons, 1999.</p>
+
+<p><span class="ref-num">[10]</span> Anthropic. "Claude: A Large Language Model for Safe and Useful AI." Technical documentation, 2024&ndash;2026.</p>
+
+<p><span class="ref-num">[11]</span> Chen, M., et al. "Evaluating Large Language Models Trained on Code." <em>arXiv preprint arXiv:2107.03374</em>, 2021.</p>
+
+<p><span class="ref-num">[12]</span> Fan, A., et al. "Large Language Models for Software Engineering: A Systematic Literature Review." <em>ACM Computing Surveys</em>, 56(4):1&ndash;39, 2024.</p>
+
+<p><span class="ref-num">[13]</span> React Three Fiber. "A React Renderer for Three.js." Open-source documentation, 2020&ndash;2026. https://docs.pmnd.rs/react-three-fiber.</p>
+
+<p><span class="ref-num">[14]</span> Tiangolo, S. "FastAPI: Modern, Fast (High-Performance), Web Framework for Building APIs with Python." Open-source documentation, 2019&ndash;2026. https://fastapi.tiangolo.com.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- APPENDIX A: PROJECT METRICS                                   -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h1 class="section-title"><span class="section-num">A.</span>Appendix: Detailed Project Metrics</h1>
+
+<table>
+  <caption>Table A-1. Frontend Component Breakdown</caption>
+  <thead>
+    <tr><th>Feature Module</th><th>Files</th><th>Lines</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">viewer-3d</td><td class="num">19</td><td class="num">4,574</td><td>3D rendering, node/element/bearing visualization, deformed shapes, force diagrams, plastic hinges</td></tr>
+    <tr><td class="metric">bent-build</td><td class="num">8</td><td class="num">4,713</td><td>Parametric bridge generator with per-pier, deck, and support configuration</td></tr>
+    <tr><td class="metric">bay-build</td><td class="num">5</td><td class="num">2,120</td><td>Parametric building frame generator with material and isolation options</td></tr>
+    <tr><td class="metric">model-editor</td><td class="num">16</td><td class="num">1,779</td><td>Hierarchical editor for nodes, elements, sections, materials, bearings, loads</td></tr>
+    <tr><td class="metric">results</td><td class="num">6</td><td class="num">1,078</td><td>Analysis results panels with tables and interactive charts</td></tr>
+    <tr><td class="metric">analysis</td><td class="num">4</td><td class="num">685</td><td>Analysis dialog, run hooks, async execution</td></tr>
+    <tr><td class="metric">comparison</td><td class="num">5</td><td class="num">665</td><td>Isolated vs. fixed-base comparison dashboard</td></tr>
+    <tr><td class="metric">layout</td><td class="num">3</td><td class="num">405</td><td>Application shell, toolbar, status bar</td></tr>
+    <tr><td class="metric">controls</td><td class="num">1</td><td class="num">296</td><td>Viewer display controls and toggles</td></tr>
+    <tr><td class="metric">property-inspector</td><td class="num">4</td><td class="num">271</td><td>Read-only property display for selected elements</td></tr>
+  </tbody>
+</table>
+
+<table style="margin-top: 24pt;">
+  <caption>Table A-2. Test Suite Breakdown</caption>
+  <thead>
+    <tr><th>Test Category</th><th>Tests</th><th>Lines</th><th>Coverage Area</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">Bent Build (Vitest)</td><td class="num">113</td><td class="num">~3,800</td><td>Bridge topology, connectivity, section sizing, loads, bearings, deck offsets</td></tr>
+    <tr><td class="metric">Bay Build (Vitest)</td><td class="num">67</td><td class="num">~2,200</td><td>Frame topology, auto-sizing, gravity loads, bearing placement, diaphragms</td></tr>
+    <tr><td class="metric">Frontend Other (Vitest)</td><td class="num">27</td><td class="num">~900</td><td>Stores, serializer, type guards, component rendering</td></tr>
+    <tr><td class="metric">Backend Unit (Pytest)</td><td class="num">124</td><td class="num">~2,600</td><td>Solver pathways, schema validation, API routes (mocked OpenSeesPy)</td></tr>
+    <tr><td class="metric">Integration (Pytest)</td><td class="num">23</td><td class="num">~1,700</td><td>End-to-end analysis through live OpenSeesPy solver</td></tr>
+  </tbody>
+</table>
+
+<table style="margin-top: 24pt;">
+  <caption>Table A-3. Case Study Results &mdash; St. Claire Memorial Hospital</caption>
+  <thead>
+    <tr><th>Performance Metric</th><th>Fixed-Base</th><th>Isolated</th><th>Improvement</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="metric">Base Shear (kips)</td><td class="num">84.4</td><td class="num">30.3</td><td class="num highlight">64% reduction</td></tr>
+    <tr><td class="metric">Max Drift Ratio</td><td class="num">0.471%</td><td class="num">0.035%</td><td class="num highlight">93% reduction</td></tr>
+    <tr><td class="metric">Plastic Hinges</td><td class="num">15</td><td class="num">0</td><td class="num highlight">100% elimination</td></tr>
+    <tr><td class="metric">Performance Level</td><td>Life Safety</td><td>Immediate Occupancy</td><td class="highlight">2-level upgrade</td></tr>
+    <tr><td class="metric">Fundamental Period (sec)</td><td class="num">0.429</td><td class="num">2.540</td><td class="num highlight">5.9&times; shift</td></tr>
+    <tr><td class="metric">Effective Damping</td><td class="num">5%</td><td class="num">41.5%</td><td class="num highlight">8.3&times; increase</td></tr>
+    <tr><td class="metric">Bearing D/C Ratio (MCE)</td><td>&mdash;</td><td class="num">0.98</td><td>Within capacity</td></tr>
+  </tbody>
+</table>
+
+</div><!-- .content -->
+</body>
+</html>
