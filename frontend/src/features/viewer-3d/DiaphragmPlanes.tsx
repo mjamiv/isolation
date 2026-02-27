@@ -230,7 +230,7 @@ export function DiaphragmPlanes() {
 
       // Create shape from inflated hull points in XZ plane
       const hullPts = hullIndices.map((i) => xzPoints[i]!);
-      const inflated = inflateHull(hullPts, stripHalfWidth);
+      const inflated = inflateHull(hullPts, 0);
       const shape = new THREE.Shape();
       shape.moveTo(inflated[0]!.x, inflated[0]!.z);
       for (let i = 1; i < inflated.length; i++) {

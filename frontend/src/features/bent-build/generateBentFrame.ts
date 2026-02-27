@@ -44,6 +44,12 @@ function groundNodeId(pi: number, ci: number, maxCols: number): number {
   return 2000 + pi * maxCols + ci + 1;
 }
 
+/** Node IDs for column intermediate nodes (3-sub-element discretization). */
+function colMidNodeId(pi: number, ci: number, frac: number, maxCols: number): number {
+  // frac: 0 = 1/3 height, 1 = 2/3 height
+  return 4000 + pi * maxCols * 2 + ci * 2 + frac + 1;
+}
+
 /** Node IDs for intermediate chord points within a span. */
 function chordNodeId(
   span: number,
@@ -462,6 +468,32 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
+  // Intermediate column nodes for 3-sub-element discretization
+  for (let pi = 0; pi < numPiers; pi++) {
+    const sli = pi + 1;
+    const colHeightIn = (columnHeights[pi] ?? 20) * 12;
+    const colBaseY = deckY[sli]! - colHeightIn;
+    const colCapY = deckY[sli]! - halfCap;
+
+    for (let ci = 0; ci < numBentColumns; ci++) {
+      const { x, z } = colNodeCoords(pi, ci);
+
+      for (let frac = 0; frac < 2; frac++) {
+        const t = (frac + 1) / 3;
+        const midY = colBaseY + t * (colCapY - colBaseY);
+        nodes.push({
+          id: colMidNodeId(pi, ci, frac, numBentColumns),
+          x,
+          y: midY,
+          z,
+          restraint: [...FREE],
+          mass: 0,
+          label: `ColMid P${pi + 1} C${ci + 1} ${frac === 0 ? 'L' : 'U'}`,
+        });
+      }
+    }
+  }
+
   // Ground nodes for column-base isolation
   if (supportMode === 'isolated' && isolationLevel === 'base') {
     for (let pi = 0; pi < numPiers; pi++) {
@@ -570,20 +602,41 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
-  // 6d. Columns: connect base to cap node
+  // 6d. Columns: connect base to cap node via 3 sub-elements
   for (let pi = 0; pi < numPiers; pi++) {
     for (let ci = 0; ci < numBentColumns; ci++) {
       const closestGi = closestGirderIndex(columnOffsets[ci]!, girderOffsets);
       const topNodeId = capNodeId(pi, closestGi, numGirders);
+      const botNodeId = baseNodeId(pi, ci, numBentColumns);
+      const mid1Id = colMidNodeId(pi, ci, 0, numBentColumns);
+      const mid2Id = colMidNodeId(pi, ci, 1, numBentColumns);
 
       elements.push({
         id: nextElementId++,
         type: 'column',
-        nodeI: baseNodeId(pi, ci, numBentColumns),
+        nodeI: botNodeId,
+        nodeJ: mid1Id,
+        sectionId: colSectionId,
+        materialId: concreteMatId,
+        label: `Col P${pi + 1} C${ci + 1} a`,
+      });
+      elements.push({
+        id: nextElementId++,
+        type: 'column',
+        nodeI: mid1Id,
+        nodeJ: mid2Id,
+        sectionId: colSectionId,
+        materialId: concreteMatId,
+        label: `Col P${pi + 1} C${ci + 1} b`,
+      });
+      elements.push({
+        id: nextElementId++,
+        type: 'column',
+        nodeI: mid2Id,
         nodeJ: topNodeId,
         sectionId: colSectionId,
         materialId: concreteMatId,
-        label: `Col P${pi + 1} C${ci + 1}`,
+        label: `Col P${pi + 1} C${ci + 1} c`,
       });
     }
   }
@@ -816,43 +869,60 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   }
 
   // ── 10. Generate Rigid Diaphragms ───────────────────────────────────
-  // Single deck-level diaphragm containing ALL deck nodes (support-line +
-  // chord nodes).  The deck slab acts as one rigid body in-plane.
+  // Per-support-line diaphragms matching default bridge preset pattern.
+  // Each support line (abutments + piers) gets its own collinear diaphragm,
+  // and each chord station gets a separate diaphragm.
 
   const diaphragms: RigidDiaphragm[] = [];
 
   if (includeDiaphragms && numGirders >= 2) {
-    // Collect diaphragm node IDs — always use deck nodes.
-    // The solver handles DOF conflicts between rigidDiaphragm and equalDOF
-    // by filtering overlapping DOFs before applying equalDOF constraints.
-    const allDiaphragmNodeIds: number[] = [];
+    let diaId = 1;
 
+    // One diaphragm per support line
     for (let sli = 0; sli < numSupportLines; sli++) {
-      for (let gi = 0; gi < numGirders; gi++) {
-        allDiaphragmNodeIds.push(deckNodeId(sli, gi, numGirders));
+      const isAbt1 = sli === 0;
+      const isAbt2 = sli === numSupportLines - 1;
+
+      const masterNid = deckNodeId(sli, 0, numGirders);
+      const constrainedNids: number[] = [];
+      for (let gi = 1; gi < numGirders; gi++) {
+        constrainedNids.push(deckNodeId(sli, gi, numGirders));
       }
+
+      let label: string;
+      if (isAbt1) label = 'Abt 1 Deck';
+      else if (isAbt2) label = 'Abt 2 Deck';
+      else label = `Pier ${sli} Deck`;
+
+      diaphragms.push({
+        id: diaId++,
+        masterNodeId: masterNid,
+        constrainedNodeIds: constrainedNids,
+        perpDirection: 2 as const,
+        label,
+      });
     }
 
+    // Per-chord-station diaphragms
     if (chordsPerSpan > 1) {
       for (let span = 0; span < numSpans; span++) {
-        for (let ci = 0; ci < chordsPerSpan - 1; ci++) {
-          for (let gi = 0; gi < numGirders; gi++) {
-            allDiaphragmNodeIds.push(chordNodeId(span, ci, gi, chordsPerSpan, numGirders));
+        const numInterior = chordsPerSpan - 1;
+        for (let ci = 0; ci < numInterior; ci++) {
+          const masterNid = chordNodeId(span, ci, 0, chordsPerSpan, numGirders);
+          const constrainedNids: number[] = [];
+          for (let gi = 1; gi < numGirders; gi++) {
+            constrainedNids.push(chordNodeId(span, ci, gi, chordsPerSpan, numGirders));
           }
+          diaphragms.push({
+            id: diaId++,
+            masterNodeId: masterNid,
+            constrainedNodeIds: constrainedNids,
+            perpDirection: 2 as const,
+            label: `Chord Span${span + 1} C${ci + 1}`,
+          });
         }
       }
     }
-
-    const masterNodeId = allDiaphragmNodeIds[0]!;
-    const constrainedNodeIds = allDiaphragmNodeIds.slice(1);
-
-    diaphragms.push({
-      id: 1,
-      masterNodeId,
-      constrainedNodeIds,
-      perpDirection: 2 as const,
-      label: 'Deck',
-    });
   }
 
   // ── 11. Build Model Name ────────────────────────────────────────────

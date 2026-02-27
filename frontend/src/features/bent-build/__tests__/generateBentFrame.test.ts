@@ -101,7 +101,8 @@ describe('basic generation', () => {
     // 3 support lines * 6 girders = 18 deck nodes
     // 1 pier * 2 bent columns = 2 base nodes
     // 1 pier * 6 girders = 6 cap nodes (all piers have separate cap)
-    expect(model.nodes).toHaveLength(26);
+    // 1 pier * 2 columns * 2 mid nodes = 4 intermediate column nodes
+    expect(model.nodes).toHaveLength(30);
   });
 
   it('3-span default bridge has correct node count', () => {
@@ -110,7 +111,8 @@ describe('basic generation', () => {
     // 4 support lines * 6 girders = 24 deck nodes
     // 2 piers * 2 bent columns = 4 base nodes
     // 2 piers * 6 girders = 12 cap nodes (all piers have separate cap)
-    expect(model.nodes).toHaveLength(40);
+    // 2 piers * 2 columns * 2 mid nodes = 8 intermediate column nodes
+    expect(model.nodes).toHaveLength(48);
   });
 
   it('model name includes span count', () => {
@@ -365,9 +367,9 @@ describe('element connectivity', () => {
     expect(xbeams).toHaveLength(5 * 4);
   });
 
-  it('correct number of column elements (numBentColumns * numPiers)', () => {
-    const model = gen(); // 2 bent columns, 2 piers
-    expect(countByType(model, 'column')).toBe(2 * 2);
+  it('correct number of column elements (numBentColumns * numPiers * 3 sub-elements)', () => {
+    const model = gen(); // 2 bent columns, 2 piers, 3 sub-elements each
+    expect(countByType(model, 'column')).toBe(2 * 2 * 3);
   });
 
   it('girders connect consecutive support line nodes', () => {
@@ -384,17 +386,28 @@ describe('element connectivity', () => {
     });
   });
 
-  it('columns connect base to cap nodes', () => {
+  it('column sub-elements form chains from base to cap', () => {
     const model = gen();
     const nodeMap = new Map(model.nodes.map((n) => [n.id, n]));
 
     const columns = model.elements.filter((e) => e.type === 'column');
+    // 3 sub-elements per column: bottom starts at Base, top ends at Cap
+    const bottomSubs = columns.filter((c) => c.label?.endsWith(' a'));
+    const topSubs = columns.filter((c) => c.label?.endsWith(' c'));
+
+    bottomSubs.forEach((col) => {
+      const ni = nodeMap.get(col.nodeI)!;
+      expect(ni.label).toContain('Base');
+    });
+    topSubs.forEach((col) => {
+      const nj = nodeMap.get(col.nodeJ)!;
+      expect(nj.label).toContain('Cap');
+    });
+
+    // All sub-elements go upward
     columns.forEach((col) => {
       const ni = nodeMap.get(col.nodeI)!;
       const nj = nodeMap.get(col.nodeJ)!;
-      // One end is base, other end is cap; cap Y > base Y
-      expect(ni.label).toContain('Base');
-      expect(nj.label).toContain('Cap');
       expect(nj.y).toBeGreaterThan(ni.y);
     });
   });
@@ -661,16 +674,16 @@ describe('gravity loads', () => {
 // ===========================================================================
 
 describe('diaphragms', () => {
-  // Panel-based: ONE single deck diaphragm containing ALL deck nodes
-  // (support-line + chord nodes).  The deck slab acts as one rigid body.
+  // Per-support-line diaphragms: one collinear diaphragm per support line
+  // (abutments + piers), matching default bridge preset pattern.
 
-  it('single deck diaphragm for conventional 3-span', () => {
+  it('per-support-line diaphragms for conventional 3-span', () => {
     const model = gen(); // 6 girders, 3 spans, 4 support lines
     expect(model.diaphragms).toBeDefined();
-    expect(model.diaphragms!).toHaveLength(1);
+    expect(model.diaphragms!).toHaveLength(4); // 4 support lines
   });
 
-  it('still 1 diaphragm regardless of span count', () => {
+  it('diaphragm count matches support line count', () => {
     const model5 = gen({
       numSpans: 5,
       spanLengths: [60, 80, 100, 80, 60],
@@ -682,26 +695,30 @@ describe('diaphragms', () => {
         { type: 'FIX', guided: false },
       ],
     });
-    expect(model5.diaphragms!).toHaveLength(1);
+    expect(model5.diaphragms!).toHaveLength(6); // 6 support lines
   });
 
-  it('deck diaphragm contains all support-line deck nodes', () => {
-    const model = gen(); // 4 support lines * 6 girders = 24 deck nodes
-    const dia = model.diaphragms![0]!;
-    // 1 master + 23 constrained = 24 total
-    expect(dia.constrainedNodeIds).toHaveLength(23);
+  it('each diaphragm has numGirders-1 constrained nodes', () => {
+    const model = gen(); // 6 girders per support line
+    model.diaphragms!.forEach((dia) => {
+      // 1 master + 5 constrained = 6 girder nodes per support line
+      expect(dia.constrainedNodeIds).toHaveLength(5);
+    });
   });
 
-  it('deck diaphragm uses deckNodeId(0, 0) as master', () => {
+  it('first diaphragm uses deckNodeId(0, 0) as master', () => {
     const model = gen();
     const dia = model.diaphragms![0]!;
     // deckNodeId(0, 0, 6) = 0*6 + 0 + 1 = 1
     expect(dia.masterNodeId).toBe(1);
   });
 
-  it('deck diaphragm label is "Deck"', () => {
-    const model = gen();
-    expect(model.diaphragms![0]!.label).toBe('Deck');
+  it('diaphragm labels match support line names', () => {
+    const model = gen(); // 3-span → Abt 1, Pier 1, Pier 2, Abt 2
+    expect(model.diaphragms![0]!.label).toBe('Abt 1 Deck');
+    expect(model.diaphragms![1]!.label).toBe('Pier 1 Deck');
+    expect(model.diaphragms![2]!.label).toBe('Pier 2 Deck');
+    expect(model.diaphragms![3]!.label).toBe('Abt 2 Deck');
   });
 
   it('each deck node belongs to exactly one diaphragm', () => {
@@ -733,11 +750,11 @@ describe('diaphragms', () => {
     expect(capDias).toHaveLength(0);
   });
 
-  it('isolated modes have same single deck diaphragm', () => {
+  it('isolated modes have same per-support-line diaphragms', () => {
     const bearing = gen({ supportMode: 'isolated', isolationLevel: 'bearing' });
     const base = gen({ supportMode: 'isolated', isolationLevel: 'base' });
-    expect(bearing.diaphragms!).toHaveLength(1);
-    expect(base.diaphragms!).toHaveLength(1);
+    expect(bearing.diaphragms!).toHaveLength(4); // 4 support lines
+    expect(base.diaphragms!).toHaveLength(4);
   });
 
   it('perpDirection is 2 for all diaphragms', () => {
@@ -747,7 +764,7 @@ describe('diaphragms', () => {
     });
   });
 
-  it('chord-discretized spans include chord nodes in single diaphragm', () => {
+  it('chord-discretized spans produce separate chord diaphragms', () => {
     const model = gen({
       alignment: {
         refElevation: 0,
@@ -758,13 +775,12 @@ describe('diaphragms', () => {
         chordsPerSpan: 3,
       },
     });
-    // Still 1 diaphragm
-    expect(model.diaphragms!).toHaveLength(1);
-    const dia = model.diaphragms![0]!;
-    // 4 support lines * 6 girders = 24 support-line nodes
-    // + 3 spans * (3-1) chord stations * 6 girders = 36 chord nodes
-    // Total = 60 nodes = 1 master + 59 constrained
-    expect(dia.constrainedNodeIds).toHaveLength(59);
+    // 4 support-line diaphragms + 3 spans * (3-1) chord station diaphragms = 10
+    expect(model.diaphragms!).toHaveLength(10);
+    // Each diaphragm has numGirders-1 constrained nodes
+    model.diaphragms!.forEach((dia) => {
+      expect(dia.constrainedNodeIds).toHaveLength(5);
+    });
   });
 
   it('includeDiaphragms=false produces zero diaphragms', () => {
@@ -774,7 +790,7 @@ describe('diaphragms', () => {
 
   it('includeDiaphragms defaults to true', () => {
     const model = gen();
-    expect(model.diaphragms!).toHaveLength(1);
+    expect(model.diaphragms!).toHaveLength(4); // 4 support lines
   });
 });
 
@@ -1158,13 +1174,14 @@ describe('variable spans/heights', () => {
     // 9 support lines * 6 girders = 54 deck nodes
     // 7 piers * 2 columns = 14 base nodes
     // 7 piers * 6 girders = 42 cap nodes (all piers have separate cap)
-    expect(model.nodes).toHaveLength(110);
+    // 7 piers * 2 columns * 2 mid nodes = 28 intermediate column nodes
+    expect(model.nodes).toHaveLength(138);
 
     // Girders: 6 * 8 = 48
     // XBeams: 5 * 9 = 45
-    // Columns: 2 * 7 = 14
+    // Columns: 2 * 7 * 3 = 42 (3 sub-elements per column)
     // PierCap: 5 * 7 = 35 (all piers have concrete pier cap beams)
-    expect(model.elements).toHaveLength(48 + 45 + 14 + 35);
+    expect(model.elements).toHaveLength(48 + 45 + 42 + 35);
   });
 });
 

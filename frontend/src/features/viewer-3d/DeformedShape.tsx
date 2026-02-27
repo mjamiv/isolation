@@ -267,6 +267,15 @@ export function DeformedShape() {
     [nodes, displacements, scaleFactor, is2D, primaryDiscretization, hasBearings],
   );
 
+  // Clamp overlay time step to fixed-base variant's available range
+  const overlayTimeStep = useMemo(() => {
+    if (comparisonType === 'time_history' && comparisonFixedBase?.timeHistoryResults) {
+      const maxStep = comparisonFixedBase.timeHistoryResults.timeSteps.length - 1;
+      return Math.min(currentTimeStep, Math.max(0, maxStep));
+    }
+    return currentTimeStep;
+  }, [comparisonType, comparisonFixedBase, currentTimeStep]);
+
   // Overlay displacements (fixed-base variant)
   const overlayDisplacedNodes = useMemo(() => {
     if (!showComparisonOverlay || !comparisonFixedBase) return null;
@@ -274,7 +283,7 @@ export function DeformedShape() {
     // Time-history comparison: animate fixed-base from TH step data
     if (comparisonType === 'time_history' && comparisonFixedBase.timeHistoryResults) {
       const thResults = comparisonFixedBase.timeHistoryResults;
-      const step = thResults.timeSteps[currentTimeStep];
+      const step = thResults.timeSteps[overlayTimeStep];
       return buildDisplacedNodeMap(
         nodes,
         step?.nodeDisplacements ?? null,
@@ -310,7 +319,7 @@ export function DeformedShape() {
     showComparisonOverlay,
     comparisonFixedBase,
     comparisonType,
-    currentTimeStep,
+    overlayTimeStep,
     scaleFactor,
     is2D,
     hasBearings,
@@ -336,7 +345,7 @@ export function DeformedShape() {
     if (!showComparisonOverlay || !comparisonFixedBase) return null;
     if (comparisonType === 'time_history' && comparisonFixedBase.timeHistoryResults) {
       const thResults = comparisonFixedBase.timeHistoryResults;
-      const step = thResults.timeSteps[currentTimeStep];
+      const step = thResults.timeSteps[overlayTimeStep];
       return step?.nodeDisplacements ?? null;
     }
     const fbDisps = (
@@ -348,7 +357,7 @@ export function DeformedShape() {
         | undefined
     )?.nodeDisplacements;
     return fbDisps ?? null;
-  }, [showComparisonOverlay, comparisonFixedBase, comparisonType, currentTimeStep]);
+  }, [showComparisonOverlay, comparisonFixedBase, comparisonType, overlayTimeStep]);
   const overlayDisplacedNodesForLines = useMemo(
     () =>
       buildDisplacedNodeMap(

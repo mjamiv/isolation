@@ -36,7 +36,16 @@
     { "id": 25, "x": 960,  "y": 0,   "z": 0,   "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Pier1 Col1 Base" },
     { "id": 26, "x": 960,  "y": 0,   "z": 480, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Pier1 Col2 Base" },
     { "id": 27, "x": 2160, "y": 0,   "z": 0,   "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Pier2 Col1 Base" },
-    { "id": 28, "x": 2160, "y": 0,   "z": 480, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Pier2 Col2 Base" }
+    { "id": 28, "x": 2160, "y": 0,   "z": 480, "restraint": [true,true,true,true,true,true],      "mass": 0, "label": "Pier2 Col2 Base" },
+
+    { "id": 29, "x": 960,  "y": 80,  "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Col1 Mid1" },
+    { "id": 30, "x": 960,  "y": 160, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Col1 Mid2" },
+    { "id": 31, "x": 960,  "y": 80,  "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Col2 Mid1" },
+    { "id": 32, "x": 960,  "y": 160, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Col2 Mid2" },
+    { "id": 33, "x": 2160, "y": 80,  "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Col1 Mid1" },
+    { "id": 34, "x": 2160, "y": 160, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Col1 Mid2" },
+    { "id": 35, "x": 2160, "y": 80,  "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Col2 Mid1" },
+    { "id": 36, "x": 2160, "y": 160, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Col2 Mid2" }
   ],
   "elements": [
     { "id": 1,  "type": "beam", "nodeI": 1,  "nodeJ": 7,  "sectionId": 1, "materialId": 1, "label": "Girder 1 Span 1" },
@@ -84,10 +93,18 @@
     { "id": 37, "type": "beam", "nodeI": 22, "nodeJ": 23, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G4-G5" },
     { "id": 38, "type": "beam", "nodeI": 23, "nodeJ": 24, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G5-G6" },
 
-    { "id": 39, "type": "column", "nodeI": 25, "nodeJ": 7,  "sectionId": 3, "materialId": 1, "label": "Pier1 Col1" },
-    { "id": 40, "type": "column", "nodeI": 26, "nodeJ": 12, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2" },
-    { "id": 41, "type": "column", "nodeI": 27, "nodeJ": 13, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1" },
-    { "id": 42, "type": "column", "nodeI": 28, "nodeJ": 18, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2" }
+    { "id": 39, "type": "column", "nodeI": 25, "nodeJ": 29, "sectionId": 3, "materialId": 1, "label": "Pier1 Col1 a" },
+    { "id": 40, "type": "column", "nodeI": 29, "nodeJ": 30, "sectionId": 3, "materialId": 1, "label": "Pier1 Col1 b" },
+    { "id": 41, "type": "column", "nodeI": 30, "nodeJ": 7,  "sectionId": 3, "materialId": 1, "label": "Pier1 Col1 c" },
+    { "id": 42, "type": "column", "nodeI": 26, "nodeJ": 31, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2 a" },
+    { "id": 43, "type": "column", "nodeI": 31, "nodeJ": 32, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2 b" },
+    { "id": 44, "type": "column", "nodeI": 32, "nodeJ": 12, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2 c" },
+    { "id": 45, "type": "column", "nodeI": 27, "nodeJ": 33, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1 a" },
+    { "id": 46, "type": "column", "nodeI": 33, "nodeJ": 34, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1 b" },
+    { "id": 47, "type": "column", "nodeI": 34, "nodeJ": 13, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1 c" },
+    { "id": 48, "type": "column", "nodeI": 28, "nodeJ": 35, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2 a" },
+    { "id": 49, "type": "column", "nodeI": 35, "nodeJ": 36, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2 b" },
+    { "id": 50, "type": "column", "nodeI": 36, "nodeJ": 18, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2 c" }
   ],
   "sections": [
     { "id": 1, "name": "W36x150 (Girders)",      "area": 44.2, "Ix": 9040,  "Iy": 270,  "Zx": 504, "d": 35.85, "bf": 11.975, "tw": 0.625, "tf": 0.94 },

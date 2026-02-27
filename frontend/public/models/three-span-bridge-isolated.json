@@ -64,7 +64,16 @@
     { "id": 121, "x": 3120, "y": 239, "z": 192, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G3" },
     { "id": 122, "x": 3120, "y": 239, "z": 288, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G4" },
     { "id": 123, "x": 3120, "y": 239, "z": 384, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G5" },
-    { "id": 124, "x": 3120, "y": 239, "z": 480, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G6" }
+    { "id": 124, "x": 3120, "y": 239, "z": 480, "restraint": [true,true,true,true,true,true], "mass": 0, "label": "Abt2 Seat G6" },
+
+    { "id": 125, "x": 960,  "y": 79.67,  "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Col1 Mid1" },
+    { "id": 126, "x": 960,  "y": 159.33, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Col1 Mid2" },
+    { "id": 127, "x": 960,  "y": 79.67,  "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Col2 Mid1" },
+    { "id": 128, "x": 960,  "y": 159.33, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier1 Col2 Mid2" },
+    { "id": 129, "x": 2160, "y": 79.67,  "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Col1 Mid1" },
+    { "id": 130, "x": 2160, "y": 159.33, "z": 0,   "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Col1 Mid2" },
+    { "id": 131, "x": 2160, "y": 79.67,  "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Col2 Mid1" },
+    { "id": 132, "x": 2160, "y": 159.33, "z": 480, "restraint": [false,false,false,false,false,false], "mass": 0, "label": "Pier2 Col2 Mid2" }
   ],
   "elements": [
     { "id": 1,  "type": "beam", "nodeI": 1,  "nodeJ": 7,  "sectionId": 1, "materialId": 1, "label": "Girder 1 Span 1" },
@@ -112,22 +121,30 @@
     { "id": 37, "type": "beam", "nodeI": 22, "nodeJ": 23, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G4-G5" },
     { "id": 38, "type": "beam", "nodeI": 23, "nodeJ": 24, "sectionId": 2, "materialId": 1, "label": "XBeam Abt2 G5-G6" },
 
-    { "id": 39, "type": "column", "nodeI": 25, "nodeJ": 107, "sectionId": 3, "materialId": 1, "label": "Pier1 Col1" },
-    { "id": 40, "type": "column", "nodeI": 26, "nodeJ": 112, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2" },
-    { "id": 41, "type": "column", "nodeI": 27, "nodeJ": 113, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1" },
-    { "id": 42, "type": "column", "nodeI": 28, "nodeJ": 118, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2" },
+    { "id": 39, "type": "column", "nodeI": 25,  "nodeJ": 125, "sectionId": 3, "materialId": 1, "label": "Pier1 Col1 a" },
+    { "id": 40, "type": "column", "nodeI": 125, "nodeJ": 126, "sectionId": 3, "materialId": 1, "label": "Pier1 Col1 b" },
+    { "id": 41, "type": "column", "nodeI": 126, "nodeJ": 107, "sectionId": 3, "materialId": 1, "label": "Pier1 Col1 c" },
+    { "id": 42, "type": "column", "nodeI": 26,  "nodeJ": 127, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2 a" },
+    { "id": 43, "type": "column", "nodeI": 127, "nodeJ": 128, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2 b" },
+    { "id": 44, "type": "column", "nodeI": 128, "nodeJ": 112, "sectionId": 3, "materialId": 1, "label": "Pier1 Col2 c" },
+    { "id": 45, "type": "column", "nodeI": 27,  "nodeJ": 129, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1 a" },
+    { "id": 46, "type": "column", "nodeI": 129, "nodeJ": 130, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1 b" },
+    { "id": 47, "type": "column", "nodeI": 130, "nodeJ": 113, "sectionId": 3, "materialId": 1, "label": "Pier2 Col1 c" },
+    { "id": 48, "type": "column", "nodeI": 28,  "nodeJ": 131, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2 a" },
+    { "id": 49, "type": "column", "nodeI": 131, "nodeJ": 132, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2 b" },
+    { "id": 50, "type": "column", "nodeI": 132, "nodeJ": 118, "sectionId": 3, "materialId": 1, "label": "Pier2 Col2 c" },
 
-    { "id": 43, "type": "beam", "nodeI": 107, "nodeJ": 108, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G1-G2" },
-    { "id": 44, "type": "beam", "nodeI": 108, "nodeJ": 109, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G2-G3" },
-    { "id": 45, "type": "beam", "nodeI": 109, "nodeJ": 110, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G3-G4" },
-    { "id": 46, "type": "beam", "nodeI": 110, "nodeJ": 111, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G4-G5" },
-    { "id": 47, "type": "beam", "nodeI": 111, "nodeJ": 112, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G5-G6" },
+    { "id": 51, "type": "beam", "nodeI": 107, "nodeJ": 108, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G1-G2" },
+    { "id": 52, "type": "beam", "nodeI": 108, "nodeJ": 109, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G2-G3" },
+    { "id": 53, "type": "beam", "nodeI": 109, "nodeJ": 110, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G3-G4" },
+    { "id": 54, "type": "beam", "nodeI": 110, "nodeJ": 111, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G4-G5" },
+    { "id": 55, "type": "beam", "nodeI": 111, "nodeJ": 112, "sectionId": 4, "materialId": 2, "label": "Cap Pier1 G5-G6" },
 
-    { "id": 48, "type": "beam", "nodeI": 113, "nodeJ": 114, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G1-G2" },
-    { "id": 49, "type": "beam", "nodeI": 114, "nodeJ": 115, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G2-G3" },
-    { "id": 50, "type": "beam", "nodeI": 115, "nodeJ": 116, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G3-G4" },
-    { "id": 51, "type": "beam", "nodeI": 116, "nodeJ": 117, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G4-G5" },
-    { "id": 52, "type": "beam", "nodeI": 117, "nodeJ": 118, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G5-G6" }
+    { "id": 56, "type": "beam", "nodeI": 113, "nodeJ": 114, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G1-G2" },
+    { "id": 57, "type": "beam", "nodeI": 114, "nodeJ": 115, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G2-G3" },
+    { "id": 58, "type": "beam", "nodeI": 115, "nodeJ": 116, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G3-G4" },
+    { "id": 59, "type": "beam", "nodeI": 116, "nodeJ": 117, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G4-G5" },
+    { "id": 60, "type": "beam", "nodeI": 117, "nodeJ": 118, "sectionId": 4, "materialId": 2, "label": "Cap Pier2 G5-G6" }
   ],
   "sections": [
     { "id": 1, "name": "W36x150 (Girders)",      "area": 44.2, "Ix": 9040,  "Iy": 270,  "Zx": 504, "d": 35.85, "bf": 11.975, "tw": 0.625, "tf": 0.94 },
