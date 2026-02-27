@@ -39,11 +39,11 @@ export type ModelVariant = 'isolated' | 'fixedBase';
 
 export interface VariantResult {
   /** Pushover capacity curve data (populated for pushover comparisons). */
-  pushoverResults: PushoverResults;
+  pushoverResults?: PushoverResults | null;
   /** Time-history results (populated for time-history comparisons). */
   timeHistoryResults?: TimeHistoryResults | null;
   /** Plastic hinge states at final step. */
-  hingeStates: HingeState[];
+  hingeStates?: HingeState[];
   /** Max base shear achieved. */
   maxBaseShear: number;
   /** Max roof displacement achieved. */

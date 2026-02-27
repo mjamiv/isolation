@@ -234,18 +234,20 @@ export function ComparisonPanel() {
   }
 
   // Build capacity curve traces
+  const isoCurve = isolated.pushoverResults?.capacityCurve ?? [];
+  const fbCurve = fixedBase.pushoverResults?.capacityCurve ?? [];
   const capacityTraces: Plotly.Data[] = [
     {
-      x: isolated.pushoverResults.capacityCurve.map((pt) => pt.roofDisplacement),
-      y: isolated.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
+      x: isoCurve.map((pt) => pt.roofDisplacement),
+      y: isoCurve.map((pt) => pt.baseShear),
       type: 'scattergl' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 2 },
       name: 'Isolated (Nominal)',
     },
     {
-      x: fixedBase.pushoverResults.capacityCurve.map((pt) => pt.roofDisplacement),
-      y: fixedBase.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
+      x: fbCurve.map((pt) => pt.roofDisplacement),
+      y: fbCurve.map((pt) => pt.baseShear),
       type: 'scattergl' as const,
       mode: 'lines' as const,
       line: { color: '#FACC15', width: 2 },
@@ -253,10 +255,11 @@ export function ComparisonPanel() {
     },
   ];
 
-  if (isolatedUpper) {
+  if (isolatedUpper?.pushoverResults) {
+    const upperCurve = isolatedUpper.pushoverResults.capacityCurve ?? [];
     capacityTraces.push({
-      x: isolatedUpper.pushoverResults.capacityCurve.map((pt) => pt.roofDisplacement),
-      y: isolatedUpper.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
+      x: upperCurve.map((pt) => pt.roofDisplacement),
+      y: upperCurve.map((pt) => pt.baseShear),
       type: 'scattergl' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 1.5, dash: 'dash' },
@@ -264,10 +267,11 @@ export function ComparisonPanel() {
     });
   }
 
-  if (isolatedLower) {
+  if (isolatedLower?.pushoverResults) {
+    const lowerCurve = isolatedLower.pushoverResults.capacityCurve ?? [];
     capacityTraces.push({
-      x: isolatedLower.pushoverResults.capacityCurve.map((pt) => pt.roofDisplacement),
-      y: isolatedLower.pushoverResults.capacityCurve.map((pt) => pt.baseShear),
+      x: lowerCurve.map((pt) => pt.roofDisplacement),
+      y: lowerCurve.map((pt) => pt.baseShear),
       type: 'scattergl' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 1.5, dash: 'dot' },

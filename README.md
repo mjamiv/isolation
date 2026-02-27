@@ -48,8 +48,8 @@ Phases 1 through 5 are complete. The app provides:
 - **Enhanced backend results** — static results include deformed shape data; modal results include real mass participation ratios; pushover returns capacity curve, hinge states, and deformed shape
 
 ### Phase 5 — Ductile vs Isolated Comparison, Lambda Factors & Summary Dashboards
-- **Comparison framework** — side-by-side pushover analysis of isolated (with bearings) vs fixed-base (ductile) structural systems via a single "Run Comparison" workflow
-- **Auto-generated fixed-base variant** — backend removes bearings and fixes base nodes to create the ductile comparison model automatically
+- **Comparison framework** — side-by-side pushover and time-history analysis of isolated (with bearings) vs fixed-base (ductile) structural systems via a single "Run Comparison" workflow
+- **Auto-generated fixed-base variant** — backend removes bearings, fixes base nodes, and cleans up orphaned nodes/diaphragms/constraints to create a valid ductile comparison model automatically
 - **ASCE 7-22 Chapter 17 lambda factors** — optional upper/lower bound property modification factors (default 0.85/1.8) that scale bearing friction coefficients for bounding analysis
 - **Comparison dashboard** — accordion-based "Compare" tab in the right panel with:
   - Capacity curve overlay (isolated nominal + upper/lower bounds + fixed-base, 4 traces)
@@ -59,15 +59,17 @@ Phases 1 through 5 are complete. The app provides:
   - Bearing demand/capacity ratios (color-coded green/yellow/red with D/C table)
   - Hinge distribution (IO/LS/CP counts grouped by variant)
 - **3D overlay visualization** — dual deformed shapes in the 3D viewer (blue for isolated, orange for fixed-base) toggled from the comparison panel
-- **AnalysisDialog integration** — "Run Comparison" checkbox appears when model has bearings and pushover is selected; lambda min/max inputs toggle below
+- **Time-history comparison** — full side-by-side time-history comparison with peak base shear and roof displacement metrics computed from raw response data, toast notification feedback, and optional chaining for type-safe variant access
+- **AnalysisDialog integration** — "Run Comparison" checkbox appears when model has bearings and pushover or time-history is selected; lambda min/max inputs toggle below for pushover
 
 ### Auto-Load & Default Analysis Setup
 - **Auto-load on startup** — sample model loads automatically on first render, so the app is immediately interactive with a 3D model visible
-- **4 built-in ground motions** — sample model ships with realistic synthetic records:
+- **5 built-in ground motions** — sample model ships with realistic synthetic records ordered by increasing intensity:
+  - Design 50 (Serviceability) — 2-6 Hz shallow crustal, ~0.10g peak, 10s
+  - Long-Duration Subduction — low-frequency dominated, ~0.15g sustained, 30s
+  - Harmonic Sweep — chirp 0.5-10Hz, 0.25g peak, 12s
   - El Centro 1940 (Approx) — multi-frequency with envelope, ~0.35g peak, 15s
   - Near-Fault Pulse — Gabor wavelet, ~0.5g peak, 8s
-  - Harmonic Sweep — chirp 0.5-10Hz, 0.25g peak, 12s
-  - Long-Duration Subduction — low-frequency dominated, ~0.15g sustained, 30s
 - **Auto-select ground motion** — switching to Time-History analysis auto-selects the first available record, eliminating the manual selection step
 
 ### Engineering Analysis Report
@@ -83,7 +85,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Preset models**: 20-Story Tower (Fixed/Isolated), 2-Story 2x2 (Fixed/Isolated), 3-Span Bridge (Fixed/Isolated)
 - **20-story steel tower** — 1-bay 20'x20' moment frame, 3 column tiers (W14x500/370/257), 3 beam tiers (W36x300/W30x211/W24x146), T1=1.41s, fully verified with all 4 analysis types
 - **3-span girder bridge** — 80'-100'-80' continuous steel girder bridge with 6 W36x150 girders at 8'-0" spacing, W24x84 abutment cross-beams, RC pier caps (4'x5' concrete, Ix=864,000 in⁴), 2-column W14x132 portal frame piers, rigid diaphragms at all support lines, and 120 psf composite concrete deck dead load. Fixed model has roller abutments (Ty+Tz only). Isolated variant has 24 TFP bearings at all girder support points with upsized pier bearings (R_eff=180", dispCap=30") and RC pier cap beams below the isolation plane
-- **Auto-generated ground motions** — models imported without ground motion records automatically get 4 synthetic records (El Centro, Near-Fault, Harmonic, Subduction), enabling immediate time-history analysis
+- **Auto-generated ground motions** — models imported without ground motion records automatically get 5 synthetic records (Serviceability, Subduction, Harmonic, El Centro, Near-Fault) ordered by intensity, enabling immediate time-history analysis starting from low-amplitude events
 - **JSON file import** — load any arbitrary model JSON via file picker with validation and toast notifications
 - **Session result caching** — analysis results are cached per model name; switching between presets preserves results within a dev session without re-running analyses
 
@@ -100,6 +102,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Z-up convention for TFP bearings** — TripleFrictionPendulum element requires DOF 3 (Z) as compression direction; solver and test harness auto-convert Y-up models to Z-up for bearing models
 - **Bearing parameter separation** — `vert_stiffness` (elastic spring, can be large) vs `kvt` (TFP tension stiffness, must be low ~1.0); prevents convergence failures on bridge-scale models
 - **Robust gravity preload** — 50 incremental steps with sub-stepping fallback (10 mini-steps), loosened tolerance (1e-4), multi-algorithm cascade (Newton → ModifiedNewton → KrylovNewton)
+- **Static analysis fallback cascade** — non-isolated static runs now use practical convergence settings (`NormDispIncr 1e-6, 100`) with staged fallbacks (ModifiedNewton, KrylovNewton, looser tolerance, then 10 sub-steps) before declaring failure
 - **Time-history robustness** — `wipeAnalysis()` between gravity (Static) and transient phases, sub-stepping for failed time steps, relaxed tolerance (1e-5)
 - **Per-element vecxz vectors** — 3D elements compute geometric transformation vectors from element direction (vertical→(1,0,0), horizontal→(0,0,1)) to avoid singularities
 
@@ -134,12 +137,13 @@ Phases 1 through 5 are complete. The app provides:
 - **Real-time parametric bridge** — "Bent Build" button in toolbar opens a dialog to generate multi-span girder bridges with per-pier support configuration
 - **Span/girder layout** — 1-8 spans with per-span lengths, 3-10 girders, steel (W30-W44) or concrete (AASHTO Type II-VI) girder sections, adjustable roadway width and overhang
 - **Pier configuration** — 1-4 bent columns per pier with independent heights, concrete circular RC columns (36-60in) auto-sized by height
-- **Support modes** — Conventional (FIX monolithic or EXP expansion with equalDOF constraints), Isolated (bearing-level TFP at all girder support points, or column-base TFP)
+- **Support modes** — Conventional (FIX monolithic or EXP expansion with equalDOF constraints) with auto-stabilization for mechanism-prone all-EXP cases (single-column bents auto-promote Pier 1 to FIX; multi-column all-EXP adds one longitudinal anchor equalDOF), and Isolated (bearing-level TFP at all girder support points, or column-base TFP)
 - **Pier cap beams** — distinct `pierCap` element type rendered in stone/gray (substructure) vs gold girders (superstructure); strong-axis section orientation for gravity bending (Ix > Iy); section depth offsets place deck nodes at girder centroid and cap nodes at cap centroid for realistic rigid end geometry
 - **AASHTO loads** — dead load components (deck slab, overlay, barriers, utilities, future wearing surface, misc), AASHTO lane live load with multi-presence factors
-- **Rigid diaphragms** — one per support line, perpDirection=2
+- **Rigid diaphragms** — single deck-level diaphragm containing all deck nodes (support lines + chord stations) for full in-plane rigidity, with optional `includeDiaphragms` toggle (perpDirection=2)
+- **Robust bearing sizing** — TFP bearings use lower friction (inner mu 0.02/0.06, outer 0.04/0.10), larger displacement capacities [6, 25, 6] inches, and weight-scaled vertical stiffness for improved convergence under larger earthquakes
 - **Live 3D preview** — model regenerates as any parameter changes
-- **113 unit tests** — full coverage of node topology, element connectivity, section sizing, loads, bearings, equalDOF, diaphragms, section orientation, and deck/cap offsets
+- **132 unit tests** — full coverage of node topology, element connectivity, section sizing, loads, bearings, equalDOF, deck diaphragm, conventional-support stability logic, section orientation, and deck/cap offsets
 
 ### 3D Viewer Enhancements
 - **Dynamic scene sizing** — grid, floor plane, camera, orbit controls, fog, and shadows all scale dynamically based on model bounding box via `useModelBounds` hook; models from small 2-story frames to 20-story towers and 3-span bridges always fit cleanly
@@ -273,13 +277,13 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (400 tests across 21 suites)
+# Frontend tests (471 tests across 22 suites)
 cd frontend && npm test
 
 # Frontend lint
 cd frontend && npm run lint
 
-# Backend unit tests (124 tests with mocked OpenSeesPy)
+# Backend unit tests (128 tests with mocked OpenSeesPy)
 cd backend && pytest
 
 # Integration tests (23 tests, requires running backend)

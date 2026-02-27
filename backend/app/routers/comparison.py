@@ -112,10 +112,38 @@ def _run_variant_time_history(
         num_steps=params.num_steps or len(gm_list[0]["acceleration"]),
     )
 
+    # Compute peak values from the raw TH results
+    max_roof_displacement = 0.0
+    max_base_shear = 0.0
+
+    node_disp_hist = results.get("node_displacements", {})
+    bearing_resp_hist = results.get("bearing_responses", {})
+    time_vals = results.get("time", [])
+    num_completed_steps = len(time_vals)
+
+    # Peak displacement: maximum absolute DOF-1 (horizontal X) displacement across all nodes
+    for _nid, dof_map in node_disp_hist.items():
+        dof1_vals = dof_map.get("1", [])
+        for val in dof1_vals:
+            if abs(val) > max_roof_displacement:
+                max_roof_displacement = abs(val)
+
+    # Peak base shear: sum of absolute bearing forces at each step,
+    # or if no bearings, estimate from largest displacement magnitudes
+    if bearing_resp_hist:
+        for step_idx in range(num_completed_steps):
+            step_shear = 0.0
+            for _bid, resp in bearing_resp_hist.items():
+                fx_vals = resp.get("force_x", [])
+                if step_idx < len(fx_vals):
+                    step_shear += abs(fx_vals[step_idx])
+            if step_shear > max_base_shear:
+                max_base_shear = step_shear
+
     return {
         "time_history_results": results,
-        "max_base_shear": results.get("max_base_shear", 0.0),
-        "max_roof_displacement": results.get("max_roof_displacement", 0.0),
+        "max_base_shear": max_base_shear,
+        "max_roof_displacement": max_roof_displacement,
     }
 
 

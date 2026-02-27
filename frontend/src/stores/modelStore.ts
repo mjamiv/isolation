@@ -45,8 +45,14 @@ const GROUND_NODE_IDS = [101, 102, 103] as const;
 /** Base structure node IDs (bearing top nodes, one per column line) */
 const BASE_NODE_IDS = [1, 2, 3] as const;
 
-/** Ground motion record IDs */
-const GM_IDS = { EL_CENTRO: 1, NEAR_FAULT: 2, HARMONIC: 3, SUBDUCTION: 4 } as const;
+/** Ground motion record IDs (ordered by increasing peak acceleration) */
+const GM_IDS = {
+  SERVICEABILITY: 1,
+  SUBDUCTION: 2,
+  HARMONIC: 3,
+  EL_CENTRO: 4,
+  NEAR_FAULT: 5,
+} as const;
 
 /** Gravity load per floor node in kips (negative = downward) */
 const FLOOR_GRAVITY_LOAD_KIP = -50;
@@ -61,6 +67,40 @@ const DEFAULT_DISP_CAPACITIES: [number, number, number] = [2, 16, 2];
 const DEFAULT_BEARING_WEIGHT = 150;
 
 // ── Ground motion generators ─────────────────────────────────────────
+
+function generateServiceability(): GroundMotionRecord {
+  const dt = 0.02;
+  const n = 500; // 10 seconds
+  const acc: number[] = [];
+  // Frequencies typical of moderate shallow crustal events (2-6 Hz)
+  const freqs = [2.0, 3.5, 5.0];
+  const amps = [0.04, 0.06, 0.03];
+  for (let i = 0; i < n; i++) {
+    const t = i * dt;
+    // Envelope: quick ramp (0-1s), sustain (1-4s), gradual decay (4-10s)
+    let env: number;
+    if (t < 1) env = t;
+    else if (t < 4) env = 1;
+    else env = Math.exp(-0.4 * (t - 4));
+    // Multi-frequency synthesis
+    let sig = 0;
+    for (let f = 0; f < freqs.length; f++) {
+      sig += amps[f]! * Math.sin(2 * Math.PI * freqs[f]! * t + f * 1.1);
+    }
+    acc.push(env * sig);
+  }
+  // Normalize to ~0.10g peak
+  const peak = Math.max(...acc.map(Math.abs));
+  const scale = 0.1 / peak;
+  return {
+    id: GM_IDS.SERVICEABILITY,
+    name: 'Design 50 (Serviceability)',
+    dt,
+    acceleration: acc.map((a) => a * scale),
+    direction: 1,
+    scaleFactor: 386.4, // g → in/s² for kip-in units
+  };
+}
 
 function generateElCentro(): GroundMotionRecord {
   const dt = 0.02;
@@ -503,10 +543,11 @@ export const useModelStore = create<ModelState>((set) => ({
       json.groundMotions.length > 0
         ? toMap(json.groundMotions)
         : new Map<number, GroundMotionRecord>([
+            [GM_IDS.SERVICEABILITY, generateServiceability()],
+            [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
+            [GM_IDS.HARMONIC, generateHarmonicSweep()],
             [GM_IDS.EL_CENTRO, generateElCentro()],
             [GM_IDS.NEAR_FAULT, generateNearFaultPulse()],
-            [GM_IDS.HARMONIC, generateHarmonicSweep()],
-            [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
           ]);
 
     set({
@@ -736,10 +777,11 @@ export const useModelStore = create<ModelState>((set) => ({
       bearings,
       loads,
       groundMotions: new Map<number, GroundMotionRecord>([
+        [GM_IDS.SERVICEABILITY, generateServiceability()],
+        [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
+        [GM_IDS.HARMONIC, generateHarmonicSweep()],
         [GM_IDS.EL_CENTRO, generateElCentro()],
         [GM_IDS.NEAR_FAULT, generateNearFaultPulse()],
-        [GM_IDS.HARMONIC, generateHarmonicSweep()],
-        [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
       ]),
     });
   },

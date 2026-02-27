@@ -288,10 +288,13 @@ export function DeformedShape() {
 
     // Pushover comparison: use static pushover displacements
     const fbDisps = (
-      comparisonFixedBase.pushoverResults as PushoverResults & {
-        nodeDisplacements?: Record<string, number[]>;
-      }
-    ).nodeDisplacements;
+      comparisonFixedBase.pushoverResults as
+        | (PushoverResults & {
+            nodeDisplacements?: Record<string, number[]>;
+          })
+        | null
+        | undefined
+    )?.nodeDisplacements;
 
     return buildDisplacedNodeMap(
       nodes,
@@ -322,7 +325,7 @@ export function DeformedShape() {
       return null;
     }
     const r = comparisonFixedBase.pushoverResults;
-    if (r.discretizationMap && r.internalNodeCoords) {
+    if (r?.discretizationMap && r.internalNodeCoords) {
       return { map: r.discretizationMap, internalCoords: r.internalNodeCoords };
     }
     return null;
@@ -337,10 +340,13 @@ export function DeformedShape() {
       return step?.nodeDisplacements ?? null;
     }
     const fbDisps = (
-      comparisonFixedBase.pushoverResults as PushoverResults & {
-        nodeDisplacements?: Record<string, number[]>;
-      }
-    ).nodeDisplacements;
+      comparisonFixedBase.pushoverResults as
+        | (PushoverResults & {
+            nodeDisplacements?: Record<string, number[]>;
+          })
+        | null
+        | undefined
+    )?.nodeDisplacements;
     return fbDisps ?? null;
   }, [showComparisonOverlay, comparisonFixedBase, comparisonType, currentTimeStep]);
   const overlayDisplacedNodesForLines = useMemo(

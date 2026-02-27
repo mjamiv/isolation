@@ -452,6 +452,17 @@ class TestRunStaticAnalysis:
 
         _mock_ops.load.assert_called_once_with(2, 0.0, -10.0, 0.0)
 
+    def test_uses_algorithm_fallback_when_first_step_fails(self, minimal_2d_model):
+        _mock_ops.analyze.side_effect = [-1, 0]
+        _mock_ops.nodeDisp.return_value = 0.0
+        _mock_ops.nodeReaction.return_value = 0.0
+        _mock_ops.eleResponse.return_value = [0.0] * 6
+
+        result = run_static_analysis(minimal_2d_model)
+
+        assert "node_displacements" in result
+        assert call("ModifiedNewton") in _mock_ops.algorithm.call_args_list
+
 
 # ---------------------------------------------------------------------------
 # run_modal_analysis

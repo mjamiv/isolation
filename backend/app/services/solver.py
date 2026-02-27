@@ -394,10 +394,13 @@ def build_model(model_data: dict) -> None:
     _define_bearings(model_data.get("bearings", []), ndm)
 
     # --- Rigid Diaphragms ---
-    _define_rigid_diaphragms(model_data.get("diaphragms", []))
+    dia_constrained = _define_rigid_diaphragms(model_data.get("diaphragms", []))
 
     # --- equalDOF Constraints ---
-    _define_equal_dof_constraints(model_data.get("equal_dof_constraints", []))
+    _define_equal_dof_constraints(
+        model_data.get("equal_dof_constraints", []),
+        diaphragm_constrained=dia_constrained,
+    )
 
     logger.info("Model build complete")
 
@@ -439,11 +442,49 @@ def run_static_analysis(model_data: dict) -> dict:
             ops.constraints("Transformation")
             ops.numberer("RCM")
             ops.system("BandGeneral")
-            ops.test("NormDispIncr", 1.0e-8, 10)
+            # Use practical tolerances + fallback algorithms for bridge-scale models.
+            ops.test("NormDispIncr", 1.0e-6, 100)
             ops.algorithm("Newton")
             ops.integrator("LoadControl", 1.0)
             ops.analysis("Static")
             result = ops.analyze(1)
+
+            if result != 0:
+                ops.algorithm("ModifiedNewton")
+                result = ops.analyze(1)
+                ops.algorithm("Newton")
+            if result != 0:
+                ops.algorithm("KrylovNewton")
+                result = ops.analyze(1)
+                ops.algorithm("Newton")
+            if result != 0:
+                # Last fallback with looser convergence tolerance.
+                ops.test("NormDispIncr", 1.0e-4, 200)
+                result = ops.analyze(1)
+            if result != 0:
+                # Final fallback: apply gravity in 10 sub-steps.
+                ops.wipeAnalysis()
+                ops.constraints("Transformation")
+                ops.numberer("RCM")
+                ops.system("BandGeneral")
+                ops.test("NormDispIncr", 1.0e-4, 200)
+                ops.algorithm("Newton")
+                ops.integrator("LoadControl", 0.1)
+                ops.analysis("Static")
+                result = 0
+                for _ in range(10):
+                    step_result = ops.analyze(1)
+                    if step_result != 0:
+                        ops.algorithm("ModifiedNewton")
+                        step_result = ops.analyze(1)
+                        ops.algorithm("Newton")
+                    if step_result != 0:
+                        ops.algorithm("KrylovNewton")
+                        step_result = ops.analyze(1)
+                        ops.algorithm("Newton")
+                    if step_result != 0:
+                        result = step_result
+                        break
 
         if result != 0:
             raise RuntimeError("Static analysis failed to converge")
@@ -1449,19 +1490,38 @@ def _define_sections(
             )
 
 
-def _define_rigid_diaphragms(diaphragms: list[dict]) -> None:
+def _define_rigid_diaphragms(diaphragms: list[dict]) -> set[tuple[int, int]]:
     """Apply rigid diaphragm constraints, merging overlapping panels.
 
     Panel-based diaphragms (e.g., bridge deck quads) may share edge nodes.
     This function uses union-find to merge connected panels into single
     constraints, avoiding OpenSeesPy errors from constraining a node twice.
 
+    Returns a set of ``(node_id, dof)`` tuples for every slave node
+    constrained by a diaphragm.  The DOFs depend on ``perpDirn``:
+
+    - perpDirn=1 constrains DOFs 2, 3, 4
+    - perpDirn=2 constrains DOFs 1, 3, 5
+    - perpDirn=3 constrains DOFs 1, 2, 6
+
     Args:
         diaphragms: List of dicts with ``perp_direction``, ``master_node_id``,
             and ``constrained_node_ids``.
+
+    Returns:
+        Set of (node_id, dof) pairs already constrained by diaphragms.
     """
+    constrained_dofs: set[tuple[int, int]] = set()
+
+    # Map perpDirn to the DOFs that rigidDiaphragm constrains on slave nodes
+    perp_to_dofs: dict[int, list[int]] = {
+        1: [2, 3, 4],
+        2: [1, 3, 5],
+        3: [1, 2, 6],
+    }
+
     if not diaphragms:
-        return
+        return constrained_dofs
 
     # Group diaphragms by perpendicular direction
     by_perp: dict[int, list[dict]] = {}
@@ -1504,6 +1564,7 @@ def _define_rigid_diaphragms(diaphragms: list[dict]) -> None:
             components.setdefault(root, set()).add(node)
 
         # Create one rigidDiaphragm per connected component
+        dia_dofs = perp_to_dofs.get(perp, [])
         for _root, nodes in components.items():
             # Prefer the smallest original master as the retained node
             master = None
@@ -1523,27 +1584,69 @@ def _define_rigid_diaphragms(diaphragms: list[dict]) -> None:
                     master,
                     slaves,
                 )
+                # Record the (node, dof) pairs for all slave nodes
+                for slave in slaves:
+                    for dof in dia_dofs:
+                        constrained_dofs.add((slave, dof))
+
+    return constrained_dofs
 
 
-def _define_equal_dof_constraints(constraints: list[dict]) -> None:
+def _define_equal_dof_constraints(
+    constraints: list[dict],
+    diaphragm_constrained: set[tuple[int, int]] | None = None,
+) -> None:
     """Apply equalDOF constraints between node pairs.
 
     Each constraint links specified DOFs of a constrained node to match
     those of a retained node using ``ops.equalDOF``.
 
+    When a node is already constrained by ``rigidDiaphragm`` on certain
+    DOFs (tracked in *diaphragm_constrained*), those DOFs are skipped to
+    avoid the Transformation constraint handler silently dropping the
+    equalDOF constraint.
+
     Args:
         constraints: List of dicts with ``retained_node_id``,
             ``constrained_node_id``, and ``dofs``.
+        diaphragm_constrained: Optional set of ``(node_id, dof)`` pairs
+            already constrained by rigid diaphragms.
     """
+    dia_set = diaphragm_constrained or set()
+
     for c in constraints:
         retained = c["retained_node_id"]
         constrained = c["constrained_node_id"]
         dofs = c["dofs"]
-        ops.equalDOF(retained, constrained, *dofs)
-        logger.info(
-            "equalDOF: retained=%d constrained=%d dofs=%s",
-            retained, constrained, dofs
-        )
+
+        # Filter out DOFs already constrained by rigidDiaphragm
+        if dia_set:
+            filtered = [d for d in dofs if (constrained, d) not in dia_set]
+        else:
+            filtered = list(dofs)
+
+        if not filtered:
+            logger.info(
+                "equalDOF: retained=%d constrained=%d — all DOFs %s already "
+                "constrained by diaphragm, skipping",
+                retained, constrained, dofs,
+            )
+            continue
+
+        if len(filtered) < len(dofs):
+            skipped = [d for d in dofs if d not in filtered]
+            logger.info(
+                "equalDOF: retained=%d constrained=%d dofs=%s "
+                "(skipped %s — already in diaphragm)",
+                retained, constrained, filtered, skipped,
+            )
+        else:
+            logger.info(
+                "equalDOF: retained=%d constrained=%d dofs=%s",
+                retained, constrained, filtered,
+            )
+
+        ops.equalDOF(retained, constrained, *filtered)
 
 
 def _define_bearings(bearings: list[dict], ndm: int) -> None:
@@ -1687,7 +1790,9 @@ def generate_fixed_base_variant(model_data: dict) -> dict:
 
     Creates a deep copy of the model, removes all bearings, and sets the
     top nodes of those bearings (i.e. the structure base nodes) to fully
-    fixed boundary conditions.
+    fixed boundary conditions.  Orphaned ground nodes (bearing bottom
+    nodes) are removed along with any diaphragms or equalDOF constraints
+    that reference them.
 
     Args:
         model_data: A dict conforming to :class:`StructuralModelSchema`.
@@ -1704,18 +1809,44 @@ def generate_fixed_base_variant(model_data: dict) -> dict:
 
     # Collect top nodes from bearings (these become the new fixed base)
     bearing_top_nodes: set[int] = set()
+    bearing_bottom_nodes: set[int] = set()
     for bearing in variant.get("bearings", []):
-        top_node = bearing["nodes"][1]
-        bearing_top_nodes.add(top_node)
+        bearing_top_nodes.add(bearing["nodes"][1])
+        bearing_bottom_nodes.add(bearing["nodes"][0])
 
     # Remove all bearings
     variant["bearings"] = []
 
-    # Also remove bearing bottom nodes (ground nodes) from the model
-    # since they only served as bearing anchors
-    bearing_bottom_nodes: set[int] = set()
-    for bearing in model_data.get("bearings", []):
-        bearing_bottom_nodes.add(bearing["nodes"][0])
+    # Remove orphaned ground nodes that only served as bearing anchors.
+    # Keep any bottom node that is also referenced by an element.
+    element_nodes: set[int] = set()
+    for elem in variant.get("elements", []):
+        for nid in elem.get("nodes", []):
+            element_nodes.add(nid)
+
+    removable_nodes = bearing_bottom_nodes - element_nodes - bearing_top_nodes
+    if removable_nodes:
+        variant["nodes"] = [
+            n for n in variant.get("nodes", []) if n["id"] not in removable_nodes
+        ]
+
+    # Remove diaphragms whose master or constrained nodes are now gone
+    if removable_nodes and variant.get("diaphragms"):
+        variant["diaphragms"] = [
+            d
+            for d in variant["diaphragms"]
+            if d.get("master_node_id") not in removable_nodes
+            and not (set(d.get("constrained_node_ids", [])) & removable_nodes)
+        ]
+
+    # Remove equalDOF constraints referencing removed nodes
+    if removable_nodes and variant.get("equal_dof_constraints"):
+        variant["equal_dof_constraints"] = [
+            c
+            for c in variant["equal_dof_constraints"]
+            if c.get("retained_node_id") not in removable_nodes
+            and c.get("constrained_node_id") not in removable_nodes
+        ]
 
     # Fix the top nodes (structure base) with full fixity
     ndf = variant.get("model_info", {}).get("ndf", 3)
@@ -1724,9 +1855,11 @@ def generate_fixed_base_variant(model_data: dict) -> dict:
             node["fixity"] = [1] * ndf
 
     logger.info(
-        "Generated fixed-base variant: removed %d bearings, fixed nodes %s",
+        "Generated fixed-base variant: removed %d bearings, fixed nodes %s, "
+        "removed %d orphaned ground nodes",
         len(model_data.get("bearings", [])),
         bearing_top_nodes,
+        len(removable_nodes),
     )
 
     return variant

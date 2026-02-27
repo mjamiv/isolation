@@ -347,7 +347,7 @@ describe('modelStore — loadModelFromJSON', () => {
     expect(state.materials.size).toBe(1);
     expect(state.bearings.size).toBe(0);
     expect(state.loads.size).toBe(1);
-    expect(state.groundMotions.size).toBe(4); // defaults generated when JSON has none
+    expect(state.groundMotions.size).toBe(5); // defaults generated when JSON has none
   });
 
   it('replaces existing data when loading a new model', () => {

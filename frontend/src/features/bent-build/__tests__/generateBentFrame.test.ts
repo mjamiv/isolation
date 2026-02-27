@@ -661,16 +661,16 @@ describe('gravity loads', () => {
 // ===========================================================================
 
 describe('diaphragms', () => {
-  // Deck panel diaphragms only: (numGirders-1) × numSpans × chordsPerSpan quads
-  // Default: (6-1) × 3 × 1 = 15 deck panels
+  // Panel-based: ONE single deck diaphragm containing ALL deck nodes
+  // (support-line + chord nodes).  The deck slab acts as one rigid body.
 
-  it('deck panels for conventional 3-span', () => {
-    const model = gen(); // 6 girders, 3 spans
+  it('single deck diaphragm for conventional 3-span', () => {
+    const model = gen(); // 6 girders, 3 spans, 4 support lines
     expect(model.diaphragms).toBeDefined();
-    expect(model.diaphragms!).toHaveLength(15);
+    expect(model.diaphragms!).toHaveLength(1);
   });
 
-  it('diaphragm count scales with spans', () => {
+  it('still 1 diaphragm regardless of span count', () => {
     const model5 = gen({
       numSpans: 5,
       spanLengths: [60, 80, 100, 80, 60],
@@ -682,58 +682,29 @@ describe('diaphragms', () => {
         { type: 'FIX', guided: false },
       ],
     });
-
-    // (6-1) × 5 = 25 deck panels
-    expect(model5.diaphragms!).toHaveLength(25);
+    expect(model5.diaphragms!).toHaveLength(1);
   });
 
-  it('deck panel diaphragms have 4 nodes each (1 master + 3 constrained)', () => {
-    const model = gen();
-    model.diaphragms!.forEach((d) => {
-      expect(d.constrainedNodeIds).toHaveLength(3); // 4-node quad
-    });
+  it('deck diaphragm contains all support-line deck nodes', () => {
+    const model = gen(); // 4 support lines * 6 girders = 24 deck nodes
+    const dia = model.diaphragms![0]!;
+    // 1 master + 23 constrained = 24 total
+    expect(dia.constrainedNodeIds).toHaveLength(23);
   });
 
-  it('first deck panel master is deckNodeId(0, 0)', () => {
+  it('deck diaphragm uses deckNodeId(0, 0) as master', () => {
     const model = gen();
-    const firstDeck = model.diaphragms![0]!;
+    const dia = model.diaphragms![0]!;
     // deckNodeId(0, 0, 6) = 0*6 + 0 + 1 = 1
-    expect(firstDeck.masterNodeId).toBe(1);
-    // Constrained: deckNodeId(0,1)=2, deckNodeId(1,0)=7, deckNodeId(1,1)=8
-    expect(firstDeck.constrainedNodeIds).toEqual([2, 7, 8]);
+    expect(dia.masterNodeId).toBe(1);
   });
 
-  it('deck panels cover all girder pairs and spans', () => {
-    const model = gen(); // 6 girders, 3 spans
-    for (let span = 1; span <= 3; span++) {
-      for (let gi = 1; gi <= 5; gi++) {
-        const label = `Deck S${span} G${gi}-${gi + 1}`;
-        expect(model.diaphragms!.some((d) => d.label === label)).toBe(true);
-      }
-    }
-  });
-
-  it('no pier cap or abutment cap diaphragms', () => {
+  it('deck diaphragm label is "Deck"', () => {
     const model = gen();
-    const capDias = model.diaphragms!.filter((d) => d.label?.startsWith('Cap'));
-    expect(capDias).toHaveLength(0);
+    expect(model.diaphragms![0]!.label).toBe('Deck');
   });
 
-  it('isolated modes have same deck-only diaphragm count', () => {
-    const bearing = gen({ supportMode: 'isolated', isolationLevel: 'bearing' });
-    const base = gen({ supportMode: 'isolated', isolationLevel: 'base' });
-    expect(bearing.diaphragms!).toHaveLength(15);
-    expect(base.diaphragms!).toHaveLength(15);
-  });
-
-  it('perpDirection is 2 for all diaphragms', () => {
-    const model = gen();
-    model.diaphragms!.forEach((d) => {
-      expect(d.perpDirection).toBe(2);
-    });
-  });
-
-  it('chord-discretized spans multiply panel count', () => {
+  it('each deck node belongs to exactly one diaphragm', () => {
     const model = gen({
       alignment: {
         refElevation: 0,
@@ -744,8 +715,66 @@ describe('diaphragms', () => {
         chordsPerSpan: 3,
       },
     });
-    // (6-1) × 3 spans × 3 segments = 45 deck panels
-    expect(model.diaphragms!).toHaveLength(45);
+
+    const membership = new Map<number, number>();
+    model.diaphragms!.forEach((d) => {
+      const ids = [d.masterNodeId, ...d.constrainedNodeIds];
+      ids.forEach((id) => membership.set(id, (membership.get(id) ?? 0) + 1));
+    });
+
+    membership.forEach((count) => {
+      expect(count).toBe(1);
+    });
+  });
+
+  it('no pier cap or abutment cap diaphragms', () => {
+    const model = gen();
+    const capDias = model.diaphragms!.filter((d) => d.label?.startsWith('Cap'));
+    expect(capDias).toHaveLength(0);
+  });
+
+  it('isolated modes have same single deck diaphragm', () => {
+    const bearing = gen({ supportMode: 'isolated', isolationLevel: 'bearing' });
+    const base = gen({ supportMode: 'isolated', isolationLevel: 'base' });
+    expect(bearing.diaphragms!).toHaveLength(1);
+    expect(base.diaphragms!).toHaveLength(1);
+  });
+
+  it('perpDirection is 2 for all diaphragms', () => {
+    const model = gen();
+    model.diaphragms!.forEach((d) => {
+      expect(d.perpDirection).toBe(2);
+    });
+  });
+
+  it('chord-discretized spans include chord nodes in single diaphragm', () => {
+    const model = gen({
+      alignment: {
+        refElevation: 0,
+        entryBearing: 0,
+        entryGrade: 0,
+        horizontalPIs: [],
+        verticalPVIs: [],
+        chordsPerSpan: 3,
+      },
+    });
+    // Still 1 diaphragm
+    expect(model.diaphragms!).toHaveLength(1);
+    const dia = model.diaphragms![0]!;
+    // 4 support lines * 6 girders = 24 support-line nodes
+    // + 3 spans * (3-1) chord stations * 6 girders = 36 chord nodes
+    // Total = 60 nodes = 1 master + 59 constrained
+    expect(dia.constrainedNodeIds).toHaveLength(59);
+  });
+
+  it('includeDiaphragms=false produces zero diaphragms', () => {
+    const model = gen({ includeDiaphragms: false });
+    expect(model.diaphragms).toHaveLength(0);
+  });
+
+  it('includeDiaphragms defaults to true', () => {
+    const model = gen();
+    expect(model.diaphragms!).toHaveLength(1);
   });
 });
 
@@ -762,13 +791,13 @@ describe('conventional FIX', () => {
     expect(capNodes).toHaveLength(12);
   });
 
-  it('FIX pier: equalDOF with all 6 DOFs (monolithic connection)', () => {
+  it('FIX pier: equalDOF with translation DOFs only (pinned connection)', () => {
     const model = gen();
     expect(model.equalDofConstraints).toBeDefined();
     // 2 FIX piers * 6 girders = 12 equalDOF constraints
     expect(model.equalDofConstraints!).toHaveLength(12);
     model.equalDofConstraints!.forEach((eq) => {
-      expect(eq.dofs).toEqual([1, 2, 3, 4, 5, 6]);
+      expect(eq.dofs).toEqual([1, 2, 3]);
     });
   });
 
@@ -792,7 +821,7 @@ describe('conventional FIX', () => {
     expect(model.bearings).toHaveLength(0);
   });
 
-  it('all-FIX bridge has equalDOF constraints with 6 DOFs each', () => {
+  it('all-FIX bridge has equalDOF constraints with translation DOFs each', () => {
     const model = gen({
       numSpans: 4,
       spanLengths: [80, 100, 100, 80],
@@ -808,7 +837,7 @@ describe('conventional FIX', () => {
     // 3 piers * 6 girders = 18
     expect(model.equalDofConstraints!).toHaveLength(18);
     model.equalDofConstraints!.forEach((eq) => {
-      expect(eq.dofs).toEqual([1, 2, 3, 4, 5, 6]);
+      expect(eq.dofs).toEqual([1, 2, 3]);
     });
   });
 });
@@ -861,7 +890,10 @@ describe('conventional EXP', () => {
     });
 
     expect(model.equalDofConstraints).toBeDefined();
-    model.equalDofConstraints!.forEach((eq) => {
+    const pierConstraints = model.equalDofConstraints!.filter((eq) =>
+      eq.label?.startsWith('EqDOF P'),
+    );
+    pierConstraints.forEach((eq) => {
       expect(eq.dofs).toEqual([2]);
     });
   });
@@ -875,18 +907,46 @@ describe('conventional EXP', () => {
     });
 
     expect(model.equalDofConstraints).toBeDefined();
-    model.equalDofConstraints!.forEach((eq) => {
+    const pierConstraints = model.equalDofConstraints!.filter((eq) =>
+      eq.label?.startsWith('EqDOF P'),
+    );
+    pierConstraints.forEach((eq) => {
       expect(eq.dofs).toEqual([2, 3]);
     });
   });
 
-  it('equalDOF count = numGirders * numEXPPiers', () => {
+  it('all-EXP adds one longitudinal anchor equalDOF', () => {
     const model = gen(expParams);
-    // 2 EXP piers * 6 girders = 12
-    expect(model.equalDofConstraints!).toHaveLength(12);
+    // 2 EXP piers * 6 girders + 1 anchor = 13
+    expect(model.equalDofConstraints!).toHaveLength(13);
+
+    const anchor = model.equalDofConstraints!.find((eq) => eq.label === 'EqDOF Anchor P1 G1');
+    expect(anchor).toBeDefined();
+    expect(anchor!.dofs).toEqual([1]);
   });
 
-  it('mixed FIX/EXP: FIX gets 6 DOFs, EXP gets 2 DOFs', () => {
+  it('single-column all-EXP auto-fixes Pier 1 for stability', () => {
+    const model = gen({
+      numGirders: 8,
+      numBentColumns: 1,
+      pierSupports: [
+        { type: 'EXP', guided: false },
+        { type: 'EXP', guided: false },
+      ],
+    });
+
+    const anchors = model.equalDofConstraints!.filter((eq) => eq.label?.startsWith('EqDOF Anchor'));
+    expect(anchors).toHaveLength(0);
+
+    const p1Constraints = model.equalDofConstraints!.filter((eq) => eq.label?.includes('P1'));
+    expect(p1Constraints).toHaveLength(8);
+    p1Constraints.forEach((eq) => {
+      expect(eq.dofs).toEqual([1, 2, 3]);
+      expect(eq.label).toContain('[Auto-FIX]');
+    });
+  });
+
+  it('mixed FIX/EXP: FIX gets 3 DOFs, EXP gets 2 DOFs', () => {
     const model = gen({
       pierSupports: [
         { type: 'FIX', guided: false },
@@ -898,13 +958,13 @@ describe('conventional EXP', () => {
     // Both piers get equalDOF: 2 piers * 6 girders = 12 constraints
     expect(model.equalDofConstraints!).toHaveLength(12);
 
-    // P1 (FIX) gets 6 DOFs, P2 (EXP) gets [2]
+    // P1 (FIX) gets [1,2,3] DOFs (pinned), P2 (EXP) gets [2]
     const p1Constraints = model.equalDofConstraints!.filter((eq) => eq.label?.includes('P1'));
     const p2Constraints = model.equalDofConstraints!.filter((eq) => eq.label?.includes('P2'));
 
     expect(p1Constraints).toHaveLength(6);
     p1Constraints.forEach((eq) => {
-      expect(eq.dofs).toEqual([1, 2, 3, 4, 5, 6]);
+      expect(eq.dofs).toEqual([1, 2, 3]);
     });
 
     expect(p2Constraints).toHaveLength(6);

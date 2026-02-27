@@ -37,6 +37,6 @@ describe('App — auto-load', () => {
 
   it('populates ground motions after mount', () => {
     render(<App />);
-    expect(getState().groundMotions.size).toBe(4);
+    expect(getState().groundMotions.size).toBe(5);
   });
 });

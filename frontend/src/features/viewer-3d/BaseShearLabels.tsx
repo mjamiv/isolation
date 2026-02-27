@@ -39,8 +39,10 @@ interface ArrowData {
   x: number;
   y: number;
   z: number;
-  rx: number;
-  rz: number;
+  /** Horizontal reaction component along the model's X-axis. */
+  hx: number;
+  /** Horizontal reaction component along the model's horizontal-Z (Y-up) or Y (Z-up) axis. */
+  hz: number;
   shear: number;
 }
 
@@ -63,8 +65,8 @@ function ShearArrow({
   color: THREE.Color;
   forceUnit: string;
 }) {
-  const dirX = item.rx;
-  const dirZ = item.rz;
+  const dirX = item.hx;
+  const dirZ = item.hz;
   const mag = Math.sqrt(dirX * dirX + dirZ * dirZ);
 
   // Normalized horizontal direction
@@ -119,7 +121,7 @@ function ShearArrow({
 
 function useBaseShearData() {
   const nodes = useModelStore((s) => s.nodes);
-  const elements = useModelStore((s) => s.elements);
+  const bearings = useModelStore((s) => s.bearings);
   const model = useModelStore((s) => s.model);
   const showBaseShearLabels = useDisplayStore((s) => s.showBaseShearLabels);
   const analysisResults = useAnalysisStore((s) => s.results);
@@ -138,35 +140,42 @@ function useBaseShearData() {
     }
     if (!reactions) return [];
 
-    // Column base nodes: restrained nodes at the I-end of column elements
-    const columnBaseNodeIds = new Set<number>();
-    for (const el of elements.values()) {
-      if (el.type === 'column') {
-        const nodeI = nodes.get(el.nodeI);
-        if (nodeI && nodeI.restraint.some((r) => r)) {
-          columnBaseNodeIds.add(el.nodeI);
-        }
+    // Z-up models (with bearings) have reaction layout [Fx, Fy, Fz, ...]
+    // where Fz is vertical. Y-up models have [Fx, Fy, Fz, ...] where Fy
+    // is vertical.  Pick the two horizontal DOF indices accordingly.
+    const isZUp = bearings.size > 0;
+    const hIdx0 = 0; // Fx is always horizontal
+    const hIdx1 = isZUp ? 1 : 2; // Fy (Z-up) or Fz (Y-up)
+
+    // Collect fully-fixed base nodes: nodes where all three translational
+    // DOFs are restrained.  This catches column bases (fixed models) AND
+    // ground nodes below bearings (isolated models).
+    const baseNodeIds = new Set<number>();
+    for (const node of nodes.values()) {
+      const r = node.restraint;
+      if (r[0] && r[1] && r[2]) {
+        baseNodeIds.add(node.id);
       }
     }
 
     const items: ArrowData[] = [];
     for (const [nodeIdStr, reaction] of Object.entries(reactions)) {
       const nodeId = Number(nodeIdStr);
-      if (!columnBaseNodeIds.has(nodeId)) continue;
+      if (!baseNodeIds.has(nodeId)) continue;
 
       const node = nodes.get(nodeId);
       if (!node) continue;
 
-      const rx = Array.isArray(reaction) ? (reaction[0] ?? 0) : 0;
-      const rz = Array.isArray(reaction) ? (reaction[2] ?? 0) : 0;
-      const shear = Math.sqrt(rx * rx + rz * rz);
+      const hx = Array.isArray(reaction) ? (reaction[hIdx0] ?? 0) : 0;
+      const hz = Array.isArray(reaction) ? (reaction[hIdx1] ?? 0) : 0;
+      const shear = Math.sqrt(hx * hx + hz * hz);
 
       if (shear > 0.01) {
-        items.push({ nodeId, x: node.x, y: node.y, z: node.z, rx, rz, shear });
+        items.push({ nodeId, x: node.x, y: node.y, z: node.z, hx, hz, shear });
       }
     }
     return items;
-  }, [showBaseShearLabels, analysisResults, model, nodes, elements]);
+  }, [showBaseShearLabels, analysisResults, model, nodes, bearings]);
 }
 
 // ── 3D Arrows (renders inside Canvas) ───────────────────────────────────

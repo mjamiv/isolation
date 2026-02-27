@@ -64,6 +64,7 @@ export interface BentBuildParams {
   aashtoLLPercent: number; // 0-100
   slopePercent: number; // -8 to 8, grade slope %
   alignment?: AlignmentParams; // COGO alignment (undefined = straight)
+  includeDiaphragms: boolean; // default true — rigid deck diaphragm
 }
 
 export const DEFAULT_DEAD_LOADS: DeadLoadComponents = {
@@ -93,4 +94,5 @@ export const DEFAULT_BENT_BUILD_PARAMS: BentBuildParams = {
   deadLoads: { ...DEFAULT_DEAD_LOADS },
   aashtoLLPercent: 0,
   slopePercent: 0,
+  includeDiaphragms: true,
 };

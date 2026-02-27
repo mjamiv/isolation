@@ -26,7 +26,12 @@ export function useRunComparison() {
         setComparisonId(result.comparisonId);
         return result;
       },
-      onStart: () => startComparison(),
+      onStart: () => {
+        startComparison();
+        useToastStore
+          .getState()
+          .addToast('info', 'Comparison started. Check the Compare tab for progress.');
+      },
       onResult: (result: ComparisonRun) => {
         setResults(result);
 

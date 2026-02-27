@@ -1,36 +1,31 @@
 # MEMORY
 
 ## Completed Work
-- Fixed 3D force-diagram rendering to use station-based member results from discretized solver output.
-- Updated force-diagram geometry to render contiguous per-station strips (not single per-element quads), so moment/shear diagrams remain continuous along members.
-- Aligned force-diagram orientation logic with backend local-axis (`vecxz`) conventions, including z-up isolated model mapping.
-- Added deformed-follow behavior for force diagrams so they track displaced geometry when deformation display is enabled.
-- Added small validation models:
-  - `frontend/public/models/two-story-2x2-fixed.json`
-  - `frontend/public/models/two-story-2x2-isolated.json`
-- Added preset entries for these models in `frontend/src/types/modelJSON.ts`.
-- Updated results panels to use full solver force vectors:
-  - Static panel now supports 12-component 3D end-force vectors.
-  - Time-history element plot now tracks i/j end traces with correct component selection.
-- Fixed z-up modal mode-shape component mapping in `ModeShapeAnimation`.
+- Fixed time-history comparison flow end-to-end (4 root causes):
+  1. No user feedback on comparison start — added toast notification
+  2. `VariantResult.pushoverResults` was required but absent for TH — made optional with null guards
+  3. Backend `_run_variant_time_history()` returned zero peak metrics — added computation from raw TH data
+  4. `generate_fixed_base_variant()` left orphaned nodes/diaphragms/constraints — added cleanup logic
+- Replaced bent build strip diaphragms with single deck-level diaphragm (all deck nodes in one rigid body)
+- Added `includeDiaphragms` boolean toggle to BentBuildParams + UI checkbox (default: true)
+- Improved TFP bearing sizing in bent build: lower friction (inner 0.02/0.06, outer 0.04/0.10), larger disp caps [6,25,6], weight-scaled vertStiffness
+- Added 5th ground motion "Design 50 (Serviceability)" at ~0.10g for low-intensity testing
+- Reordered all GMs by increasing peak acceleration (0.10g → 0.15g → 0.25g → 0.35g → 0.50g)
 
 ## Key Decisions / Tradeoffs
-- Chose station-by-station assembly from discretized sub-elements to prioritize physical continuity and fidelity over minimal rendering cost.
-- For 3D shear/moment component selection, used dominant-magnitude component for clear visualization while still reading exact solver components.
-- Kept large-model diagram gating (selection required above threshold) to avoid performance regressions.
+- Single deck diaphragm (not per-span panels) chosen for simplicity — the deck slab acts as one rigid body in-plane
+- Bearing friction reduced to improve sliding initiation under moderate earthquakes while maintaining stability
+- Displacement capacities doubled ([3,18,3] → [6,25,6]) to provide headroom for 0.5g+ events
+- Weight-scaled vertical stiffness (`Math.max(9000, weight*50)`) ensures heavier bearings get proportionally stiffer support
 
 ## Current State
-- Frontend checks are green after changes:
-  - `npm run lint`
-  - `npm test -- --run` (207/207 passing)
-  - `npm run build`
-- Repo contains backend and frontend updates in progress on `main` with new model files added.
-- README updated to reflect new presets and station-based force-diagram behavior.
+- All tests pass: 471 frontend (22 suites), 128 backend (2 skipped), clean TypeScript build
+- Comparison works for both pushover AND time-history analysis types
+- 5 ground motions available, ordered by intensity
+- Bent build diaphragms now cover full deck as single rigid body with optional disable
 
 ## Next Steps
-- Perform manual visual QA in browser on:
-  - 2-story 2x2 fixed/isolated presets
-  - 20-story tower
-  - 5-story office fixed/isolated
-  for static, modal, time-history, and pushover force diagram orientation/continuity.
-- If any remaining orientation mismatches are found, expose explicit local-axis vectors from backend results to remove viewer-side inference.
+- Run live browser QA on comparison feature (time-history with isolated model)
+- Test bent build with diaphragms disabled vs enabled to verify solver behavior
+- Run integration tests to verify comparison + new GM work end-to-end through real OpenSeesPy
+- Consider per-span panel diaphragms if single-deck approach over-constrains long multi-span bridges

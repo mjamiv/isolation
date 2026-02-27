@@ -121,6 +121,9 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
   });
   const [aashtoLLPercent, setAashtoLLPercent] = useState(DEFAULT_BENT_BUILD_PARAMS.aashtoLLPercent);
   const [slopePercent, setSlopePercent] = useState(DEFAULT_BENT_BUILD_PARAMS.slopePercent);
+  const [includeDiaphragms, setIncludeDiaphragms] = useState(
+    DEFAULT_BENT_BUILD_PARAMS.includeDiaphragms,
+  );
   const [showDeadLoads, setShowDeadLoads] = useState(false);
 
   // Alignment state
@@ -222,6 +225,7 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
       aashtoLLPercent,
       slopePercent,
       alignment: alignmentParam,
+      includeDiaphragms,
     }),
     [
       numSpans,
@@ -239,6 +243,7 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
       aashtoLLPercent,
       slopePercent,
       alignmentParam,
+      includeDiaphragms,
     ],
   );
 
@@ -666,6 +671,16 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
                   ]}
                 />
               )}
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={includeDiaphragms}
+                  onChange={(e) => setIncludeDiaphragms(e.target.checked)}
+                  className="accent-yellow-500"
+                />
+                <span className="text-xs text-gray-300">Include Rigid Diaphragms</span>
+              </label>
             </Section>
 
             {/* Dead Loads (collapsible) */}

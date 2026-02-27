@@ -58,8 +58,10 @@ export function computeDriftProfile(
     const avgDisp = (result: VariantResult, nodeIds: number[]): number => {
       // nodeDisplacements lives alongside pushoverResults on the variant
       const nodeDisplacements = (
-        result as unknown as { pushoverResults: { nodeDisplacements?: Record<string, number[]> } }
-      ).pushoverResults.nodeDisplacements;
+        result as unknown as {
+          pushoverResults?: { nodeDisplacements?: Record<string, number[]> } | null;
+        }
+      ).pushoverResults?.nodeDisplacements;
       if (!nodeDisplacements) return 0;
 
       let sum = 0;
@@ -168,6 +170,6 @@ export function computeComparisonSummary(
     driftProfiles: computeDriftProfile(isolated, fixedBase, nodes),
     baseShear: computeBaseShear(isolated, fixedBase),
     bearingDemands: computeBearingDemands(isolated, bearings),
-    hingeDistribution: countHingesByLevel(isolated.hingeStates, fixedBase.hingeStates),
+    hingeDistribution: countHingesByLevel(isolated.hingeStates ?? [], fixedBase.hingeStates ?? []),
   };
 }
