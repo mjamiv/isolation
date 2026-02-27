@@ -44,7 +44,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Mode shape visualization** — 3D animated mode shapes using `useFrame()` sinusoidal oscillation; mode selector dropdown and Visualize toggle in ModalResults panel
 - **Deformed shape rendering** — semi-transparent blue overlay showing displaced node/member positions for static and time-history results, scaled by user-configurable scale factor
 - **Plastic hinge visualization** — color-coded spheres at element ends showing IO/LS/CP performance levels (7 states from elastic/gray to collapse/black)
-- **Time-history playback** — play/pause, speed control (0.25x-4x), time scrub slider, and `useFrame`-based step driver synchronized with 3D viewer
+- **Time-history playback** — industry-grade transport controls (play/pause, step forward/back, skip to start/end, loop toggle) with custom scrubber timeline, speed pills (0.25x-4x), keyboard shortcuts (Space, Arrow keys, Home/End, L), and `useFrame`-based step driver synchronized with 3D viewer
 - **Enhanced backend results** — static results include deformed shape data; modal results include real mass participation ratios; pushover returns capacity curve, hinge states, and deformed shape
 
 ### Phase 5 — Ductile vs Isolated Comparison, Lambda Factors & Summary Dashboards
@@ -59,7 +59,7 @@ Phases 1 through 5 are complete. The app provides:
   - Bearing demand/capacity ratios (color-coded green/yellow/red with D/C table)
   - Hinge distribution (IO/LS/CP counts grouped by variant)
 - **3D overlay visualization** — dual deformed shapes in the 3D viewer (blue for isolated, orange for fixed-base) toggled from the comparison panel
-- **Time-history comparison** — full side-by-side time-history comparison with peak base shear and roof displacement metrics computed from raw response data, toast notification feedback, and optional chaining for type-safe variant access
+- **Time-history comparison** — full side-by-side time-history comparison with reaction-based peak base shear (computed from `ops.nodeReaction` at fixed nodes) and roof displacement metrics, toast notification feedback, and optional chaining for type-safe variant access
 - **AnalysisDialog integration** — "Run Comparison" checkbox appears when model has bearings and pushover or time-history is selected; lambda min/max inputs toggle below for pushover
 
 ### Auto-Load & Default Analysis Setup
@@ -217,7 +217,8 @@ isolation/
         bent-build/  # BentBuildDialog, generateBentFrame, bentSectionTables, bentBuildTypes, bentLoadCalc
         controls/    # ViewerControls (display toggles, scale, color map)
         analysis/    # AnalysisDialog, useRunAnalysis, useRunComparison, useRunAsync hooks
-        results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults, PushoverResults, PlaybackControls
+        playback/    # PlaybackControls (shared transport controls, scrubber, keyboard shortcuts)
+        results/     # ResultsPanel, StaticResults, ModalResults, TimeHistoryResults, PushoverResults
         comparison/  # ComparisonPanel, DriftProfileChart, BaseShearComparison, BearingDemandCapacity, HingeDistribution
       services/      # API client, WebSocket client, model serializer, comparison metrics
       stores/        # Zustand stores (modelStore, displayStore, analysisStore, comparisonStore, toastStore)

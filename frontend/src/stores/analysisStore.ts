@@ -26,6 +26,7 @@ interface AnalysisState {
   currentTimeStep: number;
   isPlaying: boolean;
   playbackSpeed: number; // multiplier: 0.25, 0.5, 1, 2, 4
+  loopPlayback: boolean;
   selectedModeNumber: number | null;
   error: string | null;
   /** Per-model result cache keyed by model name. */
@@ -47,6 +48,7 @@ interface AnalysisState {
   togglePlayback: () => void;
   setPlaybackSpeed: (speed: number) => void;
   setIsPlaying: (playing: boolean) => void;
+  setLoopPlayback: (loop: boolean) => void;
   setSelectedModeNumber: (mode: number | null) => void;
 }
 
@@ -63,6 +65,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   currentTimeStep: 0,
   isPlaying: false,
   playbackSpeed: 1,
+  loopPlayback: true,
   selectedModeNumber: null,
   error: null,
   resultCache: new Map(),
@@ -107,6 +110,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       results: null,
       currentTimeStep: 0,
       isPlaying: false,
+      loopPlayback: true,
       selectedModeNumber: null,
       error: null,
     }),
@@ -129,6 +133,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       progress: 100,
       currentTimeStep: 0,
       isPlaying: false,
+      loopPlayback: true,
       selectedModeNumber: null,
       error: null,
     });
@@ -142,6 +147,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
   setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
 
   setIsPlaying: (playing) => set({ isPlaying: playing }),
+
+  setLoopPlayback: (loop) => set({ loopPlayback: loop }),
 
   setSelectedModeNumber: (mode) => set({ selectedModeNumber: mode }),
 }));

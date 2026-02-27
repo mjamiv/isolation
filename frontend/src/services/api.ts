@@ -232,7 +232,7 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
         maxBearingStep = i;
       }
 
-      baseShearAtStep += Math.abs(fx);
+      baseShearAtStep += fx;
       bearingStep[Number(bid)] = {
         displacement: [dx, dy],
         force: [fx, fy],
@@ -243,8 +243,8 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
       };
     }
 
-    if (baseShearAtStep > maxBaseShear) {
-      maxBaseShear = baseShearAtStep;
+    if (Math.abs(baseShearAtStep) > maxBaseShear) {
+      maxBaseShear = Math.abs(baseShearAtStep);
       maxBaseShearStep = i;
     }
 
@@ -459,6 +459,19 @@ export async function runComparison(
         variant.timeHistoryResults = normalizeTimeHistoryResults(
           variant.timeHistoryResults as RawMap,
         );
+        // The backend computes peak base shear from node reactions (correct
+        // net shear).  The frontend normalization sums bearing forces which
+        // can be inaccurate (absolute sum inflates multi-bearing models, and
+        // zero for fixed-base with no bearings).  Always prefer the backend
+        // reaction-based value when available.
+        const th = variant.timeHistoryResults as TimeHistoryResults;
+        if (
+          th.peakValues?.maxBaseShear != null &&
+          typeof variant.maxBaseShear === 'number' &&
+          variant.maxBaseShear > 0
+        ) {
+          th.peakValues.maxBaseShear.value = variant.maxBaseShear as number;
+        }
       }
     }
   }

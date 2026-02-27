@@ -16,6 +16,12 @@ function formatShear(v: number): string {
   return v.toFixed(2);
 }
 
+function forceUnitFromUnits(units: string): string {
+  if (units.startsWith('kN')) return 'kN';
+  if (units.startsWith('lb')) return 'lb';
+  return 'kip';
+}
+
 // ── Color interpolation ─────────────────────────────────────────────────
 
 const COLOR_LOW = new THREE.Color('#facc15'); // yellow-400
@@ -202,17 +208,14 @@ export function BaseShearLabels() {
 
   if (arrowData.length === 0 || !arrowSizing) return null;
 
-  const units = model?.units ?? 'kip-in';
-  const forceUnit = units.startsWith('kN') ? 'kN' : units.startsWith('lb') ? 'lb' : 'kip';
+  const forceUnit = forceUnitFromUnits(model?.units ?? 'kip-in');
 
   return (
     <group>
       {arrowData.map((item) => {
         const ratio = item.shear / arrowSizing.maxShear;
-        const arrowLength = Math.max(
-          arrowSizing.baseLength,
-          arrowSizing.baseLength + (arrowSizing.maxArrowLength - arrowSizing.baseLength) * ratio,
-        );
+        const arrowLength =
+          arrowSizing.baseLength + (arrowSizing.maxArrowLength - arrowSizing.baseLength) * ratio;
         const color = shearColor(ratio);
 
         return (
@@ -241,8 +244,7 @@ export function BaseShearSummary() {
   if (arrowData.length === 0) return null;
 
   const totalShear = arrowData.reduce((sum, d) => sum + d.shear, 0);
-  const units = model?.units ?? 'kip-in';
-  const forceUnit = units.startsWith('kN') ? 'kN' : units.startsWith('lb') ? 'lb' : 'kip';
+  const forceUnit = forceUnitFromUnits(model?.units ?? 'kip-in');
   const count = arrowData.length;
 
   return (

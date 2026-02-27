@@ -762,14 +762,19 @@ def run_time_history(
 
         # Initialise per-node containers
         free_nodes: list[int] = []
+        fixed_nodes: list[int] = []
         for node in model_data.get("nodes", []):
             nid = node["id"]
             fixity = node.get("fixity", [])
             is_fixed = fixity and all(f_val == 1 for f_val in fixity)
-            if not is_fixed:
+            if is_fixed:
+                fixed_nodes.append(nid)
+            else:
                 free_nodes.append(nid)
                 nkey = str(nid)
                 node_disp_history[nkey] = {str(d + 1): [] for d in range(ndf)}
+
+        peak_base_shear = 0.0
 
         # Initialise per-bearing containers
         for bearing in model_data.get("bearings", []):
@@ -866,6 +871,14 @@ def run_time_history(
                         _to_float(ops.nodeDisp(nid, dof + 1), 0.0)
                     )
 
+            # Base shear from reactions at fixed nodes (needed for non-bearing models)
+            if fixed_nodes:
+                ops.reactions()
+                step_shear = 0.0
+                for fnid in fixed_nodes:
+                    step_shear += abs(_to_float(ops.nodeReaction(fnid, 1), 0.0))
+                peak_base_shear = max(peak_base_shear, step_shear)
+
             for elem in model_data.get("elements", []):
                 ekey = str(elem["id"])
                 ehist = element_force_history[ekey]
@@ -935,6 +948,7 @@ def run_time_history(
             "node_displacements": node_disp_history,
             "element_forces": element_force_history,
             "bearing_responses": bearing_resp_history,
+            "peak_base_shear": peak_base_shear,
             "discretization_map": disc_map,
             "internal_node_coords": {str(k): v for k, v in int_coords.items()},
         }

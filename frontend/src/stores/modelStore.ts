@@ -68,6 +68,29 @@ const DEFAULT_BEARING_WEIGHT = 150;
 
 // ── Ground motion generators ─────────────────────────────────────────
 
+/** Scale factor converting g to in/s^2 for kip-in units. */
+const G_TO_IN_S2 = 386.4;
+
+/** Normalize raw acceleration to a target PGA and build a GroundMotionRecord. */
+function buildGM(
+  id: number,
+  name: string,
+  dt: number,
+  rawAcc: number[],
+  targetPGA: number,
+): GroundMotionRecord {
+  const peak = Math.max(...rawAcc.map(Math.abs));
+  const scale = peak > 0 ? targetPGA / peak : 1;
+  return {
+    id,
+    name,
+    dt,
+    acceleration: rawAcc.map((a) => a * scale),
+    direction: 1,
+    scaleFactor: G_TO_IN_S2,
+  };
+}
+
 function generateServiceability(): GroundMotionRecord {
   const dt = 0.02;
   const n = 500; // 10 seconds
@@ -89,17 +112,7 @@ function generateServiceability(): GroundMotionRecord {
     }
     acc.push(env * sig);
   }
-  // Normalize to ~0.10g peak
-  const peak = Math.max(...acc.map(Math.abs));
-  const scale = 0.1 / peak;
-  return {
-    id: GM_IDS.SERVICEABILITY,
-    name: 'Design 50 (Serviceability)',
-    dt,
-    acceleration: acc.map((a) => a * scale),
-    direction: 1,
-    scaleFactor: 386.4, // g → in/s² for kip-in units
-  };
+  return buildGM(GM_IDS.SERVICEABILITY, 'Design 50 (Serviceability)', dt, acc, 0.1);
 }
 
 function generateElCentro(): GroundMotionRecord {
@@ -121,17 +134,7 @@ function generateElCentro(): GroundMotionRecord {
       0.05 * Math.sin(2 * Math.PI * 8.1 * t + 2.1);
     acc.push(env * sig);
   }
-  // Normalize to ~0.35g peak
-  const peak = Math.max(...acc.map(Math.abs));
-  const scale = 0.35 / peak;
-  return {
-    id: GM_IDS.EL_CENTRO,
-    name: 'El Centro 1940 (Approx)',
-    dt,
-    acceleration: acc.map((a) => a * scale),
-    direction: 1,
-    scaleFactor: 386.4, // g → in/s² for kip-in units
-  };
+  return buildGM(GM_IDS.EL_CENTRO, 'El Centro 1940 (Approx)', dt, acc, 0.35);
 }
 
 function generateNearFaultPulse(): GroundMotionRecord {
@@ -147,17 +150,7 @@ function generateNearFaultPulse(): GroundMotionRecord {
     const envelope = Math.exp(-tau * tau);
     acc.push(envelope * Math.cos((2 * Math.PI * t) / tp));
   }
-  // Normalize to ~0.5g peak
-  const peak = Math.max(...acc.map(Math.abs));
-  const scale = 0.5 / peak;
-  return {
-    id: GM_IDS.NEAR_FAULT,
-    name: 'Near-Fault Pulse',
-    dt,
-    acceleration: acc.map((a) => a * scale),
-    direction: 1,
-    scaleFactor: 386.4, // g → in/s² for kip-in units
-  };
+  return buildGM(GM_IDS.NEAR_FAULT, 'Near-Fault Pulse', dt, acc, 0.5);
 }
 
 function generateHarmonicSweep(): GroundMotionRecord {
@@ -178,17 +171,7 @@ function generateHarmonicSweep(): GroundMotionRecord {
     else env = 1;
     acc.push(env * Math.sin(phase));
   }
-  // Normalize to 0.25g peak
-  const peak = Math.max(...acc.map(Math.abs));
-  const scale = 0.25 / peak;
-  return {
-    id: GM_IDS.HARMONIC,
-    name: 'Harmonic Sweep',
-    dt,
-    acceleration: acc.map((a) => a * scale),
-    direction: 1,
-    scaleFactor: 386.4, // g → in/s² for kip-in units
-  };
+  return buildGM(GM_IDS.HARMONIC, 'Harmonic Sweep', dt, acc, 0.25);
 }
 
 function generateLongDurationSubduction(): GroundMotionRecord {
@@ -210,17 +193,7 @@ function generateLongDurationSubduction(): GroundMotionRecord {
       0.03 * Math.sin(2 * Math.PI * 2.0 * t + 1.5);
     acc.push(env * sig);
   }
-  // Normalize to ~0.15g peak
-  const peak = Math.max(...acc.map(Math.abs));
-  const scale = 0.15 / peak;
-  return {
-    id: GM_IDS.SUBDUCTION,
-    name: 'Long-Duration Subduction',
-    dt,
-    acceleration: acc.map((a) => a * scale),
-    direction: 1,
-    scaleFactor: 386.4, // g → in/s² for kip-in units
-  };
+  return buildGM(GM_IDS.SUBDUCTION, 'Long-Duration Subduction', dt, acc, 0.15);
 }
 
 // ── Store interface ───────────────────────────────────────────────────

@@ -126,31 +126,12 @@ function buildCollinearStrip(
   geometry.setIndex([0, 1, 2, 0, 2, 3]);
 
   // Edge geometry: 4 line segments forming one closed rectangle
+  // prettier-ignore
   const edgeVerts = new Float32Array([
-    c0x,
-    avgY,
-    c0z,
-    c1x,
-    avgY,
-    c1z, // top edge
-    c1x,
-    avgY,
-    c1z,
-    c2x,
-    avgY,
-    c2z, // right edge
-    c2x,
-    avgY,
-    c2z,
-    c3x,
-    avgY,
-    c3z, // bottom edge
-    c3x,
-    avgY,
-    c3z,
-    c0x,
-    avgY,
-    c0z, // left edge
+    c0x, avgY, c0z,  c1x, avgY, c1z,   // top edge
+    c1x, avgY, c1z,  c2x, avgY, c2z,   // right edge
+    c2x, avgY, c2z,  c3x, avgY, c3z,   // bottom edge
+    c3x, avgY, c3z,  c0x, avgY, c0z,   // left edge
   ]);
   const edgeGeometry = new THREE.BufferGeometry();
   edgeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(edgeVerts, 3));

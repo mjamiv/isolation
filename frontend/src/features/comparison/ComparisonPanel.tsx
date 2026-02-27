@@ -2,10 +2,10 @@ import { lazy, Suspense, useMemo } from 'react';
 import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useComparisonStore } from '@/stores/comparisonStore';
-import { useAnalysisStore } from '@/stores/analysisStore';
 import { useModelStore } from '@/stores/modelStore';
 import { useDisplayStore } from '@/stores/displayStore';
 import { computeComparisonSummary } from '@/services/comparisonMetrics';
+import { PlaybackControls } from '@/features/playback/PlaybackControls';
 import { DriftProfileChart } from './DriftProfileChart';
 import { BaseShearComparison } from './BaseShearComparison';
 import { BearingDemandCapacity } from './BearingDemandCapacity';
@@ -37,19 +37,11 @@ function AccordionItem({
   );
 }
 
-const PLAYBACK_SPEEDS = [0.25, 0.5, 1, 2, 4];
-
 function TimeHistoryComparisonPanel() {
   const isolated = useComparisonStore((s) => s.isolated);
   const fixedBase = useComparisonStore((s) => s.fixedBase);
   const showComparisonOverlay = useDisplayStore((s) => s.showComparisonOverlay);
   const setShowComparisonOverlay = useDisplayStore((s) => s.setShowComparisonOverlay);
-  const isPlaying = useAnalysisStore((s) => s.isPlaying);
-  const playbackSpeed = useAnalysisStore((s) => s.playbackSpeed);
-  const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
-  const togglePlayback = useAnalysisStore((s) => s.togglePlayback);
-  const setPlaybackSpeed = useAnalysisStore((s) => s.setPlaybackSpeed);
-  const setTimeStep = useAnalysisStore((s) => s.setTimeStep);
 
   if (!isolated || !fixedBase) {
     return <div className="p-3 text-xs text-gray-500">Comparison data incomplete.</div>;
@@ -67,8 +59,10 @@ function TimeHistoryComparisonPanel() {
   const dispReduction = fbPeakDisp > 0 ? ((fbPeakDisp - isoPeakDisp) / fbPeakDisp) * 100 : 0;
 
   const totalSteps = isoTH?.timeSteps?.length ?? 0;
-  const currentTime = isoTH?.timeSteps?.[currentTimeStep]?.time ?? 0;
+  const dt = isoTH?.dt ?? 0.02;
   const totalTime = isoTH?.totalTime ?? 0;
+
+  const timeAtStep = (step: number) => isoTH?.timeSteps?.[step]?.time ?? step * dt;
 
   return (
     <div className="space-y-2 p-3">
@@ -124,51 +118,12 @@ function TimeHistoryComparisonPanel() {
       </label>
 
       {/* Playback controls */}
-      <div className="rounded bg-gray-800/50 p-2 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-medium text-gray-400">Playback</span>
-          <span className="text-[10px] text-gray-500">
-            {currentTime.toFixed(2)}s / {totalTime.toFixed(2)}s
-          </span>
-        </div>
-
-        {/* Playback slider */}
-        <input
-          type="range"
-          min={0}
-          max={Math.max(totalSteps - 1, 0)}
-          value={currentTimeStep}
-          onChange={(e) => setTimeStep(Number(e.target.value))}
-          className="w-full h-1 accent-yellow-500"
-        />
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={togglePlayback}
-            className="rounded bg-yellow-600 px-3 py-1 text-[10px] font-medium text-white hover:bg-yellow-500"
-          >
-            {isPlaying ? 'Pause' : 'Play'}
-          </button>
-
-          <div className="flex gap-0.5">
-            {PLAYBACK_SPEEDS.map((speed) => (
-              <button
-                key={speed}
-                type="button"
-                onClick={() => setPlaybackSpeed(speed)}
-                className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-colors ${
-                  playbackSpeed === speed
-                    ? 'bg-yellow-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                {speed}x
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PlaybackControls
+        totalSteps={totalSteps}
+        dt={dt}
+        totalTime={totalTime}
+        timeAtStep={timeAtStep}
+      />
     </div>
   );
 }

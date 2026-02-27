@@ -22,6 +22,15 @@ interface BentBuildDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const DEAD_LOAD_FIELDS: { key: keyof DeadLoadComponents; label: string; suffix: string }[] = [
+  { key: 'overlayPsf', label: 'Overlay', suffix: 'psf' },
+  { key: 'barrierKlf', label: 'Barriers', suffix: 'klf' },
+  { key: 'crossFramesPsf', label: 'Cross-frames', suffix: 'psf' },
+  { key: 'utilitiesPsf', label: 'Utilities', suffix: 'psf' },
+  { key: 'fwsPsf', label: 'FWS', suffix: 'psf' },
+  { key: 'miscPsf', label: 'Misc', suffix: 'psf' },
+];
+
 // ── Reusable SliderRow (same as BayBuildDialog) ──
 
 function SliderRow({
@@ -142,6 +151,18 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
   const resetAnalysis = useAnalysisStore((s) => s.resetAnalysis);
   const resetComparison = useComparisonStore((s) => s.resetComparison);
   const addToast = useToastStore((s) => s.addToast);
+
+  // Helper: update a single field of an item in an array state
+  function updatePI(index: number, updates: Partial<HorizontalPI>): void {
+    const next = [...horizontalPIs];
+    next[index] = { ...next[index]!, ...updates };
+    setHorizontalPIs(next);
+  }
+  function updatePVI(index: number, updates: Partial<VerticalPVI>): void {
+    const next = [...verticalPVIs];
+    next[index] = { ...next[index]!, ...updates };
+    setVerticalPVIs(next);
+  }
 
   const numPiers = numSpans - 1;
 
@@ -419,41 +440,25 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
                           <NumberInputRow
                             label="PC Station"
                             value={String(pi.station)}
-                            onChange={(v) => {
-                              const next = [...horizontalPIs];
-                              next[i] = { ...next[i]!, station: Number(v) || 0 };
-                              setHorizontalPIs(next);
-                            }}
+                            onChange={(v) => updatePI(i, { station: Number(v) || 0 })}
                             suffix="ft"
                           />
                           <NumberInputRow
                             label="Defl. Angle"
                             value={String(pi.deflectionAngle)}
-                            onChange={(v) => {
-                              const next = [...horizontalPIs];
-                              next[i] = { ...next[i]!, deflectionAngle: Number(v) || 0 };
-                              setHorizontalPIs(next);
-                            }}
+                            onChange={(v) => updatePI(i, { deflectionAngle: Number(v) || 0 })}
                             suffix="deg"
                           />
                           <NumberInputRow
                             label="Radius"
                             value={String(pi.radius)}
-                            onChange={(v) => {
-                              const next = [...horizontalPIs];
-                              next[i] = { ...next[i]!, radius: Number(v) || 0 };
-                              setHorizontalPIs(next);
-                            }}
+                            onChange={(v) => updatePI(i, { radius: Number(v) || 0 })}
                             suffix="ft"
                           />
                           <SelectRow
                             label="Direction"
                             value={pi.direction}
-                            onChange={(v) => {
-                              const next = [...horizontalPIs];
-                              next[i] = { ...next[i]!, direction: v as 'L' | 'R' };
-                              setHorizontalPIs(next);
-                            }}
+                            onChange={(v) => updatePI(i, { direction: v as 'L' | 'R' })}
                             options={[
                               { value: 'L', label: 'Left' },
                               { value: 'R', label: 'Right' },
@@ -511,41 +516,25 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
                           <NumberInputRow
                             label="PVI Station"
                             value={String(pvi.station)}
-                            onChange={(v) => {
-                              const next = [...verticalPVIs];
-                              next[i] = { ...next[i]!, station: Number(v) || 0 };
-                              setVerticalPVIs(next);
-                            }}
+                            onChange={(v) => updatePVI(i, { station: Number(v) || 0 })}
                             suffix="ft"
                           />
                           <NumberInputRow
                             label="PVI Elevation"
                             value={String(pvi.elevation)}
-                            onChange={(v) => {
-                              const next = [...verticalPVIs];
-                              next[i] = { ...next[i]!, elevation: Number(v) || 0 };
-                              setVerticalPVIs(next);
-                            }}
+                            onChange={(v) => updatePVI(i, { elevation: Number(v) || 0 })}
                             suffix="ft"
                           />
                           <NumberInputRow
                             label="Exit Grade"
                             value={String(pvi.exitGrade)}
-                            onChange={(v) => {
-                              const next = [...verticalPVIs];
-                              next[i] = { ...next[i]!, exitGrade: Number(v) || 0 };
-                              setVerticalPVIs(next);
-                            }}
+                            onChange={(v) => updatePVI(i, { exitGrade: Number(v) || 0 })}
                             suffix="%"
                           />
                           <NumberInputRow
                             label="Curve Length"
                             value={String(pvi.curveLength)}
-                            onChange={(v) => {
-                              const next = [...verticalPVIs];
-                              next[i] = { ...next[i]!, curveLength: Number(v) || 0 };
-                              setVerticalPVIs(next);
-                            }}
+                            onChange={(v) => updatePVI(i, { curveLength: Number(v) || 0 })}
                             suffix="ft"
                           />
                         </div>
@@ -699,72 +688,15 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
               </button>
               {showDeadLoads && (
                 <div className="mt-2 space-y-1.5">
-                  <NumberInputRow
-                    label="Overlay"
-                    value={String(deadLoads.overlayPsf)}
-                    onChange={(v) =>
-                      setDeadLoads({
-                        ...deadLoads,
-                        overlayPsf: Number(v) || 0,
-                      })
-                    }
-                    suffix="psf"
-                  />
-                  <NumberInputRow
-                    label="Barriers"
-                    value={String(deadLoads.barrierKlf)}
-                    onChange={(v) =>
-                      setDeadLoads({
-                        ...deadLoads,
-                        barrierKlf: Number(v) || 0,
-                      })
-                    }
-                    suffix="klf"
-                  />
-                  <NumberInputRow
-                    label="Cross-frames"
-                    value={String(deadLoads.crossFramesPsf)}
-                    onChange={(v) =>
-                      setDeadLoads({
-                        ...deadLoads,
-                        crossFramesPsf: Number(v) || 0,
-                      })
-                    }
-                    suffix="psf"
-                  />
-                  <NumberInputRow
-                    label="Utilities"
-                    value={String(deadLoads.utilitiesPsf)}
-                    onChange={(v) =>
-                      setDeadLoads({
-                        ...deadLoads,
-                        utilitiesPsf: Number(v) || 0,
-                      })
-                    }
-                    suffix="psf"
-                  />
-                  <NumberInputRow
-                    label="FWS"
-                    value={String(deadLoads.fwsPsf)}
-                    onChange={(v) =>
-                      setDeadLoads({
-                        ...deadLoads,
-                        fwsPsf: Number(v) || 0,
-                      })
-                    }
-                    suffix="psf"
-                  />
-                  <NumberInputRow
-                    label="Misc"
-                    value={String(deadLoads.miscPsf)}
-                    onChange={(v) =>
-                      setDeadLoads({
-                        ...deadLoads,
-                        miscPsf: Number(v) || 0,
-                      })
-                    }
-                    suffix="psf"
-                  />
+                  {DEAD_LOAD_FIELDS.map(({ key, label, suffix }) => (
+                    <NumberInputRow
+                      key={key}
+                      label={label}
+                      value={String(deadLoads[key])}
+                      onChange={(v) => setDeadLoads({ ...deadLoads, [key]: Number(v) || 0 })}
+                      suffix={suffix}
+                    />
+                  ))}
                 </div>
               )}
             </div>

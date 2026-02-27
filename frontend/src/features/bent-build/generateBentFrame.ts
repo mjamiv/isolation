@@ -57,30 +57,11 @@ function chordNodeId(
 
 // ── Restraint Constants ───────────────────────────────────────────────
 
-const FIXED: [boolean, boolean, boolean, boolean, boolean, boolean] = [
-  true,
-  true,
-  true,
-  true,
-  true,
-  true,
-];
-const FREE: [boolean, boolean, boolean, boolean, boolean, boolean] = [
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-];
-const ROLLER: [boolean, boolean, boolean, boolean, boolean, boolean] = [
-  false,
-  true,
-  true,
-  false,
-  false,
-  false,
-]; // Ty+Tz fixed, rest free
+type Restraint6 = [boolean, boolean, boolean, boolean, boolean, boolean];
+
+const FIXED: Restraint6 = [true, true, true, true, true, true];
+const FREE: Restraint6 = [false, false, false, false, false, false];
+const ROLLER: Restraint6 = [false, true, true, false, false, false]; // Ty+Tz fixed
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -318,14 +299,8 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   const halfCap = pierCapDepth / 2;
 
   // ── 4. Determine which support lines need cap nodes ─────────────────
-  // Cap nodes are separate from deck nodes for:
-  // - EXP piers (conventional mode)
-  // - Bearing-level isolation (all support lines)
-
-  function pierNeedsSeparateCap(_pi: number): boolean {
-    // All piers get separate cap nodes so pier cap beams are always concrete
-    return true;
-  }
+  // All piers always get separate cap nodes so pier cap beams are concrete.
+  // Abutments get separate cap nodes only for bearing-level isolation.
 
   function abutmentNeedsSeparateCap(): boolean {
     return supportMode === 'isolated' && isolationLevel === 'bearing';
@@ -360,7 +335,7 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     const isAbutment = sli === 0 || sli === numSupportLines - 1;
 
     for (let gi = 0; gi < numGirders; gi++) {
-      let restraint: [boolean, boolean, boolean, boolean, boolean, boolean];
+      let restraint: Restraint6;
 
       if (isAbutment) {
         if (abutmentNeedsSeparateCap()) {
@@ -415,9 +390,8 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
-  // Cap nodes (for piers with separate cap, and for abutments in bearing-level isolation)
+  // Cap nodes for all piers
   for (let pi = 0; pi < numPiers; pi++) {
-    if (!pierNeedsSeparateCap(pi)) continue;
     const sli = pi + 1;
     const capY = deckY[sli]! - halfCap;
     for (let gi = 0; gi < numGirders; gi++) {
@@ -474,9 +448,7 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
 
     for (let ci = 0; ci < numBentColumns; ci++) {
       const { x, z } = colNodeCoords(pi, ci);
-      const restraint: [boolean, boolean, boolean, boolean, boolean, boolean] = isColBaseIsolation
-        ? [...FREE]
-        : [...FIXED];
+      const restraint: Restraint6 = isColBaseIsolation ? [...FREE] : [...FIXED];
 
       nodes.push({
         id: baseNodeId(pi, ci, numBentColumns),
@@ -583,9 +555,8 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
-  // 6c. Pier cap beams (when cap is separate from deck)
+  // 6c. Pier cap beams
   for (let pi = 0; pi < numPiers; pi++) {
-    if (!pierNeedsSeparateCap(pi)) continue;
     for (let gi = 0; gi < numGirders - 1; gi++) {
       elements.push({
         id: nextElementId++,
@@ -599,29 +570,16 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
-  // 6d. Columns: connect base to deck/cap
+  // 6d. Columns: connect base to cap node
   for (let pi = 0; pi < numPiers; pi++) {
-    const hasSeparateCap = pierNeedsSeparateCap(pi);
-
     for (let ci = 0; ci < numBentColumns; ci++) {
-      const colOffset = columnOffsets[ci]!;
-      const bNodeId = baseNodeId(pi, ci, numBentColumns);
-
-      // Find the top node to connect to
-      let topNodeId: number;
-      if (hasSeparateCap) {
-        const closestGi = closestGirderIndex(colOffset, girderOffsets);
-        topNodeId = capNodeId(pi, closestGi, numGirders);
-      } else {
-        const sli = pi + 1;
-        const closestGi = closestGirderIndex(colOffset, girderOffsets);
-        topNodeId = deckNodeId(sli, closestGi, numGirders);
-      }
+      const closestGi = closestGirderIndex(columnOffsets[ci]!, girderOffsets);
+      const topNodeId = capNodeId(pi, closestGi, numGirders);
 
       elements.push({
         id: nextElementId++,
         type: 'column',
-        nodeI: bNodeId,
+        nodeI: baseNodeId(pi, ci, numBentColumns),
         nodeJ: topNodeId,
         sectionId: colSectionId,
         materialId: concreteMatId,

@@ -7,8 +7,10 @@ import type { TimeHistoryResults } from '@/types/analysis';
 export function PlaybackDriver() {
   const isPlaying = useAnalysisStore((s) => s.isPlaying);
   const playbackSpeed = useAnalysisStore((s) => s.playbackSpeed);
+  const loopPlayback = useAnalysisStore((s) => s.loopPlayback);
   const results = useAnalysisStore((s) => s.results);
   const setTimeStep = useAnalysisStore((s) => s.setTimeStep);
+  const setIsPlaying = useAnalysisStore((s) => s.setIsPlaying);
   const comparisonType = useComparisonStore((s) => s.comparisonType);
   const comparisonIsolated = useComparisonStore((s) => s.isolated);
 
@@ -36,8 +38,19 @@ export function PlaybackDriver() {
     if (accumulatorRef.current >= dt) {
       accumulatorRef.current -= dt;
       const currentStep = useAnalysisStore.getState().currentTimeStep;
-      const nextStep = (currentStep + 1) % totalSteps;
-      setTimeStep(nextStep);
+      const nextStep = currentStep + 1;
+
+      if (nextStep >= totalSteps) {
+        if (loopPlayback) {
+          setTimeStep(0);
+        } else {
+          setTimeStep(totalSteps - 1);
+          setIsPlaying(false);
+          accumulatorRef.current = 0;
+        }
+      } else {
+        setTimeStep(nextStep);
+      }
     }
   });
 

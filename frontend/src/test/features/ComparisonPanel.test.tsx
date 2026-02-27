@@ -225,8 +225,10 @@ describe('ComparisonPanel — time-history comparison', () => {
     };
     getState().setResults(run);
     render(<ComparisonPanel />);
-    expect(screen.getByText('Play')).toBeInTheDocument();
-    expect(screen.getByText('Playback')).toBeInTheDocument();
+    // Transport controls are icon-based with title attributes
+    expect(screen.getByTitle(/play \/ pause/i)).toBeInTheDocument();
+    // Speed pills are rendered
+    expect(screen.getByText('1x')).toBeInTheDocument();
   });
 
   it('renders 3D overlay toggle for time-history comparison', () => {

@@ -56,18 +56,13 @@ export function computeDriftProfile(
 
     // Average horizontal displacement at each level
     const avgDisp = (result: VariantResult, nodeIds: number[]): number => {
-      // nodeDisplacements lives alongside pushoverResults on the variant
-      const nodeDisplacements = (
-        result as unknown as {
-          pushoverResults?: { nodeDisplacements?: Record<string, number[]> } | null;
-        }
-      ).pushoverResults?.nodeDisplacements;
+      const nodeDisplacements = result.pushoverResults?.nodeDisplacements;
       if (!nodeDisplacements) return 0;
 
       let sum = 0;
       let count = 0;
       for (const nid of nodeIds) {
-        const d = nodeDisplacements[String(nid)];
+        const d = nodeDisplacements[nid];
         if (d && d.length > 0) {
           sum += d[0]!;
           count++;
