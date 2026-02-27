@@ -147,34 +147,47 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
     }
   };
 
+  const inputClass =
+    'mt-1 w-full rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] text-white/80 outline-none transition-colors duration-150 focus:border-yellow-500/50 focus:bg-surface-4';
+
+  const toggleGroupClass =
+    'mt-1 flex gap-0.5 rounded-lg border border-white/[0.06] bg-surface-0 p-0.5';
+
+  const toggleBtnClass = (active: boolean) =>
+    `flex-1 rounded-md px-3 py-1.5 text-[11px] font-medium transition-all duration-150 ${
+      active
+        ? 'bg-gradient-to-r from-yellow-600/80 to-yellow-500/80 text-white shadow-glow-gold'
+        : 'text-white/35 hover:text-white/60'
+    }`;
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-96 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-gray-900 p-5 shadow-xl ring-1 ring-gray-700 focus:outline-none">
+        <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-96 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/[0.08] bg-surface-1 p-5 shadow-2xl focus:outline-none">
           <div className="flex items-center justify-between">
-            <Dialog.Title className="text-sm font-semibold text-gray-200">
+            <Dialog.Title className="text-sm font-semibold text-white/80">
               Run Analysis
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="rounded p-1 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                className="rounded-md p-1 text-white/30 transition-colors hover:bg-white/[0.06] hover:text-white/60"
               >
                 <Cross2Icon className="h-4 w-4" />
               </button>
             </Dialog.Close>
           </div>
 
-          <Dialog.Description className="mt-1 text-xs text-gray-400">
+          <Dialog.Description className="mt-1 text-[11px] text-white/30">
             Configure and run a structural analysis.
           </Dialog.Description>
 
           {/* Analysis type selector */}
           <div className="mt-4 space-y-3">
             <div>
-              <label className="text-xs font-medium text-gray-400">Analysis Type</label>
-              <div className="mt-1 flex gap-1 rounded-lg bg-gray-800 p-0.5">
+              <label className="text-[11px] font-medium text-white/40">Analysis Type</label>
+              <div className={toggleGroupClass}>
                 {ANALYSIS_TYPES.map((t) => (
                   <button
                     key={t.value}
@@ -184,11 +197,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                       setRunComparisonMode(false);
                       setEnableLambda(false);
                     }}
-                    className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                      analysisType === t.value
-                        ? 'bg-gray-600 text-white'
-                        : 'text-gray-400 hover:text-gray-200'
-                    }`}
+                    className={toggleBtnClass(analysisType === t.value)}
                   >
                     {t.label}
                   </button>
@@ -199,14 +208,14 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             {/* Modal params */}
             {analysisType === 'modal' && (
               <div>
-                <label className="text-xs font-medium text-gray-400">Number of Modes</label>
+                <label className="text-[11px] font-medium text-white/40">Number of Modes</label>
                 <input
                   type="number"
                   value={numModes}
                   onChange={(e) => setNumModes(e.target.value)}
                   min={1}
                   max={20}
-                  className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                  className={inputClass}
                 />
               </div>
             )}
@@ -215,11 +224,11 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             {analysisType === 'time_history' && (
               <>
                 <div>
-                  <label className="text-xs font-medium text-gray-400">Ground Motion</label>
+                  <label className="text-[11px] font-medium text-white/40">Ground Motion</label>
                   <select
                     value={selectedGmId}
                     onChange={(e) => setSelectedGmId(e.target.value)}
-                    className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                    className={inputClass}
                   >
                     <option value="">Select...</option>
                     {gmArray.map((gm) => (
@@ -230,7 +239,9 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-400">Excitation Directions</label>
+                  <label className="text-[11px] font-medium text-white/40">
+                    Excitation Directions
+                  </label>
                   <div className="mt-1 flex gap-3">
                     {([1, 2, 3] as const).map((dir) => {
                       const label = dir === 1 ? 'X' : dir === 2 ? 'Y' : 'Z';
@@ -246,9 +257,9 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                                 [dir]: e.target.checked ? 100 : 0,
                               }));
                             }}
-                            className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+                            className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
                           />
-                          <span className="text-xs text-gray-300">{label}</span>
+                          <span className="text-[11px] text-white/60">{label}</span>
                           <input
                             type="number"
                             value={directionScales[dir]}
@@ -258,9 +269,9 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                             }}
                             min={0}
                             max={100}
-                            className="w-12 rounded bg-gray-800 px-1.5 py-0.5 text-xs text-gray-200 text-center outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                            className="w-12 rounded-md border border-white/[0.06] bg-surface-3 px-1.5 py-0.5 text-center text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
                           />
-                          <span className="text-[10px] text-gray-500">%</span>
+                          <span className="text-[10px] text-white/25">%</span>
                         </label>
                       );
                     })}
@@ -268,23 +279,23 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-xs font-medium text-gray-400">Time Step (s)</label>
+                    <label className="text-[11px] font-medium text-white/40">Time Step (s)</label>
                     <input
                       type="number"
                       value={dt}
                       onChange={(e) => setDt(e.target.value)}
                       step={0.001}
-                      className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                      className={inputClass}
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-400">Num Steps</label>
+                    <label className="text-[11px] font-medium text-white/40">Num Steps</label>
                     <input
                       type="number"
                       value={numSteps}
                       onChange={(e) => setNumSteps(e.target.value)}
                       min={1}
-                      className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -296,41 +307,41 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
               <>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-xs font-medium text-gray-400">Target Disp (in)</label>
+                    <label className="text-[11px] font-medium text-white/40">
+                      Target Disp (in)
+                    </label>
                     <input
                       type="number"
                       value={targetDisplacement}
                       onChange={(e) => setTargetDisplacement(e.target.value)}
                       min={0.1}
                       step={1}
-                      className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                      className={inputClass}
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-400">Disp Increment (in)</label>
+                    <label className="text-[11px] font-medium text-white/40">
+                      Disp Increment (in)
+                    </label>
                     <input
                       type="number"
                       value={displacementIncrement}
                       onChange={(e) => setDisplacementIncrement(e.target.value)}
                       min={0.01}
                       step={0.01}
-                      className="mt-1 w-full rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                      className={inputClass}
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-400">Push Direction</label>
-                  <div className="mt-1 flex gap-1 rounded-lg bg-gray-800 p-0.5">
+                  <label className="text-[11px] font-medium text-white/40">Push Direction</label>
+                  <div className={toggleGroupClass}>
                     {(['X', 'Y'] as const).map((dir) => (
                       <button
                         key={dir}
                         type="button"
                         onClick={() => setPushDirection(dir)}
-                        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                          pushDirection === dir
-                            ? 'bg-gray-600 text-white'
-                            : 'text-gray-400 hover:text-gray-200'
-                        }`}
+                        className={toggleBtnClass(pushDirection === dir)}
                       >
                         {dir}
                       </button>
@@ -338,8 +349,8 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-400">Load Pattern</label>
-                  <div className="mt-1 flex gap-1 rounded-lg bg-gray-800 p-0.5">
+                  <label className="text-[11px] font-medium text-white/40">Load Pattern</label>
+                  <div className={toggleGroupClass}>
                     {[
                       { value: 'linear' as const, label: 'Linear' },
                       { value: 'first_mode' as const, label: 'First-Mode' },
@@ -348,11 +359,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                         key={lp.value}
                         type="button"
                         onClick={() => setLoadPattern(lp.value)}
-                        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                          loadPattern === lp.value
-                            ? 'bg-gray-600 text-white'
-                            : 'text-gray-400 hover:text-gray-200'
-                        }`}
+                        className={toggleBtnClass(loadPattern === lp.value)}
                       >
                         {lp.label}
                       </button>
@@ -364,22 +371,22 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
 
             {/* Comparison toggle — available for pushover and time-history */}
             {(analysisType === 'pushover' || analysisType === 'time_history') && hasBearings && (
-              <div className="rounded-lg bg-gray-800/50 p-3 space-y-2">
+              <div className="rounded-lg border border-white/[0.04] bg-surface-2 p-3 space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={runComparisonMode}
                     onChange={(e) => setRunComparisonMode(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+                    className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
                   />
-                  <span className="text-xs font-medium text-gray-300">
+                  <span className="text-[11px] font-medium text-white/60">
                     Run Comparison (Isolated vs Fixed-Base)
                   </span>
                 </label>
 
                 {runComparisonMode && (
                   <>
-                    <p className="text-[10px] text-gray-400">
+                    <p className="text-[10px] text-white/25">
                       {analysisType === 'time_history'
                         ? 'Runs time-history on both the isolated model and an auto-generated fixed-base variant with animated overlay.'
                         : 'Runs pushover on both the isolated model and an auto-generated fixed-base variant.'}
@@ -392,9 +399,9 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                             type="checkbox"
                             checked={enableLambda}
                             onChange={(e) => setEnableLambda(e.target.checked)}
-                            className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+                            className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
                           />
-                          <span className="text-xs text-gray-400">
+                          <span className="text-[11px] text-white/40">
                             Lambda Factors (ASCE 7-22 Ch. 17)
                           </span>
                         </label>
@@ -402,7 +409,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                         {enableLambda && (
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="text-[10px] font-medium text-gray-400">
+                              <label className="text-[10px] font-medium text-white/35">
                                 Lambda Min
                               </label>
                               <input
@@ -412,11 +419,11 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                                 min={0.1}
                                 max={1}
                                 step={0.05}
-                                className="mt-0.5 w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                                className="mt-0.5 w-full rounded-md border border-white/[0.06] bg-surface-3 px-2 py-1 text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
                               />
                             </div>
                             <div>
-                              <label className="text-[10px] font-medium text-gray-400">
+                              <label className="text-[10px] font-medium text-white/35">
                                 Lambda Max
                               </label>
                               <input
@@ -426,7 +433,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                                 min={1}
                                 max={3}
                                 step={0.1}
-                                className="mt-0.5 w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+                                className="mt-0.5 w-full rounded-md border border-white/[0.06] bg-surface-3 px-2 py-1 text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
                               />
                             </div>
                           </div>
@@ -441,7 +448,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             {/* Validation error */}
             {validationError && (
               <div role="alert" aria-live="polite">
-                <p className="text-xs text-red-400">{validationError}</p>
+                <p className="text-[11px] text-red-400">{validationError}</p>
               </div>
             )}
           </div>
@@ -451,7 +458,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="rounded bg-gray-800 px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700"
+                className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] text-white/50 transition-colors hover:bg-surface-4 hover:text-white/70"
               >
                 Cancel
               </button>
@@ -460,7 +467,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
               type="button"
               onClick={handleRun}
               disabled={!!validationError || submitting}
-              className="rounded bg-yellow-600 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md bg-gradient-to-r from-yellow-600 to-yellow-500 px-4 py-1.5 text-[11px] font-semibold text-white shadow-glow-gold transition-all hover:from-yellow-500 hover:to-yellow-400 hover:shadow-glow-gold-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
             >
               {submitting
                 ? 'Submitting...'

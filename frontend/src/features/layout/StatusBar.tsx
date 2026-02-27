@@ -2,7 +2,7 @@ import { useModelStore } from '../../stores/modelStore';
 import { useAnalysisStore } from '../../stores/analysisStore';
 
 const STATUS_COLORS: Record<string, string> = {
-  idle: 'text-gray-400',
+  idle: 'text-white/30',
   running: 'text-yellow-400',
   complete: 'text-yellow-400',
   error: 'text-red-400',
@@ -30,35 +30,35 @@ export function StatusBar() {
   const elementCount = elements.size;
 
   return (
-    <div className="flex h-7 items-center justify-between border-t border-gray-700 bg-gray-900 px-4 text-xs">
+    <div className="flex h-7 items-center justify-between border-t border-white/[0.06] bg-surface-1 px-4 text-[10px]">
       {/* Left: Status indicator */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <div
-            className={`h-2 w-2 rounded-full ${
+            className={`h-1.5 w-1.5 rounded-full ${
               status === 'running'
-                ? 'animate-pulse bg-yellow-400'
+                ? 'status-pulse bg-yellow-400'
                 : status === 'complete'
                   ? 'bg-yellow-400'
                   : status === 'error'
                     ? 'bg-red-400'
-                    : 'bg-gray-500'
+                    : 'bg-white/20'
             }`}
           />
-          <span className={STATUS_COLORS[status] ?? 'text-gray-400'}>
+          <span className={`font-medium ${STATUS_COLORS[status] ?? 'text-white/30'}`}>
             {STATUS_LABELS[status] ?? 'Unknown'}
           </span>
         </div>
 
         {status === 'running' && (
           <div className="flex items-center gap-2">
-            <div className="h-1 w-24 overflow-hidden rounded-full bg-gray-700">
+            <div className="h-1 w-24 overflow-hidden rounded-full bg-surface-4">
               <div
-                className="h-full rounded-full bg-yellow-400 transition-all duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <span className="text-gray-400">{Math.round(progress)}%</span>
+            <span className="font-mono text-white/30">{Math.round(progress)}%</span>
           </div>
         )}
 
@@ -67,15 +67,17 @@ export function StatusBar() {
 
       {/* Center: Time step (only for time-history analysis) */}
       {status === 'complete' && analysisType === 'time_history' && (
-        <div className="text-gray-400">Time Step: {currentTimeStep}</div>
+        <div className="font-mono text-white/30">Step {currentTimeStep}</div>
       )}
 
       {/* Right: Model info */}
-      <div className="flex items-center gap-3 text-gray-500">
-        {model && <span className="text-gray-400">{model.name}</span>}
-        <span>Nodes: {nodeCount}</span>
-        <span>Elements: {elementCount}</span>
-        <span>Units: kip-in</span>
+      <div className="flex items-center gap-3 text-white/25">
+        {model && <span className="font-medium text-white/35">{model.name}</span>}
+        <span className="font-mono">{nodeCount}N</span>
+        <span className="font-mono">{elementCount}E</span>
+        <span className="rounded border border-white/[0.06] px-1.5 py-0.5 font-mono text-[9px]">
+          kip-in
+        </span>
       </div>
     </div>
   );

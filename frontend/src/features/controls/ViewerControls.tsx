@@ -35,15 +35,15 @@ const COLOR_MAP_OPTIONS: { value: ColorMapType; label: string }[] = [
 
 function ControlSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{title}</h3>
+    <div className="space-y-2">
+      <h3 className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-white/25">
+        <span className="h-px flex-1 bg-white/[0.06]" />
+        {title}
+        <span className="h-px flex-1 bg-white/[0.06]" />
+      </h3>
       {children}
     </div>
   );
-}
-
-function Divider() {
-  return <div className="border-t border-gray-700/60" />;
 }
 
 function Toggle({
@@ -56,21 +56,15 @@ function Toggle({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between">
-      <span className="text-xs text-gray-400">{label}</span>
+    <label className="flex cursor-pointer items-center justify-between py-0.5">
+      <span className="text-[11px] text-white/50">{label}</span>
       <button
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative h-4 w-8 rounded-full transition-colors ${
-          checked ? 'bg-yellow-600' : 'bg-gray-700'
-        }`}
+        className="toggle-track"
       >
-        <div
-          className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${
-            checked ? 'translate-x-4' : 'translate-x-0.5'
-          }`}
-        />
+        <div className="toggle-thumb" />
       </button>
     </label>
   );
@@ -88,12 +82,12 @@ function SelectControl<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <label className="flex items-center justify-between">
-      <span className="text-xs text-gray-400">{label}</span>
+    <label className="flex items-center justify-between py-0.5">
+      <span className="text-[11px] text-white/50">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="rounded bg-gray-800 px-2 py-0.5 text-xs text-gray-300 outline-none ring-1 ring-gray-700 focus:ring-yellow-500"
+        className="rounded-md border border-white/[0.06] bg-surface-3 px-2 py-0.5 text-[11px] text-white/70 outline-none transition-colors duration-150 focus:border-yellow-500/50 focus:ring-0"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -122,9 +116,11 @@ function SliderControl({
   onChange: (value: number) => void;
   formatValue?: (v: number) => string;
 }) {
+  const progress = ((value - min) / (max - min)) * 100;
+
   return (
-    <label className="flex items-center justify-between">
-      <span className="text-xs text-gray-400">{label}</span>
+    <label className="flex items-center justify-between py-0.5">
+      <span className="text-[11px] text-white/50">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="range"
@@ -133,9 +129,10 @@ function SliderControl({
           step={step}
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="h-1 w-20 cursor-pointer accent-yellow-500"
+          className="h-4 w-20 cursor-pointer"
+          style={{ '--range-progress': `${progress}%` } as React.CSSProperties}
         />
-        <span className="w-10 text-right text-xs text-gray-500">
+        <span className="w-10 text-right font-mono text-[10px] text-white/30">
           {formatValue ? formatValue(value) : String(value)}
         </span>
       </div>
@@ -200,8 +197,6 @@ export function ViewerControls() {
         />
       </ControlSection>
 
-      <Divider />
-
       {/* Display: geometry representation + viewport helpers */}
       <ControlSection title="Display">
         <SelectControl
@@ -221,8 +216,6 @@ export function ViewerControls() {
         <Toggle label="Node / Element Labels" checked={showLabels} onChange={setShowLabels} />
       </ControlSection>
 
-      <Divider />
-
       {/* Element Properties: annotation overlays tied to the undeformed model */}
       <ControlSection title="Element Properties">
         <Toggle label="Mass Labels" checked={showMassLabels} onChange={setShowMassLabels} />
@@ -232,8 +225,6 @@ export function ViewerControls() {
           onChange={setShowStiffnessLabels}
         />
       </ControlSection>
-
-      <Divider />
 
       {/* Deformation: result-dependent — deformed shape + scale */}
       <ControlSection title="Deformation">
@@ -248,8 +239,6 @@ export function ViewerControls() {
           formatValue={(v) => String(v)}
         />
       </ControlSection>
-
-      <Divider />
 
       {/* Results: all post-processing overlays grouped together */}
       <ControlSection title="Results">

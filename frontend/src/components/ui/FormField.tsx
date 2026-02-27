@@ -22,7 +22,7 @@ export function FormField({
   const id = useId();
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <label htmlFor={id} className="shrink-0 text-xs text-gray-400 w-12">
+      <label htmlFor={id} className="shrink-0 text-[11px] text-white/35 w-12">
         {label}
       </label>
       <input
@@ -32,7 +32,7 @@ export function FormField({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         disabled={disabled}
-        className="w-full rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none ring-1 ring-gray-700 focus:ring-yellow-500 disabled:opacity-50"
+        className="w-full rounded-md border border-white/[0.06] bg-surface-3 px-2 py-1 text-[11px] text-white/80 outline-none transition-colors duration-150 placeholder:text-white/20 focus:border-yellow-500/50 focus:bg-surface-4 disabled:opacity-40"
       />
     </div>
   );

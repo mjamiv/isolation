@@ -16,10 +16,10 @@ export function IconButton({
   children,
 }: IconButtonProps) {
   const base =
-    'inline-flex items-center justify-center rounded p-1 transition-colors disabled:opacity-40';
+    'inline-flex items-center justify-center rounded-md p-1 transition-all duration-150 disabled:opacity-30';
   const variants = {
-    default: 'text-gray-400 hover:bg-gray-700 hover:text-gray-200',
-    danger: 'text-gray-400 hover:bg-red-900/50 hover:text-red-400',
+    default: 'text-white/30 hover:bg-white/[0.06] hover:text-white/60',
+    danger: 'text-white/30 hover:bg-red-500/10 hover:text-red-400',
   };
 
   return (

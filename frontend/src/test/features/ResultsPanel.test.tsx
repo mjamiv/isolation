@@ -30,7 +30,7 @@ beforeEach(() => {
 describe('ResultsPanel — no results', () => {
   it('shows placeholder when no results available', () => {
     render(<ResultsPanel />);
-    expect(screen.getByText(/No analysis results yet/)).toBeInTheDocument();
+    expect(screen.getByText(/No analysis results/)).toBeInTheDocument();
   });
 });
 
@@ -74,12 +74,12 @@ describe('ResultsPanel — modal results', () => {
       status: 'complete',
       progress: 1,
       results: {
-        periods: [0.85, 0.30],
+        periods: [0.85, 0.3],
         frequencies: [1.18, 3.33],
         modeShapes: {},
         massParticipation: {
           1: { x: 0.82, y: 0.0, z: 0.0 },
-          2: { x: 0.10, y: 0.0, z: 0.0 },
+          2: { x: 0.1, y: 0.0, z: 0.0 },
         },
       },
     };

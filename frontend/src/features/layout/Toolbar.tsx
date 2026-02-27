@@ -100,29 +100,35 @@ export function Toolbar() {
   };
 
   return (
-    <div className="flex h-12 items-center justify-between border-b border-gray-700 bg-gray-900 px-4">
+    <div className="toolbar-glow relative z-10 flex h-12 items-center justify-between bg-surface-1 px-4">
       {/* Left: App title */}
       <div className="flex items-center gap-3">
-        <h1 className="text-lg font-bold tracking-wide text-white">
-          <span className="text-yellow-400">Iso</span>
-          <span className="text-yellow-500">Vis</span>
+        <h1 className="flex items-baseline gap-0.5 text-lg font-bold tracking-tight">
+          <span className="bg-gradient-to-r from-yellow-300 to-yellow-500 bg-clip-text text-transparent">
+            Iso
+          </span>
+          <span className="bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
+            Vis
+          </span>
         </h1>
-        <div className="mx-2 h-6 w-px bg-gray-700" />
-        <span className="text-xs text-gray-400">Triple Friction Pendulum Bearing Simulator</span>
+        <div className="mx-1 h-5 w-px bg-white/10" />
+        <span className="text-[11px] font-medium tracking-wide text-white/30">
+          TFP Bearing Simulator
+        </span>
       </div>
 
       {/* Center: Action buttons */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <button
           onClick={() => setBayBuildOpen(true)}
-          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500"
+          className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white hover:shadow-glow-gold"
         >
           Bay Build
         </button>
 
         <button
           onClick={() => setBentBuildOpen(true)}
-          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500"
+          className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white hover:shadow-glow-gold"
         >
           Bent Build
         </button>
@@ -133,7 +139,7 @@ export function Toolbar() {
             void handleModelSelect(e.target.value);
             e.target.value = '';
           }}
-          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500 cursor-pointer"
+          className="cursor-pointer rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white"
           aria-label="Load model"
         >
           <option value="" disabled>
@@ -155,12 +161,21 @@ export function Toolbar() {
           onChange={handleFileImport}
         />
 
+        <div className="mx-1 h-5 w-px bg-white/[0.06]" />
+
         <button
           onClick={() => setDialogOpen(true)}
           disabled={analysisStatus === 'running'}
-          className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md bg-gradient-to-r from-yellow-600 to-yellow-500 px-4 py-1.5 text-[11px] font-semibold text-white shadow-glow-gold transition-all duration-150 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-glow-gold-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
         >
-          {analysisStatus === 'running' ? 'Running...' : 'Run Analysis'}
+          {analysisStatus === 'running' ? (
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-white/80 border-t-transparent" />
+              Running...
+            </span>
+          ) : (
+            'Run Analysis'
+          )}
         </button>
 
         <button
@@ -169,22 +184,22 @@ export function Toolbar() {
               clearModel();
             }
           }}
-          className="rounded bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-600"
+          className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-400 transition-all duration-150 hover:border-red-500/30 hover:text-red-400"
         >
           Reset
         </button>
       </div>
 
       {/* Right: Display mode toggle */}
-      <div className="flex items-center gap-1 rounded-lg bg-gray-800 p-0.5">
+      <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-surface-0 p-0.5">
         {DISPLAY_MODES.map((mode) => (
           <button
             key={mode.value}
             onClick={() => setDisplayMode(mode.value)}
-            className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-md px-3 py-1 text-[11px] font-medium transition-all duration-150 ${
               displayMode === mode.value
-                ? 'bg-gray-600 text-white'
-                : 'text-gray-400 hover:text-gray-200'
+                ? 'bg-gradient-to-r from-yellow-600/80 to-yellow-500/80 text-white shadow-glow-gold'
+                : 'text-gray-500 hover:text-gray-300'
             }`}
           >
             {mode.label}
