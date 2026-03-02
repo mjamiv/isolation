@@ -19,8 +19,10 @@
 import { useMemo, useRef, useEffect, useCallback, useState } from 'react';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useComparisonStore } from '@/stores/comparisonStore';
+import { useDisplayStore } from '@/stores/displayStore';
 import { useModelStore } from '@/stores/modelStore';
 import type { TimeHistoryResults } from '@/types/analysis';
+import { extractPlanDisplacement } from './tfpKinematics';
 
 // ── Layout constants ─────────────────────────────────────────────────
 const CANVAS_SIZE = 160;
@@ -72,15 +74,8 @@ function extractOrbit(
 ): { x: number; y: number }[] {
   const orbit: { x: number; y: number }[] = [];
   for (const step of thResults.timeSteps) {
-    const dispI = step.nodeDisplacements[nodeI];
-    const dispJ = step.nodeDisplacements[nodeJ];
-    if (dispJ) {
-      const dx = dispJ[0] - (dispI?.[0] ?? 0);
-      const dy = dispJ[1] - (dispI?.[1] ?? 0);
-      orbit.push({ x: dx, y: dy });
-    } else {
-      orbit.push({ x: 0, y: 0 });
-    }
+    const { dx, dz } = extractPlanDisplacement(step, nodeI, nodeJ);
+    orbit.push({ x: dx, y: dz });
   }
   return orbit;
 }
@@ -275,6 +270,7 @@ export function BearingDisplacementView() {
   const [ampFactor, setAmpFactor] = useState(1);
   const [collapsed, setCollapsed] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const showBearingDisplacement = useDisplayStore((s) => s.showBearingDisplacement);
   const thResults = useActiveTimeHistory();
   const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
   const bearings = useModelStore((s) => s.bearings);
@@ -331,6 +327,7 @@ export function BearingDisplacementView() {
     draw();
   }, [draw]);
 
+  if (!showBearingDisplacement) return null;
   if (numBearings === 0 || !thResults) return null;
 
   const panelWidth = 192;
