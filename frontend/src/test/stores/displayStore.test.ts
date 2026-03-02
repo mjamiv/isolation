@@ -24,6 +24,7 @@ beforeEach(() => {
   s.setForceType('none');
   s.setForceScale(1);
   s.setColorMap('none');
+  s.setBearingVerticalScale(1);
   s.clearSelection();
 });
 
@@ -62,6 +63,10 @@ describe('displayStore — initial defaults', () => {
 
   it('initializes with forceScale 1', () => {
     expect(getState().forceScale).toBe(1);
+  });
+
+  it('initializes with bearingVerticalScale 1', () => {
+    expect(getState().bearingVerticalScale).toBe(1);
   });
 
   it('initializes with empty selection sets', () => {
@@ -171,6 +176,21 @@ describe('displayStore — setColorMap', () => {
   it('changes color map to displacement', () => {
     getState().setColorMap('displacement');
     expect(getState().colorMap).toBe('displacement');
+  });
+});
+
+describe('displayStore — setBearingVerticalScale', () => {
+  it('updates bearing vertical scale within allowed range', () => {
+    getState().setBearingVerticalScale(2.2);
+    expect(getState().bearingVerticalScale).toBe(2.2);
+  });
+
+  it('clamps bearing vertical scale to min/max constraints', () => {
+    getState().setBearingVerticalScale(0.1);
+    expect(getState().bearingVerticalScale).toBe(0.5);
+
+    getState().setBearingVerticalScale(8);
+    expect(getState().bearingVerticalScale).toBe(3);
   });
 });
 

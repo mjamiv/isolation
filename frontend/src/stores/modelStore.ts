@@ -14,6 +14,8 @@ import type {
   StructuralModel,
 } from '@/types/storeModel';
 import type { ModelJSON } from '@/types/modelJSON';
+import { generateBayFrame } from '@/features/bay-build/generateBayFrame';
+import type { BayBuildParams } from '@/features/bay-build/bayBuildTypes';
 
 // Re-export types for backward compat
 export type {
@@ -33,18 +35,6 @@ export type {
 
 // ── Constants ────────────────────────────────────────────────────────
 
-/** Column x-positions in inches (24ft = 288in spacing) */
-const COLUMN_X_POSITIONS = [0, 288, 576] as const;
-
-/** Story heights in inches (12ft = 144in per story) */
-const STORY_HEIGHTS = [0, 144, 288, 432] as const;
-
-/** Ground node IDs (fixed supports below bearings) */
-const GROUND_NODE_IDS = [101, 102, 103] as const;
-
-/** Base structure node IDs (bearing top nodes, one per column line) */
-const BASE_NODE_IDS = [1, 2, 3] as const;
-
 /** Ground motion record IDs (ordered by increasing peak acceleration) */
 const GM_IDS = {
   SERVICEABILITY: 1,
@@ -54,17 +44,20 @@ const GM_IDS = {
   NEAR_FAULT: 5,
 } as const;
 
-/** Gravity load per floor node in kips (negative = downward) */
-const FLOOR_GRAVITY_LOAD_KIP = -50;
+/** Startup default model: bay-build 1x1x1 steel frame with rigid diaphragms. */
+const STARTUP_BAY_PARAMS: BayBuildParams = {
+  baysX: 1,
+  baysZ: 1,
+  bayWidthX: 20,
+  bayWidthZ: 20,
+  stories: 1,
+  storyHeight: 15,
+  material: 'steel',
+  diaphragms: true,
+  baseType: 'fixed',
+};
 
-/** Bearing radii in inches [inner, outer, inner] */
-const DEFAULT_BEARING_RADII: [number, number, number] = [16, 84, 16];
-
-/** Bearing displacement capacities in inches */
-const DEFAULT_DISP_CAPACITIES: [number, number, number] = [2, 16, 2];
-
-/** Bearing weight in kips */
-const DEFAULT_BEARING_WEIGHT = 150;
+const STARTUP_LIVE_LOAD_FACTOR = 0.5;
 
 // ── Ground motion generators ─────────────────────────────────────────
 
@@ -558,197 +551,38 @@ export const useModelStore = create<ModelState>((set) => ({
 
   // ── Sample model loader ──────────────────────────
   loadSampleModel: () => {
-    const fixedRestraint: [boolean, boolean, boolean, boolean, boolean, boolean] = [
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-    ];
-    const freeRestraint: [boolean, boolean, boolean, boolean, boolean, boolean] = [
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-    ];
-
-    const nodes = new Map<number, Node>();
-
-    // Ground nodes (fixed)
-    for (let i = 0; i < GROUND_NODE_IDS.length; i++) {
-      const gndId = GROUND_NODE_IDS[i]!;
-      nodes.set(gndId, {
-        id: gndId,
-        x: COLUMN_X_POSITIONS[i]!,
-        y: -1,
-        z: 0,
-        restraint: fixedRestraint,
-        label: `GND${gndId}`,
-      });
-    }
-
-    // Structure nodes — base nodes (y=0) are now free (bearing tops)
-    let nodeId = 1;
-    for (const y of STORY_HEIGHTS) {
-      for (const x of COLUMN_X_POSITIONS) {
-        nodes.set(nodeId, {
-          id: nodeId,
-          x,
-          y,
-          z: 0,
-          restraint: freeRestraint,
-          label: `N${nodeId}`,
-        });
-        nodeId++;
-      }
-    }
-
-    const materials = new Map<number, Material>();
-    materials.set(1, {
-      id: 1,
-      name: 'A992 Steel',
-      E: 29000,
-      Fy: 50,
-      density: 490,
-      nu: 0.3,
-    });
-
-    const sections = new Map<number, Section>();
-    sections.set(1, {
-      id: 1,
-      name: 'W14x68',
-      area: 20.0,
-      Ix: 723,
-      Iy: 121,
-      Zx: 115,
-      d: 14.04,
-      bf: 10.035,
-      tw: 0.415,
-      tf: 0.72,
-    });
-    sections.set(2, {
-      id: 2,
-      name: 'W24x68',
-      area: 20.1,
-      Ix: 1830,
-      Iy: 70.4,
-      Zx: 177,
-      d: 23.73,
-      bf: 8.965,
-      tw: 0.415,
-      tf: 0.585,
-    });
-
-    const elements = new Map<number, Element>();
-    let elemId = 1;
-
-    for (let story = 0; story < 3; story++) {
-      for (let col = 0; col < 3; col++) {
-        const iNode = story * 3 + col + 1;
-        const jNode = (story + 1) * 3 + col + 1;
-        elements.set(elemId, {
-          id: elemId,
-          type: 'column',
-          nodeI: iNode,
-          nodeJ: jNode,
-          sectionId: 1,
-          materialId: 1,
-          label: `COL${elemId}`,
-        });
-        elemId++;
-      }
-    }
-
-    for (let floor = 1; floor <= 3; floor++) {
-      for (let bay = 0; bay < 2; bay++) {
-        const iNode = floor * 3 + bay + 1;
-        const jNode = floor * 3 + bay + 2;
-        elements.set(elemId, {
-          id: elemId,
-          type: 'beam',
-          nodeI: iNode,
-          nodeJ: jNode,
-          sectionId: 2,
-          materialId: 1,
-          label: `BM${elemId}`,
-        });
-        elemId++;
-      }
-    }
-
-    // 3 TFP bearings connecting ground nodes to base nodes
-    const defaultInnerSurface: FrictionSurface = {
-      type: 'VelDependent',
-      muSlow: 0.012,
-      muFast: 0.018,
-      transRate: 0.4,
-    };
-    const defaultOuterSurface: FrictionSurface = {
-      type: 'VelDependent',
-      muSlow: 0.018,
-      muFast: 0.03,
-      transRate: 0.4,
+    const startup = generateBayFrame(STARTUP_BAY_PARAMS);
+    startup.modelInfo = {
+      ...startup.modelInfo,
+      name: 'Bay Build: 1x1x1 Steel (Fixed, 50% LL)',
+      description:
+        'Startup bay-build model: 1x1x1 steel frame with rigid diaphragms, fixed base, and 50% live load.',
     };
 
-    const bearings = new Map<number, TFPBearing>();
-    for (let i = 0; i < BASE_NODE_IDS.length; i++) {
-      const bId = BASE_NODE_IDS[i]!;
-      bearings.set(bId, {
-        id: bId,
-        nodeI: GROUND_NODE_IDS[i]!,
-        nodeJ: BASE_NODE_IDS[i]!,
-        surfaces: [
-          { ...defaultInnerSurface },
-          { ...defaultInnerSurface },
-          { ...defaultOuterSurface },
-          { ...defaultOuterSurface },
-        ],
-        radii: [...DEFAULT_BEARING_RADII],
-        dispCapacities: [...DEFAULT_DISP_CAPACITIES],
-        weight: DEFAULT_BEARING_WEIGHT,
-        yieldDisp: 0.04, // inches
-        vertStiffness: 10000, // kip/in
-        minVertForce: 0.1,
-        tolerance: 1e-8,
-        label: `TFP${bId}`,
-      });
-    }
-
-    // Gravity loads on floor nodes
-    const loads = new Map<number, PointLoad>();
-    let loadId = 1;
-    for (const [id, node] of nodes) {
-      if (node.y > 0) {
-        loads.set(loadId, {
-          id: loadId,
-          nodeId: id,
-          fx: 0,
-          fy: FLOOR_GRAVITY_LOAD_KIP,
-          fz: 0,
-          mx: 0,
-          my: 0,
-          mz: 0,
-        });
-        loadId++;
-      }
-    }
+    // Startup scenario uses reduced live-load participation (50% LL).
+    startup.loads = startup.loads.map((load) => ({
+      ...load,
+      fy: load.fy * STARTUP_LIVE_LOAD_FACTOR,
+    }));
+    const toMap = <T extends { id: number }>(arr: T[]): Map<number, T> =>
+      new Map(arr.map((item) => [item.id, item]));
 
     set({
       model: {
-        name: '3-Story 2-Bay Base-Isolated Frame',
-        units: 'kip-in',
-        description:
-          'Sample 3-story, 2-bay steel moment frame with TFP bearing isolation at the base.',
+        name: startup.modelInfo.name,
+        units: startup.modelInfo.units,
+        description: startup.modelInfo.description,
       },
-      nodes,
-      elements,
-      sections,
-      materials,
-      bearings,
-      loads,
+      nodes: toMap(startup.nodes),
+      elements: toMap(startup.elements),
+      sections: toMap(startup.sections),
+      materials: toMap(startup.materials),
+      bearings: toMap(startup.bearings),
+      diaphragms: startup.diaphragms ? toMap(startup.diaphragms) : new Map(),
+      equalDofConstraints: startup.equalDofConstraints
+        ? toMap(startup.equalDofConstraints)
+        : new Map(),
+      loads: toMap(startup.loads),
       groundMotions: new Map<number, GroundMotionRecord>([
         [GM_IDS.SERVICEABILITY, generateServiceability()],
         [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],

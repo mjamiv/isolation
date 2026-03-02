@@ -7,6 +7,9 @@ export type ForceType = 'moment' | 'shear' | 'axial' | 'none';
 export type ColorMapType = 'none' | 'demandCapacity' | 'displacement' | 'stress';
 export type EnvironmentPreset = 'studio' | 'outdoor' | 'dark' | 'blueprint';
 
+const MIN_BEARING_VERTICAL_SCALE = 0.5;
+const MAX_BEARING_VERTICAL_SCALE = 3;
+
 interface DisplayState {
   // Scene environment
   environment: EnvironmentPreset;
@@ -35,6 +38,7 @@ interface DisplayState {
 
   // Results overlays
   showBearingDisplacement: boolean;
+  bearingVerticalScale: number;
 
   // Comparison overlay
   showComparisonOverlay: boolean;
@@ -66,6 +70,7 @@ interface DisplayState {
   setForceScale: (scale: number) => void;
   setColorMap: (map: ColorMapType) => void;
   setShowBearingDisplacement: (show: boolean) => void;
+  setBearingVerticalScale: (scale: number) => void;
   setShowComparisonOverlay: (show: boolean) => void;
 
   // Selection actions
@@ -104,6 +109,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
 
   // Default results overlay state
   showBearingDisplacement: false,
+  bearingVerticalScale: 1,
 
   // Default comparison state
   showComparisonOverlay: false,
@@ -137,6 +143,13 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   setForceScale: (scale) => set({ forceScale: scale }),
   setColorMap: (map) => set({ colorMap: map }),
   setShowBearingDisplacement: (show) => set({ showBearingDisplacement: show }),
+  setBearingVerticalScale: (scale) =>
+    set({
+      bearingVerticalScale: Math.min(
+        MAX_BEARING_VERTICAL_SCALE,
+        Math.max(MIN_BEARING_VERTICAL_SCALE, scale),
+      ),
+    }),
   setShowComparisonOverlay: (show) => set({ showComparisonOverlay: show }),
 
   // ── Selection actions ────────────────────────────

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { AnalysisParams, AnalysisResults } from '@/types/analysis';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useDisplayStore } from '@/stores/displayStore';
+import { useModelStore } from '@/stores/modelStore';
 import { useToastStore } from '@/stores/toastStore';
 import { runAnalysis, getAnalysisStatus, getResults } from '@/services/api';
 import { useRunAsync } from './useRunAsync';
@@ -59,19 +60,32 @@ export function useRunAnalysis() {
       onResult: (result: AnalysisResults) => {
         setResults(result);
 
-        // Auto-enable visualizations based on analysis type
         const display = useDisplayStore.getState();
+        const hasBearings = useModelStore.getState().bearings.size > 0;
+
+        // Post-analysis defaults: deformed shape at 100, results overlays off.
         if (
           result.type === 'static' ||
           result.type === 'pushover' ||
           result.type === 'time_history'
         ) {
           display.setShowDeformed(true);
-          display.setShowForces(true);
-          if (display.forceType === 'none') {
-            display.setForceType('moment');
-          }
+          display.setHideUndeformed(false);
+          display.setScaleFactor(100);
+          display.setShowForces(false);
+          display.setForceType('none');
+          display.setColorMap('none');
         }
+
+        display.setShowComparisonOverlay(false);
+        display.setShowBearingDisplacement(hasBearings);
+        display.setShowBaseShearLabels(result.type === 'pushover');
+
+        if (result.type === 'time_history') {
+          useAnalysisStore.getState().setTimeStep(0);
+          useAnalysisStore.getState().setIsPlaying(false);
+        }
+
         if (result.type === 'modal') {
           useAnalysisStore.getState().setSelectedModeNumber(1);
         }

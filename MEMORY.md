@@ -1,31 +1,44 @@
 # MEMORY
 
-## Completed Work
-- Fixed time-history comparison flow end-to-end (4 root causes):
-  1. No user feedback on comparison start — added toast notification
-  2. `VariantResult.pushoverResults` was required but absent for TH — made optional with null guards
-  3. Backend `_run_variant_time_history()` returned zero peak metrics — added computation from raw TH data
-  4. `generate_fixed_base_variant()` left orphaned nodes/diaphragms/constraints — added cleanup logic
-- Replaced bent build strip diaphragms with single deck-level diaphragm (all deck nodes in one rigid body)
-- Added `includeDiaphragms` boolean toggle to BentBuildParams + UI checkbox (default: true)
-- Improved TFP bearing sizing in bent build: lower friction (inner 0.02/0.06, outer 0.04/0.10), larger disp caps [6,25,6], weight-scaled vertStiffness
-- Added 5th ground motion "Design 50 (Serviceability)" at ~0.10g for low-intensity testing
-- Reordered all GMs by increasing peak acceleration (0.10g → 0.15g → 0.25g → 0.35g → 0.50g)
+## Completed Work (2026-03-02)
+- Rebased this session on a clean baseline by discarding earlier in-progress edits per user direction.
+- Updated startup autoload model to Bay Build `1x1x1` steel frame (`fixed` base, rigid diaphragms) with startup gravity loads scaled to `50% LL`.
+- Set Model Tree panels to default collapsed and condensed Viewer Controls into collapsible sections (`Scene`, `Display`, `Element Properties`, `Deformation`, `Results`) with default collapsed state.
+- Fixed sticky/non-starting play behavior by replacing the `useFrame` playback stepping dependency with a requestAnimationFrame time-accumulator driver in `PlaybackDriver`.
+- Updated post-analysis/post-comparison defaults:
+  - Deformed shape on with scale factor `100`
+  - Force diagrams and color maps off by default
+  - Bearing displacement default on for isolation-bearing models
+  - Base shear arrows default on for pushover
+  - Comparison overlay default on for comparison runs
+  - Time-history playback resets to step `0` and paused on new results
+- Retained/verified detailed staged TFP bearing rendering updates: lower-concave orbit emphasis, top-assembly stage-following displacement, vertical bearing exaggeration control.
+- Added fixed-base anomaly investigation note: bridge "fixed-base" preset currently behaves as fixed piers + expansion-like abutments; base-shear metric currently sums only fully fixed nodes.
+- Added/updated targeted tests for startup model defaults and analysis/comparison display default behavior.
 
 ## Key Decisions / Tradeoffs
-- Single deck diaphragm (not per-span panels) chosen for simplicity — the deck slab acts as one rigid body in-plane
-- Bearing friction reduced to improve sliding initiation under moderate earthquakes while maintaining stability
-- Displacement capacities doubled ([3,18,3] → [6,25,6]) to provide headroom for 0.5g+ events
-- Weight-scaled vertical stiffness (`Math.max(9000, weight*50)`) ensures heavier bearings get proportionally stiffer support
+- Implemented `50% LL` as startup-load scaling in `loadSampleModel()` because Bay Build currently has no explicit startup dead/live split controls.
+- Fixed playback reliability at the driver layer (time stepping) rather than only UI controls; this addresses both Results and Compare panes consistently.
+- Investigated fixed-base anomalies without major solver or model rewrites per request; documented findings and low-risk next diagnostics instead.
 
 ## Current State
-- All tests pass: 471 frontend (22 suites), 128 backend (2 skipped), clean TypeScript build
-- Comparison works for both pushover AND time-history analysis types
-- 5 ground motions available, ordered by intensity
-- Bent build diaphragms now cover full deck as single rigid body with optional disable
+- Verified locally this session:
+  - `npm test -- --run src/test/stores/modelStore.test.ts src/test/features/App.test.tsx src/test/features/analysisDisplayDefaults.test.tsx` (`33` passed)
+  - `npm test -- --run src/test/stores/displayStore.test.ts src/test/stores/analysisStore.test.ts src/test/stores/analysisStore-phase4.test.ts` (`58` passed)
+  - `npm test -- --run src/test/features/ComparisonPanel.test.tsx src/test/features/AnalysisDialog-comparison.test.tsx` (`28` passed)
+  - `npm run type-check` (pass)
+- Research artifact created:
+  - `reports/fixed-base-investigation-2026-03-02.md`
+- Not yet verified this session:
+  - Full frontend suite
+  - Backend/unit/integration suites
+  - Manual browser QA for startup defaults, panel-collapse UX, playback behavior, and post-run auto-toggles
 
 ## Next Steps
-- Run live browser QA on comparison feature (time-history with isolated model)
-- Test bent build with diaphragms disabled vs enabled to verify solver behavior
-- Run integration tests to verify comparison + new GM work end-to-end through real OpenSeesPy
-- Consider per-span panel diaphragms if single-deck approach over-constrains long multi-span bridges
+- Run manual browser QA for:
+  - startup Bay Build `1x1x1` model + `50% LL` expectation
+  - Results/Compare playback auto-start and stability
+  - default collapsed control/panel UX
+  - post-analysis default visualization toggles
+- Decide whether the bridge preset label should be changed to reflect released abutment DOFs (or update restraints to true full fixed-base behavior).
+- If base-shear interpretation clarity is needed, add support-group reaction breakdown (fully fixed vs partially restrained) to results.

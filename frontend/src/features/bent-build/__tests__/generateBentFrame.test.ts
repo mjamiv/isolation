@@ -674,16 +674,15 @@ describe('gravity loads', () => {
 // ===========================================================================
 
 describe('diaphragms', () => {
-  // Per-support-line diaphragms: one collinear diaphragm per support line
-  // (abutments + piers), matching default bridge preset pattern.
+  // Single deck-level rigid diaphragm over all deck/chord nodes.
 
-  it('per-support-line diaphragms for conventional 3-span', () => {
+  it('single diaphragm for conventional 3-span', () => {
     const model = gen(); // 6 girders, 3 spans, 4 support lines
     expect(model.diaphragms).toBeDefined();
-    expect(model.diaphragms!).toHaveLength(4); // 4 support lines
+    expect(model.diaphragms!).toHaveLength(1);
   });
 
-  it('diaphragm count matches support line count', () => {
+  it('single diaphragm remains one for larger span counts', () => {
     const model5 = gen({
       numSpans: 5,
       spanLengths: [60, 80, 100, 80, 60],
@@ -695,15 +694,13 @@ describe('diaphragms', () => {
         { type: 'FIX', guided: false },
       ],
     });
-    expect(model5.diaphragms!).toHaveLength(6); // 6 support lines
+    expect(model5.diaphragms!).toHaveLength(1);
   });
 
-  it('each diaphragm has numGirders-1 constrained nodes', () => {
+  it('single diaphragm constrains all deck support-line nodes except master', () => {
     const model = gen(); // 6 girders per support line
-    model.diaphragms!.forEach((dia) => {
-      // 1 master + 5 constrained = 6 girder nodes per support line
-      expect(dia.constrainedNodeIds).toHaveLength(5);
-    });
+    // 4 support lines * 6 girders = 24 nodes, minus 1 master
+    expect(model.diaphragms![0]!.constrainedNodeIds).toHaveLength(23);
   });
 
   it('first diaphragm uses deckNodeId(0, 0) as master', () => {
@@ -713,15 +710,12 @@ describe('diaphragms', () => {
     expect(dia.masterNodeId).toBe(1);
   });
 
-  it('diaphragm labels match support line names', () => {
-    const model = gen(); // 3-span → Abt 1, Pier 1, Pier 2, Abt 2
-    expect(model.diaphragms![0]!.label).toBe('Abt 1 Deck');
-    expect(model.diaphragms![1]!.label).toBe('Pier 1 Deck');
-    expect(model.diaphragms![2]!.label).toBe('Pier 2 Deck');
-    expect(model.diaphragms![3]!.label).toBe('Abt 2 Deck');
+  it('diaphragm label is deck rigid', () => {
+    const model = gen();
+    expect(model.diaphragms![0]!.label).toBe('Deck Rigid');
   });
 
-  it('each deck node belongs to exactly one diaphragm', () => {
+  it('single diaphragm includes all deck and chord nodes exactly once', () => {
     const model = gen({
       alignment: {
         refElevation: 0,
@@ -733,15 +727,19 @@ describe('diaphragms', () => {
       },
     });
 
+    const dia = model.diaphragms![0]!;
+    const ids = [dia.masterNodeId, ...dia.constrainedNodeIds];
     const membership = new Map<number, number>();
-    model.diaphragms!.forEach((d) => {
-      const ids = [d.masterNodeId, ...d.constrainedNodeIds];
-      ids.forEach((id) => membership.set(id, (membership.get(id) ?? 0) + 1));
-    });
+    ids.forEach((id) => membership.set(id, (membership.get(id) ?? 0) + 1));
 
     membership.forEach((count) => {
       expect(count).toBe(1);
     });
+
+    // 3 spans => 4 support lines = 24 support nodes
+    // chordsPerSpan=3 => 2 interior stations per span => 3*2*6 = 36 chord nodes
+    // Total deck/chord nodes = 60 = 1 master + 59 constrained
+    expect(ids).toHaveLength(60);
   });
 
   it('no pier cap or abutment cap diaphragms', () => {
@@ -750,11 +748,11 @@ describe('diaphragms', () => {
     expect(capDias).toHaveLength(0);
   });
 
-  it('isolated modes have same per-support-line diaphragms', () => {
+  it('isolated modes use same single deck diaphragm', () => {
     const bearing = gen({ supportMode: 'isolated', isolationLevel: 'bearing' });
     const base = gen({ supportMode: 'isolated', isolationLevel: 'base' });
-    expect(bearing.diaphragms!).toHaveLength(4); // 4 support lines
-    expect(base.diaphragms!).toHaveLength(4);
+    expect(bearing.diaphragms!).toHaveLength(1);
+    expect(base.diaphragms!).toHaveLength(1);
   });
 
   it('perpDirection is 2 for all diaphragms', () => {
@@ -764,7 +762,7 @@ describe('diaphragms', () => {
     });
   });
 
-  it('chord-discretized spans produce separate chord diaphragms', () => {
+  it('chord-discretized spans are included in the same single diaphragm', () => {
     const model = gen({
       alignment: {
         refElevation: 0,
@@ -775,12 +773,9 @@ describe('diaphragms', () => {
         chordsPerSpan: 3,
       },
     });
-    // 4 support-line diaphragms + 3 spans * (3-1) chord station diaphragms = 10
-    expect(model.diaphragms!).toHaveLength(10);
-    // Each diaphragm has numGirders-1 constrained nodes
-    model.diaphragms!.forEach((dia) => {
-      expect(dia.constrainedNodeIds).toHaveLength(5);
-    });
+    expect(model.diaphragms!).toHaveLength(1);
+    // 60 total deck/chord nodes => 59 constrained + 1 master
+    expect(model.diaphragms![0]!.constrainedNodeIds).toHaveLength(59);
   });
 
   it('includeDiaphragms=false produces zero diaphragms', () => {
@@ -790,7 +785,7 @@ describe('diaphragms', () => {
 
   it('includeDiaphragms defaults to true', () => {
     const model = gen();
-    expect(model.diaphragms!).toHaveLength(4); // 4 support lines
+    expect(model.diaphragms!).toHaveLength(1);
   });
 });
 
@@ -1100,6 +1095,21 @@ describe('isolated bearings', () => {
       expect(nj.label).toContain('Base');
     });
   });
+
+  it('col-base: deck and pier cap are rigidly linked at piers', () => {
+    const model = gen({
+      supportMode: 'isolated',
+      isolationLevel: 'base',
+    });
+
+    const eq = model.equalDofConstraints ?? [];
+    // 2 piers * 6 girders = 12 rigid links
+    expect(eq).toHaveLength(12);
+    eq.forEach((c) => {
+      expect(c.dofs).toEqual([1, 2, 3]);
+      expect(c.label).toContain('[ColBase]');
+    });
+  });
 });
 
 // ===========================================================================
@@ -1334,6 +1344,28 @@ describe('edge cases', () => {
 
     baseNodes.forEach((n) => {
       expect(n.z).toBeCloseTo(expectedZ, 5);
+    });
+  });
+
+  it('single-column with even girders creates dedicated cap-column nodes (no snap kink)', () => {
+    const model = gen({ numBentColumns: 1, numGirders: 6 });
+    const capCols = model.nodes.filter((n) => n.label?.startsWith('CapCol'));
+    expect(capCols).toHaveLength(2); // 2 piers * 1 dedicated cap-column node
+
+    const totalGirderWidth = (((40 - 2 * 3.5) * 12) / (6 - 1)) * (6 - 1);
+    const midZ = totalGirderWidth / 2;
+    capCols.forEach((n) => expect(n.z).toBeCloseTo(midZ, 5));
+
+    // With one extra cap node per pier, pier cap segmentation increases by 1 per pier.
+    const pierCaps = model.elements.filter((e) => e.label?.startsWith('PierCap'));
+    expect(pierCaps).toHaveLength(12); // 2 piers * (6 segments each)
+
+    // Column top segment should connect to dedicated cap-column nodes.
+    const capColIds = new Set(capCols.map((n) => n.id));
+    const colTopSegs = model.elements.filter((e) => e.label?.endsWith(' c'));
+    expect(colTopSegs.length).toBeGreaterThan(0);
+    colTopSegs.forEach((e) => {
+      expect(capColIds.has(e.nodeJ)).toBe(true);
     });
   });
 });

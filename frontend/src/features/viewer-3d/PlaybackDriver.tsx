@@ -1,5 +1,4 @@
-import { useFrame } from '@react-three/fiber';
-import { useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useComparisonStore } from '@/stores/comparisonStore';
 import type { TimeHistoryResults } from '@/types/analysis';
@@ -14,45 +13,72 @@ export function PlaybackDriver() {
   const comparisonType = useComparisonStore((s) => s.comparisonType);
   const comparisonIsolated = useComparisonStore((s) => s.isolated);
 
-  const accumulatorRef = useRef(0);
-
-  useFrame((_, delta) => {
-    if (!isPlaying) return;
-
-    // Determine TH source: comparison TH or regular analysis TH
-    let thResults: TimeHistoryResults | null = null;
+  const thResults = useMemo(() => {
     if (comparisonType === 'time_history' && comparisonIsolated?.timeHistoryResults) {
-      thResults = comparisonIsolated.timeHistoryResults;
-    } else if (results?.results && results.type === 'time_history') {
-      thResults = results.results as TimeHistoryResults;
+      return comparisonIsolated.timeHistoryResults;
     }
+    if (results?.results && results.type === 'time_history') {
+      return results.results as TimeHistoryResults;
+    }
+    return null;
+  }, [comparisonType, comparisonIsolated, results]);
 
-    if (!thResults) return;
+  const totalSteps = thResults?.timeSteps.length ?? 0;
+  const dt = thResults?.dt ?? 0;
 
-    const totalSteps = thResults.timeSteps.length;
-    if (totalSteps === 0) return;
+  useEffect(() => {
+    if (!isPlaying || !thResults || totalSteps === 0 || dt <= 0) return;
 
-    const dt = thResults.dt;
-    accumulatorRef.current += delta * playbackSpeed;
+    let rafId = 0;
+    let lastTs = performance.now();
+    let accumulator = 0;
 
-    if (accumulatorRef.current >= dt) {
-      accumulatorRef.current -= dt;
-      const currentStep = useAnalysisStore.getState().currentTimeStep;
-      const nextStep = currentStep + 1;
+    const tick = (now: number) => {
+      const elapsed = (now - lastTs) / 1000;
+      lastTs = now;
+      accumulator += elapsed * playbackSpeed;
 
-      if (nextStep >= totalSteps) {
-        if (loopPlayback) {
-          setTimeStep(0);
+      if (accumulator >= dt) {
+        const stepsToAdvance = Math.floor(accumulator / dt);
+        accumulator -= stepsToAdvance * dt;
+
+        const currentStep = useAnalysisStore.getState().currentTimeStep;
+        const unclampedNext = currentStep + stepsToAdvance;
+
+        if (unclampedNext >= totalSteps) {
+          if (loopPlayback) {
+            setTimeStep(unclampedNext % totalSteps);
+          } else {
+            setTimeStep(totalSteps - 1);
+            setIsPlaying(false);
+            return;
+          }
         } else {
-          setTimeStep(totalSteps - 1);
-          setIsPlaying(false);
-          accumulatorRef.current = 0;
+          setTimeStep(unclampedNext);
         }
-      } else {
-        setTimeStep(nextStep);
       }
+
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    rafId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [
+    isPlaying,
+    playbackSpeed,
+    loopPlayback,
+    setTimeStep,
+    setIsPlaying,
+    thResults,
+    totalSteps,
+    dt,
+  ]);
+
+  useEffect(() => {
+    if (isPlaying && (!thResults || totalSteps === 0 || dt <= 0)) {
+      setIsPlaying(false);
     }
-  });
+  }, [isPlaying, thResults, totalSteps, dt, setIsPlaying]);
 
   return null;
 }

@@ -1,3 +1,5 @@
+import * as Accordion from '@radix-ui/react-accordion';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 import {
   useDisplayStore,
   type DisplayMode,
@@ -33,16 +35,29 @@ const COLOR_MAP_OPTIONS: { value: ColorMapType; label: string }[] = [
   { value: 'stress', label: 'Stress' },
 ];
 
-function ControlSection({ title, children }: { title: string; children: React.ReactNode }) {
+function ControlSection({
+  value,
+  title,
+  children,
+}: {
+  value: string;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="space-y-2">
-      <h3 className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-white/25">
-        <span className="h-px flex-1 bg-white/[0.06]" />
-        {title}
-        <span className="h-px flex-1 bg-white/[0.06]" />
-      </h3>
-      {children}
-    </div>
+    <Accordion.Item value={value} className="overflow-hidden rounded border border-white/[0.06]">
+      <Accordion.Header>
+        <Accordion.Trigger className="group flex w-full items-center gap-2 bg-surface-2 px-2.5 py-1.5 text-left">
+          <ChevronDownIcon className="h-3 w-3 shrink-0 text-white/35 transition-transform group-data-[state=open]:rotate-180" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/45">
+            {title}
+          </span>
+        </Accordion.Trigger>
+      </Accordion.Header>
+      <Accordion.Content className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
+        <div className="space-y-1.5 p-2">{children}</div>
+      </Accordion.Content>
+    </Accordion.Item>
   );
 }
 
@@ -57,7 +72,7 @@ function Toggle({
 }) {
   return (
     <label className="flex cursor-pointer items-center justify-between py-0.5">
-      <span className="text-[11px] text-white/50">{label}</span>
+      <span className="text-[10px] text-white/55">{label}</span>
       <button
         role="switch"
         aria-checked={checked}
@@ -83,11 +98,11 @@ function SelectControl<T extends string>({
 }) {
   return (
     <label className="flex items-center justify-between py-0.5">
-      <span className="text-[11px] text-white/50">{label}</span>
+      <span className="text-[10px] text-white/55">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="rounded-md border border-white/[0.06] bg-surface-3 px-2 py-0.5 text-[11px] text-white/70 outline-none transition-colors duration-150 focus:border-yellow-500/50 focus:ring-0"
+        className="rounded border border-white/[0.06] bg-surface-3 px-1.5 py-0.5 text-[10px] text-white/70 outline-none transition-colors duration-150 focus:border-yellow-500/50 focus:ring-0"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -120,7 +135,7 @@ function SliderControl({
 
   return (
     <label className="flex items-center justify-between py-0.5">
-      <span className="text-[11px] text-white/50">{label}</span>
+      <span className="text-[10px] text-white/55">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="range"
@@ -129,10 +144,10 @@ function SliderControl({
           step={step}
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="h-4 w-20 cursor-pointer"
+          className="h-4 w-16 cursor-pointer"
           style={{ '--range-progress': `${progress}%` } as React.CSSProperties}
         />
-        <span className="w-10 text-right font-mono text-[10px] text-white/30">
+        <span className="w-9 text-right font-mono text-[9px] text-white/35">
           {formatValue ? formatValue(value) : String(value)}
         </span>
       </div>
@@ -174,6 +189,7 @@ export function ViewerControls() {
   const forceScale = useDisplayStore((state) => state.forceScale);
   const colorMap = useDisplayStore((state) => state.colorMap);
   const showBearingDisplacement = useDisplayStore((state) => state.showBearingDisplacement);
+  const bearingVerticalScale = useDisplayStore((state) => state.bearingVerticalScale);
   const showBaseShearLabels = useDisplayStore((state) => state.showBaseShearLabels);
   const showComparisonOverlay = useDisplayStore((state) => state.showComparisonOverlay);
 
@@ -183,12 +199,12 @@ export function ViewerControls() {
   const setForceScale = useDisplayStore((state) => state.setForceScale);
   const setColorMap = useDisplayStore((state) => state.setColorMap);
   const setShowBearingDisplacement = useDisplayStore((state) => state.setShowBearingDisplacement);
+  const setBearingVerticalScale = useDisplayStore((state) => state.setBearingVerticalScale);
   const setShowComparisonOverlay = useDisplayStore((state) => state.setShowComparisonOverlay);
 
   return (
-    <div className="space-y-3">
-      {/* Scene: environment is the outermost context — comes first */}
-      <ControlSection title="Scene">
+    <Accordion.Root type="multiple" defaultValue={[]} className="space-y-1">
+      <ControlSection value="scene" title="Scene">
         <SelectControl
           label="Environment"
           value={environment}
@@ -197,8 +213,7 @@ export function ViewerControls() {
         />
       </ControlSection>
 
-      {/* Display: geometry representation + viewport helpers */}
-      <ControlSection title="Display">
+      <ControlSection value="display" title="Display">
         <SelectControl
           label="Mode"
           value={displayMode}
@@ -216,8 +231,7 @@ export function ViewerControls() {
         <Toggle label="Node / Element Labels" checked={showLabels} onChange={setShowLabels} />
       </ControlSection>
 
-      {/* Element Properties: annotation overlays tied to the undeformed model */}
-      <ControlSection title="Element Properties">
+      <ControlSection value="element-properties" title="Element Properties">
         <Toggle label="Mass Labels" checked={showMassLabels} onChange={setShowMassLabels} />
         <Toggle
           label="Stiffness Labels"
@@ -226,8 +240,7 @@ export function ViewerControls() {
         />
       </ControlSection>
 
-      {/* Deformation: result-dependent — deformed shape + scale */}
-      <ControlSection title="Deformation">
+      <ControlSection value="deformation" title="Deformation">
         <Toggle label="Show Deformed Shape" checked={showDeformed} onChange={setShowDeformed} />
         <Toggle label="Deformed Only" checked={hideUndeformed} onChange={setHideUndeformed} />
         <SliderControl
@@ -240,8 +253,7 @@ export function ViewerControls() {
         />
       </ControlSection>
 
-      {/* Results: all post-processing overlays grouped together */}
-      <ControlSection title="Results">
+      <ControlSection value="results" title="Results">
         <Toggle label="Force Diagrams" checked={showForces} onChange={setShowForces} />
         <SelectControl
           label="Force Type"
@@ -274,12 +286,21 @@ export function ViewerControls() {
           checked={showBearingDisplacement}
           onChange={setShowBearingDisplacement}
         />
+        <SliderControl
+          label="Bearing Vert Scale"
+          min={0.5}
+          max={3}
+          step={0.1}
+          value={bearingVerticalScale}
+          onChange={setBearingVerticalScale}
+          formatValue={(v) => `${v.toFixed(1)}x`}
+        />
         <Toggle
           label="Comparison Overlay"
           checked={showComparisonOverlay}
           onChange={setShowComparisonOverlay}
         />
       </ControlSection>
-    </div>
+    </Accordion.Root>
   );
 }

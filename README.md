@@ -15,7 +15,7 @@ Phases 1 through 5 are complete. The app provides:
 - **3D labels** on nodes and elements, visible on hover, selection, or global toggle
 - **Viewer controls** for display mode, grid, axes, labels, deformation scale, force diagrams, and color maps
 - **Model import** — "Load Model" dropdown with 6 presets (20-Story Tower, 2-Story 2x2, 3-Span Bridge — each fixed/isolated) and JSON file import
-- **Sample model** — 3-story 2-bay steel moment frame auto-loaded on startup
+- **Startup model** — bay-build generated 1x1x1 steel frame (fixed base, rigid diaphragms, 50% live load) auto-loaded on startup
 
 ### Phase 2 — Load Editing, Analysis Runner & Results
 - **Load Editor** — CRUD for point loads with node selector and force fields; gravity loads auto-created with sample model
@@ -44,7 +44,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Mode shape visualization** — 3D animated mode shapes using `useFrame()` sinusoidal oscillation; mode selector dropdown and Visualize toggle in ModalResults panel
 - **Deformed shape rendering** — semi-transparent blue overlay showing displaced node/member positions for static and time-history results, scaled by user-configurable scale factor
 - **Plastic hinge visualization** — color-coded spheres at element ends showing IO/LS/CP performance levels (7 states from elastic/gray to collapse/black)
-- **Time-history playback** — industry-grade transport controls (play/pause, step forward/back, skip to start/end, loop toggle) with custom scrubber timeline, speed pills (0.25x-4x), keyboard shortcuts (Space, Arrow keys, Home/End, L), and `useFrame`-based step driver synchronized with 3D viewer
+- **Time-history playback** — industry-grade transport controls (play/pause, step forward/back, skip to start/end, loop toggle) with custom scrubber timeline, speed pills (0.25x-4x), keyboard shortcuts (Space, Arrow keys, Home/End, L), and a requestAnimationFrame-based step driver synchronized with 3D viewer
 - **Enhanced backend results** — static results include deformed shape data; modal results include real mass participation ratios; pushover returns capacity curve, hinge states, and deformed shape
 
 ### Phase 5 — Ductile vs Isolated Comparison, Lambda Factors & Summary Dashboards
@@ -63,8 +63,8 @@ Phases 1 through 5 are complete. The app provides:
 - **AnalysisDialog integration** — "Run Comparison" checkbox appears when model has bearings and pushover or time-history is selected; lambda min/max inputs toggle below for pushover
 
 ### Auto-Load & Default Analysis Setup
-- **Auto-load on startup** — sample model loads automatically on first render, so the app is immediately interactive with a 3D model visible
-- **5 built-in ground motions** — sample model ships with realistic synthetic records ordered by increasing intensity:
+- **Auto-load on startup** — the bay-build 1x1x1 steel startup model (fixed base, rigid diaphragms, 50% LL) loads automatically on first render, so the app is immediately interactive with a 3D model visible
+- **5 built-in ground motions** — the startup model ships with realistic synthetic records ordered by increasing intensity:
   - Design 50 (Serviceability) — 2-6 Hz shallow crustal, ~0.10g peak, 10s
   - Long-Duration Subduction — low-frequency dominated, ~0.15g sustained, 30s
   - Harmonic Sweep — chirp 0.5-10Hz, 0.25g peak, 12s
@@ -84,7 +84,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Load Model dropdown** — toolbar dropdown with 6 focused presets and an "Import JSON File..." option
 - **Preset models**: 20-Story Tower (Fixed/Isolated), 2-Story 2x2 (Fixed/Isolated), 3-Span Bridge (Fixed/Isolated)
 - **20-story steel tower** — 1-bay 20'x20' moment frame, 3 column tiers (W14x500/370/257), 3 beam tiers (W36x300/W30x211/W24x146), T1=1.41s, fully verified with all 4 analysis types
-- **3-span girder bridge** — 80'-100'-80' continuous steel girder bridge with 6 W36x150 girders at 8'-0" spacing, W24x84 abutment cross-beams, RC pier caps (4'x5' concrete, Ix=864,000 in⁴), 2-column W14x132 portal frame piers with 3 sub-elements per column (intermediate nodes at 1/3 and 2/3 height), rigid diaphragms at all support lines, and 120 psf composite concrete deck dead load. Fixed model has roller abutments (36 nodes, 50 elements). Isolated variant has 24 TFP bearings at all girder support points with upsized pier bearings (R_eff=180", dispCap=30") and RC pier cap beams below the isolation plane (60 nodes, 60 elements)
+- **3-span girder bridge** — 80'-100'-80' continuous steel girder bridge with 6 W36x150 girders at 8'-0" spacing, W24x84 abutment cross-beams, RC pier caps (5'x6' concrete, Ix=1,866,240 in⁴), 2-column W14x257 portal frame piers with 3 sub-elements per column (intermediate nodes at 1/3 and 2/3 height), a single rigid deck diaphragm, and 120 psf composite concrete deck dead load. Fixed model has roller abutments (36 nodes, 50 elements). Isolated variant has 24 TFP bearings at all girder support points with upsized pier bearings (R_eff=180", dispCap=30") and RC pier cap beams below the isolation plane (60 nodes, 60 elements)
 - **Auto-generated ground motions** — models imported without ground motion records automatically get 5 synthetic records (Serviceability, Subduction, Harmonic, El Centro, Near-Fault) ordered by intensity, enabling immediate time-history analysis starting from low-amplitude events
 - **JSON file import** — load any arbitrary model JSON via file picker with validation and toast notifications
 - **Session result caching** — analysis results are cached per model name; switching between presets preserves results within a dev session without re-running analyses
@@ -137,25 +137,30 @@ Phases 1 through 5 are complete. The app provides:
 - **Real-time parametric bridge** — "Bent Build" button in toolbar opens a dialog to generate multi-span girder bridges with per-pier support configuration
 - **Span/girder layout** — 1-8 spans with per-span lengths, 3-10 girders, steel (W30-W44) or concrete (AASHTO Type II-VI) girder sections, adjustable roadway width and overhang
 - **Pier configuration** — 1-4 bent columns per pier with independent heights, concrete circular RC columns (36-60in) auto-sized by height
-- **Support modes** — Conventional (FIX monolithic or EXP expansion with equalDOF constraints) with auto-stabilization for mechanism-prone all-EXP cases (single-column bents auto-promote Pier 1 to FIX; multi-column all-EXP adds one longitudinal anchor equalDOF), and Isolated (bearing-level TFP at all girder support points, or column-base TFP)
+- **Support modes** — Conventional (FIX monolithic or EXP expansion with equalDOF constraints) with auto-stabilization for mechanism-prone all-EXP cases (single-column bents auto-promote Pier 1 to FIX; multi-column all-EXP adds one longitudinal anchor equalDOF), and Isolated (bearing-level TFP at all girder support points, or column-base TFP with rigid deck-to-cap equalDOF links so only the column base isolates)
 - **Pier cap beams** — distinct `pierCap` element type rendered in stone/gray (substructure) vs gold girders (superstructure); strong-axis section orientation for gravity bending (Ix > Iy); section depth offsets place deck nodes at girder centroid and cap nodes at cap centroid for realistic rigid end geometry
 - **AASHTO loads** — dead load components (deck slab, overlay, barriers, utilities, future wearing surface, misc), AASHTO lane live load with multi-presence factors
-- **Per-support-line diaphragms** — one collinear diaphragm per support line (abutments + piers) and per chord station, matching default bridge preset pattern for clean strip rendering via `buildCollinearStrip()`
+- **Single deck diaphragm** — bent-build creates one rigid deck-level diaphragm across all deck/chord nodes (when enabled), keeping the superstructure in-plane as one rigid body
 - **Column discretization** — each pier column is split into 3 sub-elements with intermediate nodes at 1/3 and 2/3 height for improved deformed shape visualization (node ID range 4000+)
 - **Robust bearing sizing** — TFP bearings use lower friction (inner mu 0.02/0.06, outer 0.04/0.10), larger displacement capacities [6, 25, 6] inches, and weight-scaled vertical stiffness for improved convergence under larger earthquakes
 - **Live 3D preview** — model regenerates as any parameter changes
-- **132 unit tests** — full coverage of node topology, element connectivity, section sizing, loads, bearings, equalDOF, diaphragms, conventional-support stability logic, section orientation, and deck/cap offsets
+- **134 unit tests** — full coverage of node topology, element connectivity, section sizing, loads, bearings, equalDOF, diaphragms, conventional-support stability logic, section orientation, and deck/cap offsets
 
 ### 3D Viewer Enhancements
 - **Dynamic scene sizing** — grid, floor plane, camera, orbit controls, fog, and shadows all scale dynamically based on model bounding box via `useModelBounds` hook; models from small 2-story frames to 20-story towers and 3-span bridges always fit cleanly
 - **Scene environments** — 4 selectable environment presets (Studio, Outdoor, Dark, Blueprint) with procedural lighting, backgrounds, and ground treatments; no external HDR files
 - **Node visibility** — nodes render with bright gold color and emissive glow, clearly visible against all backgrounds
 - **Bearing orbit overlay** — collapsible plan-view panel showing real-time isolation bearing displacement orbits during time-history playback with amplification presets (1x-50x), prev/next navigation, and capacity circles
+- **Bearing displacement emphasis controls** — compare/deformed rendering supports a dedicated vertical expansion scale (`0.5x` to `3.0x`), and displacement markers are rendered at the lower concave stage for clearer bearing motion interpretation
+- **Bearing top-assembly displacement** — upper bearing assembly components now translate with top-stage (`slider3`) cumulative displacement, so top plate motion matches playback displacement response
 - **Global bearing hysteresis** — hysteresis loop charts use global node displacements and global element forces (not element-local `basicDisplacement`/`basicForce`), producing correct nonlinear loops for multi-directional excitation
 
 ### Bug Fixes & Polish
 - **3D display modes** — Extruded mode renders semi-transparent box cross-sections with wireframe edges; Solid mode renders opaque lit geometry with MeshStandardMaterial. Both use actual section dimensions (depth, flange width) from the model.
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
+- **Compare overlay modal isolation** — comparison runs clear selected modal mode and suppress mode-shape animation while overlaying fixed/isolated deformed shapes, preventing a third ghost frame from drifting with mismatched scale
+- **Post-analysis display defaults** — completed analyses default to deformed shape on (scale factor 100), force/color-map overlays off; isolation defaults bearing displacement on; pushover defaults base shear arrows on; comparison defaults overlay on
+- **Collapsed control panels** — Model Tree sections and Viewer control sections (Scene, Display, Element Properties, Deformation, Results) now default to collapsed for a cleaner workflow
 - **Load pattern fix** — pushover load pattern values now match backend expectations (`linear`/`first_mode` instead of `uniform`/`firstMode`)
 - **Empty tab states** — Results and Compare tabs show centered placeholder messages when no analysis/comparison data exists, with guidance on what to do next
 - **Local force diagrams** — Backend switched from global `eleResponse("force")` to local `eleResponse("localForce")` for correct force diagram rendering regardless of element orientation

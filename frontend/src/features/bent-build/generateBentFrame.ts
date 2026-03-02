@@ -40,6 +40,10 @@ function capNodeId(pi: number, gi: number, numGirders: number): number {
   return 1000 + pi * numGirders + gi + 1;
 }
 
+function capColumnNodeId(pi: number, ci: number, maxCols: number): number {
+  return 6000 + pi * maxCols + ci + 1;
+}
+
 function groundNodeId(pi: number, ci: number, maxCols: number): number {
   return 2000 + pi * maxCols + ci + 1;
 }
@@ -98,6 +102,18 @@ function closestGirderIndex(colOffset: number, girderOffsets: number[]): number 
     }
   }
   return bestGi;
+}
+
+/** Find an exact girder offset match within tolerance. */
+function matchingGirderIndex(
+  colOffset: number,
+  girderOffsets: number[],
+  tol = 1e-6,
+): number | null {
+  for (let gi = 0; gi < girderOffsets.length; gi++) {
+    if (Math.abs((girderOffsets[gi] ?? 0) - colOffset) <= tol) return gi;
+  }
+  return null;
 }
 
 /** Compute column transverse offsets centered on alignment (in inches). */
@@ -207,6 +223,11 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   const columnOffsets = alignment
     ? computeColumnOffsets(numBentColumns, totalGirderWidth)
     : computeColumnOffsetsLegacy(numBentColumns, totalGirderWidth);
+  // Per-pier, per-column top connection node on pier cap.
+  // Uses girder cap nodes when offsets align, otherwise dedicated cap-column nodes.
+  const columnCapNodeIds: number[][] = Array.from({ length: numPiers }, () =>
+    Array.from({ length: numBentColumns }, () => 0),
+  );
 
   // Determine the max column height for section sizing
   const maxColHeightFt = numPiers > 0 ? Math.max(...columnHeights) : 20;
@@ -414,6 +435,33 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
+  // Dedicated cap nodes for columns whose spacing does not align with girders.
+  for (let pi = 0; pi < numPiers; pi++) {
+    const sli = pi + 1;
+    const capY = deckY[sli]! - halfCap;
+    for (let ci = 0; ci < numBentColumns; ci++) {
+      const colOffset = columnOffsets[ci]!;
+      const matchedGi = matchingGirderIndex(colOffset, girderOffsets);
+      if (matchedGi !== null) {
+        columnCapNodeIds[pi]![ci] = capNodeId(pi, matchedGi, numGirders);
+        continue;
+      }
+
+      const nodeId = capColumnNodeId(pi, ci, numBentColumns);
+      const { x, z } = colNodeCoords(pi, ci);
+      nodes.push({
+        id: nodeId,
+        x,
+        y: capY,
+        z,
+        restraint: [...FREE],
+        mass: 0,
+        label: `CapCol P${pi + 1} C${ci + 1}`,
+      });
+      columnCapNodeIds[pi]![ci] = nodeId;
+    }
+  }
+
   // Abutment cap nodes for bearing-level isolation
   if (abutmentNeedsSeparateCap()) {
     const abt1CapPi = numPiers;
@@ -588,16 +636,33 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   }
 
   // 6c. Pier cap beams
+  // Include both girder-cap nodes and any dedicated cap-column nodes so
+  // column spacing and girder spacing remain independent along the cap.
   for (let pi = 0; pi < numPiers; pi++) {
-    for (let gi = 0; gi < numGirders - 1; gi++) {
+    const capLine: { offset: number; nodeId: number }[] = [];
+    for (let gi = 0; gi < numGirders; gi++) {
+      capLine.push({ offset: girderOffsets[gi]!, nodeId: capNodeId(pi, gi, numGirders) });
+    }
+    for (let ci = 0; ci < numBentColumns; ci++) {
+      const nodeId = columnCapNodeIds[pi]![ci]!;
+      if (!capLine.some((p) => p.nodeId === nodeId)) {
+        capLine.push({ offset: columnOffsets[ci]!, nodeId });
+      }
+    }
+    capLine.sort((a, b) => a.offset - b.offset);
+
+    for (let seg = 0; seg < capLine.length - 1; seg++) {
+      const nodeI = capLine[seg]!.nodeId;
+      const nodeJ = capLine[seg + 1]!.nodeId;
+      if (nodeI === nodeJ) continue;
       elements.push({
         id: nextElementId++,
         type: 'pierCap',
-        nodeI: capNodeId(pi, gi, numGirders),
-        nodeJ: capNodeId(pi, gi + 1, numGirders),
+        nodeI,
+        nodeJ,
         sectionId: pierCapSectionId,
         materialId: concreteMatId,
-        label: `PierCap P${pi + 1} G${gi + 1}-${gi + 2}`,
+        label: `PierCap P${pi + 1} S${seg + 1}`,
       });
     }
   }
@@ -605,8 +670,7 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   // 6d. Columns: connect base to cap node via 3 sub-elements
   for (let pi = 0; pi < numPiers; pi++) {
     for (let ci = 0; ci < numBentColumns; ci++) {
-      const closestGi = closestGirderIndex(columnOffsets[ci]!, girderOffsets);
-      const topNodeId = capNodeId(pi, closestGi, numGirders);
+      const topNodeId = columnCapNodeIds[pi]![ci]!;
       const botNodeId = baseNodeId(pi, ci, numBentColumns);
       const mid1Id = colMidNodeId(pi, ci, 0, numBentColumns);
       const mid2Id = colMidNodeId(pi, ci, 1, numBentColumns);
@@ -866,62 +930,61 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
         label: `EqDOF Anchor P1 G${anchorGi + 1}`,
       });
     }
+  } else if (supportMode === 'isolated' && isolationLevel === 'base') {
+    // Column-base isolation keeps superstructure/substructure rigidly connected
+    // at piers; only column bases are isolated by TFP bearings.
+    let eqId = 1;
+    for (let pi = 0; pi < numPiers; pi++) {
+      const sli = pi + 1;
+      for (let gi = 0; gi < numGirders; gi++) {
+        equalDofConstraints.push({
+          id: eqId++,
+          retainedNodeId: capNodeId(pi, gi, numGirders),
+          constrainedNodeId: deckNodeId(sli, gi, numGirders),
+          dofs: [1, 2, 3],
+          label: `EqDOF P${pi + 1} G${gi + 1} [ColBase]`,
+        });
+      }
+    }
   }
 
   // ── 10. Generate Rigid Diaphragms ───────────────────────────────────
-  // Per-support-line diaphragms matching default bridge preset pattern.
-  // Each support line (abutments + piers) gets its own collinear diaphragm,
-  // and each chord station gets a separate diaphragm.
+  // Single deck-level rigid diaphragm: all deck/chord nodes move as one
+  // in-plane rigid body.
 
   const diaphragms: RigidDiaphragm[] = [];
 
   if (includeDiaphragms && numGirders >= 2) {
-    let diaId = 1;
+    const deckNodeIds: number[] = [];
 
-    // One diaphragm per support line
+    // Support-line deck nodes
     for (let sli = 0; sli < numSupportLines; sli++) {
-      const isAbt1 = sli === 0;
-      const isAbt2 = sli === numSupportLines - 1;
-
-      const masterNid = deckNodeId(sli, 0, numGirders);
-      const constrainedNids: number[] = [];
-      for (let gi = 1; gi < numGirders; gi++) {
-        constrainedNids.push(deckNodeId(sli, gi, numGirders));
+      for (let gi = 0; gi < numGirders; gi++) {
+        deckNodeIds.push(deckNodeId(sli, gi, numGirders));
       }
-
-      let label: string;
-      if (isAbt1) label = 'Abt 1 Deck';
-      else if (isAbt2) label = 'Abt 2 Deck';
-      else label = `Pier ${sli} Deck`;
-
-      diaphragms.push({
-        id: diaId++,
-        masterNodeId: masterNid,
-        constrainedNodeIds: constrainedNids,
-        perpDirection: 2 as const,
-        label,
-      });
     }
 
-    // Per-chord-station diaphragms
+    // Interior chord nodes for curved alignment discretization
     if (chordsPerSpan > 1) {
       for (let span = 0; span < numSpans; span++) {
         const numInterior = chordsPerSpan - 1;
         for (let ci = 0; ci < numInterior; ci++) {
-          const masterNid = chordNodeId(span, ci, 0, chordsPerSpan, numGirders);
-          const constrainedNids: number[] = [];
-          for (let gi = 1; gi < numGirders; gi++) {
-            constrainedNids.push(chordNodeId(span, ci, gi, chordsPerSpan, numGirders));
+          for (let gi = 0; gi < numGirders; gi++) {
+            deckNodeIds.push(chordNodeId(span, ci, gi, chordsPerSpan, numGirders));
           }
-          diaphragms.push({
-            id: diaId++,
-            masterNodeId: masterNid,
-            constrainedNodeIds: constrainedNids,
-            perpDirection: 2 as const,
-            label: `Chord Span${span + 1} C${ci + 1}`,
-          });
         }
       }
+    }
+
+    const allDeckNodeIds = [...new Set(deckNodeIds)];
+    if (allDeckNodeIds.length >= 2) {
+      diaphragms.push({
+        id: 1,
+        masterNodeId: allDeckNodeIds[0]!,
+        constrainedNodeIds: allDeckNodeIds.slice(1),
+        perpDirection: 2 as const,
+        label: 'Deck Rigid',
+      });
     }
   }
 

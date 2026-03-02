@@ -65,79 +65,60 @@ describe('modelStore — setModel', () => {
 // ---------------------------------------------------------------------------
 
 describe('modelStore — loadSampleModel', () => {
-  it('creates a valid base-isolated 3-story frame', () => {
+  it('creates the startup bay-build 1x1x1 steel frame', () => {
     getState().loadSampleModel();
     const state = getState();
 
     // Model metadata should be populated
     expect(state.model).not.toBeNull();
-    expect(state.model!.name).toContain('Base-Isolated');
+    expect(state.model!.name).toContain('1x1x1');
 
-    // 12 structure nodes + 3 ground nodes = 15 nodes
-    expect(state.nodes.size).toBe(15);
-
-    // 9 columns + 6 beams = 15 elements
-    expect(state.elements.size).toBe(15);
-
-    // 1 material, 2 sections
+    // 1x1x1 bay frame: 2x2 grid, 1 story, fixed base
+    expect(state.nodes.size).toBe(8);
+    expect(state.elements.size).toBe(8);
     expect(state.materials.size).toBe(1);
     expect(state.sections.size).toBe(2);
-
-    // 3 TFP bearings
-    expect(state.bearings.size).toBe(3);
-
-    // 9 gravity loads on floor nodes above base (y > 0)
-    expect(state.loads.size).toBe(9);
+    expect(state.bearings.size).toBe(0);
+    expect(state.diaphragms.size).toBe(1);
+    expect(state.equalDofConstraints.size).toBe(0);
+    expect(state.loads.size).toBe(4);
   });
 
-  it('creates fixed ground nodes', () => {
+  it('creates fixed restraints at all base nodes for startup bay frame', () => {
     getState().loadSampleModel();
     const nodes = getState().nodes;
 
-    // Ground nodes 101, 102, 103 are fixed
-    for (const id of [101, 102, 103]) {
-      const node = nodes.get(id)!;
-      expect(node.restraint).toEqual([true, true, true, true, true, true]);
-    }
+    const baseNodes = Array.from(nodes.values()).filter((n) => n.y === 0);
+    expect(baseNodes).toHaveLength(4);
+    baseNodes.forEach((node) =>
+      expect(node.restraint).toEqual([true, true, true, true, true, true]),
+    );
   });
 
-  it('creates free base nodes at y=0', () => {
+  it('creates free top-floor nodes above the fixed base', () => {
     getState().loadSampleModel();
     const nodes = getState().nodes;
 
-    // Base nodes 1, 2, 3 are free (bearing tops)
-    for (const id of [1, 2, 3]) {
-      const node = nodes.get(id)!;
-      expect(node.y).toBe(0);
-      expect(node.restraint).toEqual([false, false, false, false, false, false]);
-    }
-  });
-
-  it('creates free nodes above ground level', () => {
-    getState().loadSampleModel();
-    const nodes = getState().nodes;
-
-    // Nodes 4-12 should be free
-    for (let id = 4; id <= 12; id++) {
-      const node = nodes.get(id)!;
+    const topFloorNodes = Array.from(nodes.values()).filter((n) => n.y > 0);
+    expect(topFloorNodes).toHaveLength(4);
+    topFloorNodes.forEach((node) => {
       expect(node.y).toBeGreaterThan(0);
       expect(node.restraint).toEqual([false, false, false, false, false, false]);
-    }
+    });
   });
 
-  it('creates bearings connecting ground to base nodes', () => {
+  it('applies 50% live load scaling to startup gravity loads', () => {
     getState().loadSampleModel();
-    const bearings = getState().bearings;
+    const loads = Array.from(getState().loads.values());
+    expect(loads).toHaveLength(4);
+    loads.forEach((load) => expect(load.fy).toBeCloseTo(-6, 6));
+  });
 
-    expect(bearings.size).toBe(3);
-
-    const b1 = bearings.get(1)!;
-    expect(b1.nodeI).toBe(101);
-    expect(b1.nodeJ).toBe(1);
-    expect(b1.surfaces).toHaveLength(4);
-    expect(b1.radii).toEqual([16, 84, 16]);
-    expect(b1.dispCapacities).toEqual([2, 16, 2]);
-    expect(b1.surfaces[0].type).toBe('VelDependent');
+  it('does not create any ground nodes or bearings in startup fixed model', () => {
+    getState().loadSampleModel();
+    const nodes = Array.from(getState().nodes.values());
+    expect(getState().bearings.size).toBe(0);
+    expect(nodes.some((n) => n.label?.startsWith('Ground'))).toBe(false);
   });
 });
 
@@ -353,8 +334,8 @@ describe('modelStore — loadModelFromJSON', () => {
   it('replaces existing data when loading a new model', () => {
     // Load sample first
     getState().loadSampleModel();
-    expect(getState().nodes.size).toBe(15);
-    expect(getState().bearings.size).toBe(3);
+    expect(getState().nodes.size).toBe(8);
+    expect(getState().bearings.size).toBe(0);
 
     // Load JSON — should fully replace
     getState().loadModelFromJSON(makeTestJSON());

@@ -10,11 +10,7 @@ import { GroundMotionList } from './GroundMotionList';
 
 export function ModelEditor() {
   return (
-    <Accordion.Root
-      type="multiple"
-      defaultValue={['nodes', 'elements', 'sections', 'materials']}
-      className="text-gray-300"
-    >
+    <Accordion.Root type="multiple" defaultValue={[]} className="text-gray-300">
       <NodeList />
       <ElementList />
       <SectionList />

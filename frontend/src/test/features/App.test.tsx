@@ -27,12 +27,12 @@ describe('App — auto-load', () => {
     render(<App />);
 
     expect(getState().model).not.toBeNull();
-    expect(getState().model!.name).toContain('Base-Isolated');
+    expect(getState().model!.name).toContain('1x1x1');
   });
 
   it('populates nodes after mount', () => {
     render(<App />);
-    expect(getState().nodes.size).toBe(15);
+    expect(getState().nodes.size).toBe(8);
   });
 
   it('populates ground motions after mount', () => {

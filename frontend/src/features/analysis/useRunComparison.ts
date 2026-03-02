@@ -28,20 +28,29 @@ export function useRunComparison() {
       },
       onStart: () => {
         startComparison();
+        useAnalysisStore.getState().setSelectedModeNumber(null);
         useToastStore
           .getState()
           .addToast('info', 'Comparison started. Check the Compare tab for progress.');
       },
       onResult: (result: ComparisonRun) => {
         setResults(result);
+        useAnalysisStore.getState().setSelectedModeNumber(null);
 
-        // For time-history comparisons, enable overlay and set up playback
-        if (result.comparisonType === 'time_history' && result.isolated?.timeHistoryResults) {
-          useDisplayStore.getState().setShowDeformed(true);
-          useDisplayStore.getState().setShowComparisonOverlay(true);
-          useAnalysisStore.getState().setTimeStep(0);
-          useAnalysisStore.getState().setIsPlaying(false);
-        }
+        // Post-comparison defaults: show deformed at scale 100, results overlays off.
+        const display = useDisplayStore.getState();
+        display.setShowDeformed(true);
+        display.setHideUndeformed(false);
+        display.setScaleFactor(100);
+        display.setShowForces(false);
+        display.setForceType('none');
+        display.setColorMap('none');
+        display.setShowComparisonOverlay(true);
+        display.setShowBaseShearLabels(result.comparisonType === 'pushover');
+        display.setShowBearingDisplacement(true);
+
+        useAnalysisStore.getState().setTimeStep(0);
+        useAnalysisStore.getState().setIsPlaying(false);
 
         useToastStore.getState().addToast('success', 'Comparison completed successfully.');
       },

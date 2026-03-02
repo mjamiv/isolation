@@ -31,7 +31,8 @@ export function StructuralModel3D() {
     return null;
   }
 
-  const hasModalResults = results?.type === 'modal' && selectedModeNumber !== null;
+  const hasModalResults =
+    results?.type === 'modal' && selectedModeNumber !== null && comparisonType === null;
   const hasHingeStates = (results?.hingeStates?.length ?? 0) > 0;
   const hasTimeHistory = results?.type === 'time_history';
   const hasComparisonTimeHistory = comparisonType === 'time_history';

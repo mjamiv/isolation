@@ -40,6 +40,7 @@ export function BearingSymbols() {
   const selectedBearingIds = useDisplayStore((s) => s.selectedBearingIds);
   const selectBearing = useDisplayStore((s) => s.selectBearing);
   const showBearingDisplacement = useDisplayStore((s) => s.showBearingDisplacement);
+  const bearingVerticalScale = useDisplayStore((s) => s.bearingVerticalScale);
   const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
   const thResults = useActiveTimeHistory();
 
@@ -47,7 +48,7 @@ export function BearingSymbols() {
 
   const currentOffsetsByBearingId = useMemo(() => {
     const map = new Map<number, ReturnType<typeof computeTfpStageOffsets>>();
-    if (!showBearingDisplacement || !thResults || thResults.timeSteps.length === 0) return map;
+    if (!thResults || thResults.timeSteps.length === 0) return map;
 
     const clampedStep = Math.min(Math.max(currentTimeStep, 0), thResults.timeSteps.length - 1);
     const step = thResults.timeSteps[clampedStep];
@@ -56,7 +57,7 @@ export function BearingSymbols() {
       map.set(bearing.id, computeTfpStageOffsets(dx, dz, bearing.dispCapacities));
     }
     return map;
-  }, [showBearingDisplacement, thResults, currentTimeStep, bearingArray]);
+  }, [thResults, currentTimeStep, bearingArray]);
 
   const orbitByBearingId = useMemo(() => {
     const map = new Map<number, [number, number][]>();
@@ -64,11 +65,14 @@ export function BearingSymbols() {
 
     for (const bearing of bearingArray) {
       const orbit = extractOrbitPoints(thResults.timeSteps, bearing.nodeI, bearing.nodeJ, 120);
-      const topPlateOrbit = orbit.map(([dx, dz]) => {
+      // Keep displayed displacement synchronized with the assembly's top-stage
+      // cumulative travel; only the vertical draw location is moved to the
+      // lower concave for visibility.
+      const displayOrbit = orbit.map(([dx, dz]) => {
         const offsets = computeTfpStageOffsets(dx, dz, bearing.dispCapacities);
         return offsets.slider3;
       });
-      map.set(bearing.id, topPlateOrbit);
+      map.set(bearing.id, displayOrbit);
     }
     return map;
   }, [showBearingDisplacement, thResults, bearingArray]);
@@ -97,11 +101,15 @@ export function BearingSymbols() {
         const mz = (nI.z + nJ.z) / 2;
 
         const span = Math.hypot(nJ.x - nI.x, nJ.y - nI.y, nJ.z - nI.z);
-        const housingHeight = Math.min(Math.max(span * 0.9, 6), 16);
+        const baseHousingHeight = Math.min(Math.max(span * 0.9, 6), 16);
         const maxDispCap = Math.max(...bearing.dispCapacities, 0);
         const outerRadius = Math.min(Math.max(maxDispCap * 0.9, 8), 26);
-        const plateThickness = Math.max(0.8, housingHeight * 0.12);
-        const clearGap = Math.max(3.0, housingHeight - plateThickness * 2);
+        const plateThickness = Math.max(0.8, baseHousingHeight * 0.12);
+        const clearGap = Math.max(
+          3.0,
+          (baseHousingHeight - plateThickness * 2) * bearingVerticalScale,
+        );
+        const housingHeight = clearGap + plateThickness * 2;
         const bowlDepth = Math.max(1.2, clearGap * 0.25);
 
         const offsets =
@@ -116,7 +124,7 @@ export function BearingSymbols() {
         const emissiveColor = isSelected ? '#f59e0b' : '#000000';
 
         const orbit = orbitByBearingId.get(bearing.id) ?? [];
-        const orbitHeight = clearGap * 0.36;
+        const orbitHeight = -clearGap / 2 + bowlDepth * 0.55;
         const orbitPoints = orbit.map(([x, z]) => [x, orbitHeight, z] as [number, number, number]);
         const currentOrbitIndex =
           showBearingDisplacement && orbitPoints.length > 0 && totalSteps > 1
@@ -158,23 +166,15 @@ export function BearingSymbols() {
               />
             </mesh>
 
-            {/* Top / bottom caps */}
+            {/* Bottom cap */}
             <mesh position={[0, -housingHeight / 2 + plateThickness / 2, 0]}>
               <cylinderGeometry args={[outerRadius, outerRadius, plateThickness, 30]} />
               <meshStandardMaterial color={housingColor} metalness={0.8} roughness={0.3} />
             </mesh>
-            <mesh position={[0, housingHeight / 2 - plateThickness / 2, 0]}>
-              <cylinderGeometry args={[outerRadius, outerRadius, plateThickness, 30]} />
-              <meshStandardMaterial color={housingColor} metalness={0.8} roughness={0.3} />
-            </mesh>
 
-            {/* Concave sliding tracks */}
+            {/* Lower concave track */}
             <mesh position={[0, -clearGap / 2 + bowlDepth / 2, 0]}>
               <cylinderGeometry args={[outerRadius * 0.42, outerRadius * 0.88, bowlDepth, 28]} />
-              <meshStandardMaterial color={TRACK_COLOR} metalness={0.58} roughness={0.52} />
-            </mesh>
-            <mesh position={[0, clearGap / 2 - bowlDepth / 2, 0]}>
-              <cylinderGeometry args={[outerRadius * 0.88, outerRadius * 0.42, bowlDepth, 28]} />
               <meshStandardMaterial color={TRACK_COLOR} metalness={0.58} roughness={0.52} />
             </mesh>
 
@@ -194,17 +194,27 @@ export function BearingSymbols() {
               <meshStandardMaterial color={SLIDER_ACCENT} metalness={0.28} roughness={0.26} />
             </mesh>
 
-            {/* Stage 3 top slider */}
-            <mesh position={[slider3X, clearGap * 0.22, slider3Z]}>
-              <sphereGeometry args={[outerRadius * 0.16, 20, 16]} />
-              <meshStandardMaterial color={SLIDER_COLOR} metalness={0.2} roughness={0.24} />
-            </mesh>
-            <mesh position={[slider3X, clearGap / 2 - bowlDepth * 0.4, slider3Z]}>
-              <cylinderGeometry
-                args={[outerRadius * 0.22, outerRadius * 0.22, plateThickness * 0.75, 24]}
-              />
-              <meshStandardMaterial color={SLIDER_ACCENT} metalness={0.28} roughness={0.24} />
-            </mesh>
+            {/* Upper assembly follows top-stage displacement (slider3). */}
+            <group position={[slider3X, 0, slider3Z]}>
+              <mesh position={[0, housingHeight / 2 - plateThickness / 2, 0]}>
+                <cylinderGeometry args={[outerRadius, outerRadius, plateThickness, 30]} />
+                <meshStandardMaterial color={housingColor} metalness={0.8} roughness={0.3} />
+              </mesh>
+              <mesh position={[0, clearGap / 2 - bowlDepth / 2, 0]}>
+                <cylinderGeometry args={[outerRadius * 0.88, outerRadius * 0.42, bowlDepth, 28]} />
+                <meshStandardMaterial color={TRACK_COLOR} metalness={0.58} roughness={0.52} />
+              </mesh>
+              <mesh position={[0, clearGap * 0.22, 0]}>
+                <sphereGeometry args={[outerRadius * 0.16, 20, 16]} />
+                <meshStandardMaterial color={SLIDER_COLOR} metalness={0.2} roughness={0.24} />
+              </mesh>
+              <mesh position={[0, clearGap / 2 - bowlDepth * 0.4, 0]}>
+                <cylinderGeometry
+                  args={[outerRadius * 0.22, outerRadius * 0.22, plateThickness * 0.75, 24]}
+                />
+                <meshStandardMaterial color={SLIDER_ACCENT} metalness={0.28} roughness={0.24} />
+              </mesh>
+            </group>
 
             {/* Orbit trace of top-plate displacement during playback. */}
             {showBearingDisplacement && orbitPoints.length > 1 && (
