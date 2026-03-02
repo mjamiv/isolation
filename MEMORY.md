@@ -20,7 +20,16 @@
 
 ## Current State (Session Closeout)
 - Branch: `main` (tracking `origin/main`)
-- Git status: clean except untracked `.mcp.json`
+- Git status:
+  - `main` is `ahead 1` commit (`173328d`) with this memory update
+  - uncommitted tracked changes remain in:
+    - `README.md`
+    - `frontend/src/features/bent-build/__tests__/generateBentFrame.test.ts`
+    - `frontend/src/features/bent-build/generateBentFrame.ts`
+    - `frontend/src/features/viewer-3d/BearingSymbols.tsx`
+    - `frontend/src/features/viewer-3d/tfpKinematics.ts`
+    - `frontend/src/test/features/tfpKinematics.test.ts`
+  - untracked: `.mcp.json`
 - Verification executed for shipped Bent Build changes:
   - `cd frontend && npm test -- --run src/features/bent-build/__tests__/generateBentFrame.test.ts` (`135 passed`)
   - `cd frontend && npm run type-check` (pass)
