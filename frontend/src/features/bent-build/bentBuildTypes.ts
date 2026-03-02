@@ -96,3 +96,24 @@ export const DEFAULT_BENT_BUILD_PARAMS: BentBuildParams = {
   slopePercent: 0,
   includeDiaphragms: true,
 };
+
+/**
+ * Bent Build dialog startup preset focused on comparison workflows:
+ * steel superstructure, bearing-level isolation, and curved/profiled alignment.
+ */
+export const DEFAULT_BENT_BUILD_SHOWCASE_PARAMS: BentBuildParams = {
+  ...DEFAULT_BENT_BUILD_PARAMS,
+  spanLengths: [100, 140, 100],
+  roadwayWidth: 48,
+  columnHeights: [24, 24],
+  supportMode: 'isolated',
+  isolationLevel: 'bearing',
+  slopePercent: 2.5,
+  alignment: {
+    ...DEFAULT_ALIGNMENT,
+    entryGrade: 2.5,
+    horizontalPIs: [{ station: 70, deflectionAngle: 18, radius: 1200, direction: 'R' }],
+    verticalPVIs: [{ station: 170, elevation: 4.25, exitGrade: -2, curveLength: 180 }],
+    chordsPerSpan: 4,
+  },
+};

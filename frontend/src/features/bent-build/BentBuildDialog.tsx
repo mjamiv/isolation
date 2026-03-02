@@ -9,7 +9,7 @@ import type {
   VerticalPVI,
   AlignmentParams,
 } from './bentBuildTypes';
-import { DEFAULT_BENT_BUILD_PARAMS, DEFAULT_DEAD_LOADS } from './bentBuildTypes';
+import { DEFAULT_BENT_BUILD_SHOWCASE_PARAMS } from './bentBuildTypes';
 import { generateBentFrame } from './generateBentFrame';
 import { aashtoLaneCount, aashtoMPF, aashtoLaneLoadKlf } from './bentLoadCalc';
 import { useModelStore } from '@/stores/modelStore';
@@ -101,51 +101,56 @@ function NumberInputRow({
 // ── Main Component ──
 
 export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
+  const showcaseDefaults = DEFAULT_BENT_BUILD_SHOWCASE_PARAMS;
+  const showcaseAlignment = showcaseDefaults.alignment;
+
   // State from defaults
-  const [numSpans, setNumSpans] = useState(DEFAULT_BENT_BUILD_PARAMS.numSpans);
-  const [spanLengthsStr, setSpanLengthsStr] = useState(
-    DEFAULT_BENT_BUILD_PARAMS.spanLengths.join(', '),
-  );
-  const [numGirders, setNumGirders] = useState(DEFAULT_BENT_BUILD_PARAMS.numGirders);
-  const [girderType, setGirderType] = useState<'steel' | 'concrete'>(
-    DEFAULT_BENT_BUILD_PARAMS.girderType,
-  );
-  const [roadwayWidth, setRoadwayWidth] = useState(DEFAULT_BENT_BUILD_PARAMS.roadwayWidth);
-  const [overhang, setOverhang] = useState(DEFAULT_BENT_BUILD_PARAMS.overhang);
-  const [numBentColumns, setNumBentColumns] = useState(DEFAULT_BENT_BUILD_PARAMS.numBentColumns);
+  const [numSpans, setNumSpans] = useState(showcaseDefaults.numSpans);
+  const [spanLengthsStr, setSpanLengthsStr] = useState(showcaseDefaults.spanLengths.join(', '));
+  const [numGirders, setNumGirders] = useState(showcaseDefaults.numGirders);
+  const [girderType, setGirderType] = useState<'steel' | 'concrete'>(showcaseDefaults.girderType);
+  const [roadwayWidth, setRoadwayWidth] = useState(showcaseDefaults.roadwayWidth);
+  const [overhang, setOverhang] = useState(showcaseDefaults.overhang);
+  const [numBentColumns, setNumBentColumns] = useState(showcaseDefaults.numBentColumns);
   const [columnHeightsStr, setColumnHeightsStr] = useState(
-    DEFAULT_BENT_BUILD_PARAMS.columnHeights.join(', '),
+    showcaseDefaults.columnHeights.join(', '),
   );
   const [supportMode, setSupportMode] = useState<'conventional' | 'isolated'>(
-    DEFAULT_BENT_BUILD_PARAMS.supportMode,
+    showcaseDefaults.supportMode,
   );
   const [pierSupports, setPierSupports] = useState<PierSupportConfig[]>(
-    DEFAULT_BENT_BUILD_PARAMS.pierSupports,
+    showcaseDefaults.pierSupports.map((cfg) => ({ ...cfg })),
   );
   const [isolationLevel, setIsolationLevel] = useState<'bearing' | 'base'>(
-    DEFAULT_BENT_BUILD_PARAMS.isolationLevel,
+    showcaseDefaults.isolationLevel,
   );
   const [deadLoads, setDeadLoads] = useState<DeadLoadComponents>({
-    ...DEFAULT_DEAD_LOADS,
+    ...showcaseDefaults.deadLoads,
   });
-  const [aashtoLLPercent, setAashtoLLPercent] = useState(DEFAULT_BENT_BUILD_PARAMS.aashtoLLPercent);
-  const [slopePercent, setSlopePercent] = useState(DEFAULT_BENT_BUILD_PARAMS.slopePercent);
-  const [includeDiaphragms, setIncludeDiaphragms] = useState(
-    DEFAULT_BENT_BUILD_PARAMS.includeDiaphragms,
-  );
+  const [aashtoLLPercent, setAashtoLLPercent] = useState(showcaseDefaults.aashtoLLPercent);
+  const [slopePercent, setSlopePercent] = useState(showcaseDefaults.slopePercent);
+  const [includeDiaphragms, setIncludeDiaphragms] = useState(showcaseDefaults.includeDiaphragms);
   const [showDeadLoads, setShowDeadLoads] = useState(false);
 
   // Alignment state
-  const [showAlignment, setShowAlignment] = useState(false);
-  const [enableHCurve, setEnableHCurve] = useState(false);
-  const [horizontalPIs, setHorizontalPIs] = useState<HorizontalPI[]>([
-    { station: 50, deflectionAngle: 15, radius: 2000, direction: 'R' as const },
-  ]);
-  const [enableVCurve, setEnableVCurve] = useState(false);
-  const [verticalPVIs, setVerticalPVIs] = useState<VerticalPVI[]>([
-    { station: 130, elevation: 0, exitGrade: -1, curveLength: 50 },
-  ]);
-  const [chordsPerSpan, setChordsPerSpan] = useState(1);
+  const [showAlignment, setShowAlignment] = useState(Boolean(showcaseAlignment));
+  const [enableHCurve, setEnableHCurve] = useState(
+    (showcaseAlignment?.horizontalPIs.length ?? 0) > 0,
+  );
+  const [horizontalPIs, setHorizontalPIs] = useState<HorizontalPI[]>(
+    showcaseAlignment?.horizontalPIs.length
+      ? showcaseAlignment.horizontalPIs.map((pi) => ({ ...pi }))
+      : [{ station: 50, deflectionAngle: 15, radius: 2000, direction: 'R' as const }],
+  );
+  const [enableVCurve, setEnableVCurve] = useState(
+    (showcaseAlignment?.verticalPVIs.length ?? 0) > 0,
+  );
+  const [verticalPVIs, setVerticalPVIs] = useState<VerticalPVI[]>(
+    showcaseAlignment?.verticalPVIs.length
+      ? showcaseAlignment.verticalPVIs.map((pvi) => ({ ...pvi }))
+      : [{ station: 130, elevation: 0, exitGrade: -1, curveLength: 50 }],
+  );
+  const [chordsPerSpan, setChordsPerSpan] = useState(showcaseAlignment?.chordsPerSpan ?? 1);
 
   const loadModelFromJSON = useModelStore((s) => s.loadModelFromJSON);
   const resetAnalysis = useAnalysisStore((s) => s.resetAnalysis);
@@ -319,7 +324,7 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
             </Dialog.Close>
           </div>
           <Dialog.Description className="mt-1 text-xs text-gray-400">
-            Generate a parametric girder bridge with real-time preview.
+            Generate a comparison-ready steel girder bridge with real-time preview.
           </Dialog.Description>
 
           <div className="mt-5 space-y-4">
