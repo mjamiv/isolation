@@ -1,44 +1,82 @@
 # MEMORY
 
+## Completed Work (2026-03-02 — Session Closeout)
+- Shipped and merged Bent Build showcase defaults via PR `#1`:
+  - merge commit: `78d2356015ac2284a3b88dc7fbea0bce2aa6aa51`
+  - feature commit: `c26a2ca`
+- Bent Build now opens in a comparison-ready configuration:
+  - steel, `3` spans (`100-140-100 ft`)
+  - support mode: `isolated` at `bearing` level
+  - active horizontal curve (`station=70 ft`, `delta=18 deg`, `R=1200 ft`, right)
+  - active vertical profile (`station=170 ft`, `elev=4.25 ft`, `exit=-2%`, `L=180 ft`)
+  - `4` chords/span for curved discretization
+- Bent Build dialog now initializes alignment controls and support mode from showcase defaults.
+
+## Key Decisions / Tradeoffs (Session Closeout)
+- Kept the shipped merge focused to two product files only:
+  - `frontend/src/features/bent-build/bentBuildTypes.ts`
+  - `frontend/src/features/bent-build/BentBuildDialog.tsx`
+- Avoided bundling unrelated in-progress local edits into the merge to reduce regression surface.
+
+## Current State (Session Closeout)
+- Branch: `main` (tracking `origin/main`)
+- Git status: clean except untracked `.mcp.json`
+- Verification executed for shipped Bent Build changes:
+  - `cd frontend && npm test -- --run src/features/bent-build/__tests__/generateBentFrame.test.ts` (`135 passed`)
+  - `cd frontend && npm run type-check` (pass)
+  - `cd frontend && npx eslint src/features/bent-build/BentBuildDialog.tsx src/features/bent-build/bentBuildTypes.ts src/features/bent-build/__tests__/generateBentFrame.test.ts` (pass)
+
+## Next Steps (Session Closeout)
+- Optional: either ignore `.mcp.json` in git or explicitly track it, to keep status clean.
+- Optional QA: run one quick Bent Build -> Time History -> Compare flow to validate first-open UX with the new showcase defaults.
+
 ## Completed Work (2026-03-02)
-- Rebased this session on a clean baseline by discarding earlier in-progress edits per user direction.
-- Updated startup autoload model to Bay Build `1x1x1` steel frame (`fixed` base, rigid diaphragms) with startup gravity loads scaled to `50% LL`.
-- Set Model Tree panels to default collapsed and condensed Viewer Controls into collapsible sections (`Scene`, `Display`, `Element Properties`, `Deformation`, `Results`) with default collapsed state.
-- Fixed sticky/non-starting play behavior by replacing the `useFrame` playback stepping dependency with a requestAnimationFrame time-accumulator driver in `PlaybackDriver`.
-- Updated post-analysis/post-comparison defaults:
-  - Deformed shape on with scale factor `100`
-  - Force diagrams and color maps off by default
-  - Bearing displacement default on for isolation-bearing models
-  - Base shear arrows default on for pushover
-  - Comparison overlay default on for comparison runs
-  - Time-history playback resets to step `0` and paused on new results
-- Retained/verified detailed staged TFP bearing rendering updates: lower-concave orbit emphasis, top-assembly stage-following displacement, vertical bearing exaggeration control.
-- Added fixed-base anomaly investigation note: bridge "fixed-base" preset currently behaves as fixed piers + expansion-like abutments; base-shear metric currently sums only fully fixed nodes.
-- Added/updated targeted tests for startup model defaults and analysis/comparison display default behavior.
+- Fixed bent-build conventional FIX behavior to match the working fixed preset: FIX piers are now monolithic deck-pier connections (no separate cap-node/equalDOF coupling path on FIX lines).
+- Preserved EXP and isolated behavior: separate cap/support planes and equalDOF constraints remain where expansion or isolation support behavior requires them.
+- Updated bent-build element generation to avoid duplicate deck cross-beam stiffness at monolithic FIX pier lines while keeping concrete `pierCap` members.
+- Updated TFP 3D bearing rendering:
+  - lower assembly follows displaced node I
+  - upper assembly follows displaced node J
+  - relative orbit traces are plotted at the lower bearing footprint
+  - connection spine added to make top/bottom movement coupling explicit in playback
+- Added kinematics helper for consistent solver Z-up to viewer Y-up displacement mapping in bearing visuals.
+- Updated bent-build tests to reflect monolithic FIX topology and mixed FIX/EXP equalDOF behavior.
+- Added/updated kinematics tests for node displacement mapping and orbit extraction behavior.
+- Ran automated browser QA (headless Chrome + Playwright) end-to-end against live local servers:
+  - startup model static analysis
+  - bent-build default conventional/FIX static analysis
+  - 3-span isolated bridge time-history analysis + playback/orbit checks
+  - result: `1 passed`
 
 ## Key Decisions / Tradeoffs
-- Implemented `50% LL` as startup-load scaling in `loadSampleModel()` because Bay Build currently has no explicit startup dead/live split controls.
-- Fixed playback reliability at the driver layer (time stepping) rather than only UI controls; this addresses both Results and Compare panes consistently.
-- Investigated fixed-base anomalies without major solver or model rewrites per request; documented findings and low-risk next diagnostics instead.
+- Aligned bent-build FIX modeling with the already-stable fixed preset instead of adding more constraint complexity on top of rigid diaphragm handling.
+- Kept EXP support behavior constraint-based (equalDOF) so release/guided behavior remains explicit and configurable.
+- Switched bearing animation anchoring from staged-offset-only visuals to direct connected-node motion so top/bottom movement is physically consistent across bridge and building models.
+- Used temporary, non-committed browser test scaffolding for full QA coverage; removed temporary test files/artifacts after run.
 
 ## Current State
-- Verified locally this session:
-  - `npm test -- --run src/test/stores/modelStore.test.ts src/test/features/App.test.tsx src/test/features/analysisDisplayDefaults.test.tsx` (`33` passed)
-  - `npm test -- --run src/test/stores/displayStore.test.ts src/test/stores/analysisStore.test.ts src/test/stores/analysisStore-phase4.test.ts` (`58` passed)
-  - `npm test -- --run src/test/features/ComparisonPanel.test.tsx src/test/features/AnalysisDialog-comparison.test.tsx` (`28` passed)
-  - `npm run type-check` (pass)
-- Research artifact created:
-  - `reports/fixed-base-investigation-2026-03-02.md`
-- Not yet verified this session:
-  - Full frontend suite
-  - Backend/unit/integration suites
-  - Manual browser QA for startup defaults, panel-collapse UX, playback behavior, and post-run auto-toggles
+- Working tree changes include:
+  - `frontend/src/features/bent-build/generateBentFrame.ts`
+  - `frontend/src/features/bent-build/__tests__/generateBentFrame.test.ts`
+  - `frontend/src/features/viewer-3d/BearingSymbols.tsx`
+  - `frontend/src/features/viewer-3d/tfpKinematics.ts`
+  - `frontend/src/test/features/tfpKinematics.test.ts`
+  - `README.md`
+- Verified this session:
+  - `cd frontend && npm test -- --run src/features/bent-build/__tests__/generateBentFrame.test.ts src/test/features/tfpKinematics.test.ts` (`143 passed`)
+  - `cd frontend && npm run type-check` (pass)
+  - Browser E2E flow via Playwright (pass); screenshot artifact: `/tmp/isovis-full-browser-test.png`
+- Earlier research artifact retained: `reports/fixed-base-investigation-2026-03-02.md`
+- Not run this session:
+  - Full frontend test suite
+  - Backend unit/integration suites
 
 ## Next Steps
-- Run manual browser QA for:
-  - startup Bay Build `1x1x1` model + `50% LL` expectation
-  - Results/Compare playback auto-start and stability
-  - default collapsed control/panel UX
-  - post-analysis default visualization toggles
-- Decide whether the bridge preset label should be changed to reflect released abutment DOFs (or update restraints to true full fixed-base behavior).
-- If base-shear interpretation clarity is needed, add support-group reaction breakdown (fully fixed vs partially restrained) to results.
+- Do quick manual visual QA on bearing motion/orbit readability in:
+  - `3-Span Bridge (Isolated)` time-history
+  - a building isolation model time-history
+- If preparing for integration/release, run full validation:
+  - `cd frontend && npm test`
+  - `cd backend && pytest`
+  - integration run against live backend
+- Decide whether to relabel the current bridge “fixed-base” preset to make released abutment DOFs explicit (if keeping current restraint scheme).
