@@ -87,9 +87,10 @@ body {
 
 /* ─── Focus Styles ─── */
 *:focus-visible {
-  outline: 1.5px solid var(--gold-500);
-  outline-offset: 1px;
+  outline: 2px solid var(--gold-400);
+  outline-offset: 2px;
   border-radius: 2px;
+  box-shadow: 0 0 0 2px rgba(10, 14, 23, 0.95);
 }
 
 /* ─── Radix Accordion Animation ─── */

@@ -49,11 +49,19 @@ function RightPanel() {
 
   return (
     <div className="flex h-full flex-col bg-surface-1">
-      <div className="relative flex items-center border-b border-white/[0.06]">
+      <div
+        role="tablist"
+        aria-label="Inspector tabs"
+        className="relative flex items-center border-b border-white/[0.06]"
+      >
         {TABS.map((tab) => (
           <button
             key={tab.value}
             type="button"
+            id={`tab-${tab.value}`}
+            role="tab"
+            aria-selected={activeTab === tab.value}
+            aria-controls={`right-panel-${tab.value}`}
             onClick={() => setActiveTab(tab.value)}
             className={`relative flex-1 px-3 py-2.5 text-[11px] font-semibold transition-colors duration-150 ${
               activeTab === tab.value ? 'text-yellow-400' : 'text-white/30 hover:text-white/50'
@@ -67,9 +75,30 @@ function RightPanel() {
         ))}
       </div>
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'results' && <ResultsPanel />}
-        {activeTab === 'comparison' && <ComparisonPanel />}
-        {activeTab === 'properties' && <PropertyInspector />}
+        <div
+          id="right-panel-results"
+          role="tabpanel"
+          aria-labelledby="tab-results"
+          hidden={activeTab !== 'results'}
+        >
+          <ResultsPanel />
+        </div>
+        <div
+          id="right-panel-comparison"
+          role="tabpanel"
+          aria-labelledby="tab-comparison"
+          hidden={activeTab !== 'comparison'}
+        >
+          <ComparisonPanel />
+        </div>
+        <div
+          id="right-panel-properties"
+          role="tabpanel"
+          aria-labelledby="tab-properties"
+          hidden={activeTab !== 'properties'}
+        >
+          <PropertyInspector />
+        </div>
       </div>
     </div>
   );
@@ -82,7 +111,7 @@ export function AppLayout() {
       <Toolbar />
 
       {/* Main 3-panel layout */}
-      <div className="flex-1 overflow-hidden">
+      <div className="hidden flex-1 overflow-hidden md:block">
         <PanelGroup direction="horizontal" autoSaveId="isovis-layout">
           {/* Left panel: Model tree & controls */}
           <Panel defaultSize={20} minSize={15} maxSize={35}>
@@ -105,6 +134,19 @@ export function AppLayout() {
             <RightPanel />
           </Panel>
         </PanelGroup>
+      </div>
+      <div className="flex flex-1 flex-col overflow-hidden md:hidden">
+        <div className="min-h-0 flex-[0.95] border-b border-white/[0.06]">
+          <LeftPanel />
+        </div>
+        <div className="min-h-0 flex-1 border-b border-white/[0.06]">
+          <div className="h-full w-full bg-surface-0">
+            <Viewer3D />
+          </div>
+        </div>
+        <div className="min-h-0 flex-[0.95]">
+          <RightPanel />
+        </div>
       </div>
 
       {/* Bottom status bar */}

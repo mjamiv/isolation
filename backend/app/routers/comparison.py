@@ -14,15 +14,22 @@ import logging
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from app.core.config import settings
+from app.core.rate_limit import rate_limit
+from app.core.security import require_api_key
 from app.routers.models import get_model_store
 from app.schemas.model import AnalysisParamsSchema
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["comparison"])
+router = APIRouter(
+    prefix="/api/comparison",
+    tags=["comparison"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 # --------------------------------------------------------------------------
@@ -105,11 +112,20 @@ def _run_variant_time_history(
         for gm in params.ground_motions
     ]
 
+    dt_value = params.dt or gm_list[0]["dt"]
+    num_steps_value = params.num_steps or len(gm_list[0]["acceleration"])
+    duration_seconds = dt_value * num_steps_value
+    if duration_seconds > settings.MAX_SIMULATION_DURATION:
+        raise ValueError(
+            f"Requested simulation duration ({duration_seconds:.3f}s) exceeds "
+            f"limit ({settings.MAX_SIMULATION_DURATION:.3f}s)"
+        )
+
     results = run_time_history(
         model_data,
         ground_motions=gm_list,
-        dt=params.dt or gm_list[0]["dt"],
-        num_steps=params.num_steps or len(gm_list[0]["acceleration"]),
+        dt=dt_value,
+        num_steps=num_steps_value,
     )
 
     # Compute peak values from the raw TH results
@@ -141,10 +157,18 @@ def _run_variant_time_history(
 
 
 @router.post(
-    "/api/comparison/run",
+    "/run",
     status_code=status.HTTP_200_OK,
     summary="Run ductile vs isolated comparison",
     response_description="Paired comparison results",
+    dependencies=[
+        Depends(
+            rate_limit(
+                scope="comparison_run",
+                max_requests=settings.RATE_LIMIT_HEAVY_MAX,
+            )
+        )
+    ],
 )
 async def run_comparison(request: RunComparisonRequest) -> dict[str, Any]:
     """Run analysis on both isolated and fixed-base variants.
@@ -246,7 +270,13 @@ async def run_comparison(request: RunComparisonRequest) -> dict[str, Any]:
             "error": None,
         }
 
-    except Exception as exc:
+    except ValueError as exc:
+        logger.warning("Comparison %s rejected: %s", comparison_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        )
+    except Exception:
         logger.exception("Comparison %s failed", comparison_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

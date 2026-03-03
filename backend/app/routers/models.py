@@ -15,11 +15,16 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.security import require_api_key
 from app.schemas.model import StructuralModelSchema
 
-router = APIRouter(prefix="/api/models", tags=["models"])
+router = APIRouter(
+    prefix="/api/models",
+    tags=["models"],
+    dependencies=[Depends(require_api_key)],
+)
 
 # In-memory model store  --  model_id (str) -> model dict
 _model_store: dict[str, dict[str, Any]] = {}

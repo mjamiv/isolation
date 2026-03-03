@@ -116,19 +116,41 @@ function normalizeStatus(status: string): AnalysisResults['status'] {
   return 'running';
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type RawMap = Record<string, any>;
+type RawMap = Record<string, unknown>;
 
-function normalizeStaticResults(raw: RawMap): StaticResults {
+function asRecord(value: unknown): RawMap {
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    return value as RawMap;
+  }
+  return {};
+}
+
+function asNumberArray(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter((entry): entry is number => typeof entry === 'number');
+}
+
+function normalizeNodeReactionMaps(raw: RawMap): {
+  nodeDisplacements: Record<number, [number, number, number, number, number, number]>;
+  reactions: Record<number, [number, number, number, number, number, number]>;
+} {
   const nodeDisplacements: Record<number, [number, number, number, number, number, number]> = {};
   const reactions: Record<number, [number, number, number, number, number, number]> = {};
 
-  for (const [nid, vals] of Object.entries(raw?.nodeDisplacements ?? {})) {
-    nodeDisplacements[Number(nid)] = padTo6(vals as number[]);
+  for (const [nid, vals] of Object.entries(asRecord(raw.nodeDisplacements))) {
+    nodeDisplacements[Number(nid)] = padTo6(asNumberArray(vals));
   }
-  for (const [nid, vals] of Object.entries(raw?.reactions ?? {})) {
-    reactions[Number(nid)] = padTo6(vals as number[]);
+  for (const [nid, vals] of Object.entries(asRecord(raw.reactions))) {
+    reactions[Number(nid)] = padTo6(asNumberArray(vals));
   }
+
+  return { nodeDisplacements, reactions };
+}
+
+function normalizeStaticResults(raw: RawMap): StaticResults {
+  const { nodeDisplacements, reactions } = normalizeNodeReactionMaps(raw);
 
   return {
     nodeDisplacements,
@@ -140,13 +162,13 @@ function normalizeStaticResults(raw: RawMap): StaticResults {
 }
 
 function normalizeModalResults(raw: RawMap): ModalResults {
-  const periods: number[] = raw?.periods ?? [];
-  const frequencies: number[] = raw?.frequencies ?? [];
-  const modeShapes = raw?.modeShapes ?? {};
-  const mp = raw?.massParticipation ?? {};
-  const mpx: number[] = mp.X ?? mp.x ?? [];
-  const mpy: number[] = mp.Y ?? mp.y ?? [];
-  const mpz: number[] = mp.Z ?? mp.z ?? [];
+  const periods = asNumberArray(raw.periods);
+  const frequencies = asNumberArray(raw.frequencies);
+  const modeShapes = asRecord(raw.modeShapes);
+  const mp = asRecord(raw.massParticipation);
+  const mpx = asNumberArray(mp.X ?? mp.x);
+  const mpy = asNumberArray(mp.Y ?? mp.y);
+  const mpz = asNumberArray(mp.Z ?? mp.z);
 
   const massParticipation: Record<number, { x: number; y: number; z: number }> = {};
   for (let i = 0; i < periods.length; i++) {
@@ -162,14 +184,14 @@ function normalizeModalResults(raw: RawMap): ModalResults {
 }
 
 function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
-  if (Array.isArray(raw?.timeSteps)) {
+  if (Array.isArray(raw.timeSteps)) {
     return raw as TimeHistoryResults;
   }
 
-  const times: number[] = raw?.time ?? [];
-  const nodeHist = raw?.nodeDisplacements ?? {};
-  const elemHist = raw?.elementForces ?? {};
-  const bearingHist = raw?.bearingResponses ?? {};
+  const times = asNumberArray(raw.time);
+  const nodeHist = asRecord(raw.nodeDisplacements);
+  const elemHist = asRecord(raw.elementForces);
+  const bearingHist = asRecord(raw.bearingResponses);
   const timeSteps: TimeHistoryResults['timeSteps'] = [];
 
   let maxDisp = 0;
@@ -188,10 +210,10 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
 
     for (const [nid, dofMap] of Object.entries(nodeHist)) {
       const arr: [number, number, number, number, number, number] = [0, 0, 0, 0, 0, 0];
-      for (const [dof, vals] of Object.entries((dofMap ?? {}) as Record<string, number[]>)) {
+      for (const [dof, vals] of Object.entries(asRecord(dofMap))) {
         const idx = Number(dof) - 1;
         if (idx >= 0 && idx < 6) {
-          arr[idx] = (vals?.[i] ?? 0) as number;
+          arr[idx] = asNumberArray(vals)[i] ?? 0;
         }
       }
       nodeStep[Number(nid)] = arr;
@@ -204,24 +226,25 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
     }
 
     for (const [eid, compMap] of Object.entries(elemHist)) {
-      const components = Object.entries((compMap ?? {}) as Record<string, number[]>)
+      const components = Object.entries(asRecord(compMap))
         .sort((a, b) => Number(a[0]) - Number(b[0]))
-        .map(([, vals]) => vals?.[i] ?? 0);
+        .map(([, vals]) => asNumberArray(vals)[i] ?? 0);
       elemStep[Number(eid)] = components;
     }
 
     let baseShearAtStep = 0;
     for (const [bid, resp] of Object.entries(bearingHist)) {
-      const r = (resp ?? {}) as Record<string, unknown>;
-      const ra = r as Record<string, number[]>;
-      const dx = ra.displacementX?.[i] ?? ra.displacement?.[i] ?? 0;
-      const dy = ra.displacementY?.[i] ?? 0;
-      const fx = ra.forceX?.[i] ?? ra.force?.[i] ?? 0;
-      const fy = ra.forceY?.[i] ?? 0;
-      const axial = ra.axialForce?.[i] ?? 0;
-      const gfx = ra.globalForceX?.[i] ?? 0;
-      const gfy = ra.globalForceY?.[i] ?? 0;
-      const gfz = ra.globalForceZ?.[i] ?? 0;
+      const r = asRecord(resp);
+      const dx = (asNumberArray(r.displacementX)[i] ??
+        asNumberArray(r.displacement)[i] ??
+        0) as number;
+      const dy = (asNumberArray(r.displacementY)[i] ?? 0) as number;
+      const fx = (asNumberArray(r.forceX)[i] ?? asNumberArray(r.force)[i] ?? 0) as number;
+      const fy = (asNumberArray(r.forceY)[i] ?? 0) as number;
+      const axial = (asNumberArray(r.axialForce)[i] ?? 0) as number;
+      const gfx = (asNumberArray(r.globalForceX)[i] ?? 0) as number;
+      const gfy = (asNumberArray(r.globalForceY)[i] ?? 0) as number;
+      const gfz = (asNumberArray(r.globalForceZ)[i] ?? 0) as number;
       const nodeI = Number(r.nodeI ?? 0);
       const nodeJ = Number(r.nodeJ ?? 0);
 
@@ -257,7 +280,8 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
     });
   }
 
-  const dt = times.length > 1 ? Math.max(0, (times[1] ?? 0) - (times[0] ?? 0)) : (raw?.dt ?? 0);
+  const dt =
+    times.length > 1 ? Math.max(0, (times[1] ?? 0) - (times[0] ?? 0)) : Number(raw.dt ?? 0);
   const totalTime = times.length > 0 ? (times[times.length - 1] ?? 0) : 0;
 
   return {
@@ -276,15 +300,7 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
 }
 
 function normalizePushoverResults(raw: RawMap): PushoverResults {
-  const nodeDisplacements: Record<number, [number, number, number, number, number, number]> = {};
-  const reactions: Record<number, [number, number, number, number, number, number]> = {};
-
-  for (const [nid, vals] of Object.entries(raw?.nodeDisplacements ?? {})) {
-    nodeDisplacements[Number(nid)] = padTo6(vals as number[]);
-  }
-  for (const [nid, vals] of Object.entries(raw?.reactions ?? {})) {
-    reactions[Number(nid)] = padTo6(vals as number[]);
-  }
+  const { nodeDisplacements, reactions } = normalizeNodeReactionMaps(raw);
 
   return {
     capacityCurve: raw?.capacityCurve ?? [],
@@ -300,21 +316,21 @@ function normalizePushoverResults(raw: RawMap): PushoverResults {
 }
 
 function normalizeAnalysisResults(raw: RawMap): AnalysisResults {
-  const type = (raw?.type ?? 'static') as AnalysisResults['type'];
-  const status = normalizeStatus(raw?.status ?? 'running');
+  const type = (raw.type ?? 'static') as AnalysisResults['type'];
+  const status = normalizeStatus(String(raw.status ?? 'running'));
   const out: AnalysisResults = {
-    analysisId: raw?.analysisId ?? '',
-    modelId: raw?.modelId ?? '',
+    analysisId: String(raw.analysisId ?? ''),
+    modelId: String(raw.modelId ?? ''),
     type,
     status,
-    progress: raw?.progress ?? (status === 'complete' ? 1 : 0),
+    progress: typeof raw.progress === 'number' ? raw.progress : status === 'complete' ? 1 : 0,
     results: null,
-    wallTime: raw?.wallTime,
-    error: raw?.error ?? undefined,
+    wallTime: typeof raw.wallTime === 'number' ? raw.wallTime : undefined,
+    error: typeof raw.error === 'string' ? raw.error : undefined,
   };
 
-  const results = raw?.results;
-  if (!results) {
+  const results = asRecord(raw.results);
+  if (Object.keys(results).length === 0) {
     return out;
   }
 
@@ -326,7 +342,7 @@ function normalizeAnalysisResults(raw: RawMap): AnalysisResults {
     out.results = normalizeTimeHistoryResults(results);
   } else if (type === 'pushover') {
     out.results = normalizePushoverResults(results);
-    const hingeStates = (results?.hingeStates ?? raw?.hingeStates ?? []) as HingeState[];
+    const hingeStates = ((results.hingeStates ?? raw.hingeStates ?? []) as HingeState[]) ?? [];
     if (hingeStates.length > 0) {
       out.hingeStates = hingeStates.map((h) => ({
         ...h,
@@ -373,15 +389,7 @@ export async function deleteModel(modelId: string): Promise<void> {
   const response = await fetch(`${API_BASE}/models/${modelId}`, {
     method: 'DELETE',
   });
-  if (!response.ok) {
-    let body: unknown;
-    try {
-      body = await response.json();
-    } catch {
-      body = await response.text();
-    }
-    throw new ApiError(response.status, response.statusText, body);
-  }
+  await handleResponse<{ detail: string }>(response);
 }
 
 /**
@@ -424,9 +432,11 @@ export async function getResultsSummary(
  */
 export async function getAnalysisStatus(
   analysisId: string,
-): Promise<{ status: string; progress: number; error?: string }> {
+): Promise<{ status: string; progress: number; error?: string; errorCode?: string }> {
   const response = await fetch(`${API_BASE}/analysis/${analysisId}/status`);
-  return handleResponse<{ status: string; progress: number; error?: string }>(response);
+  return handleResponse<{ status: string; progress: number; error?: string; errorCode?: string }>(
+    response,
+  );
 }
 
 /**

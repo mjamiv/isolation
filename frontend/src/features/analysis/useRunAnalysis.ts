@@ -1,11 +1,10 @@
-import { useMemo } from 'react';
 import type { AnalysisParams, AnalysisResults } from '@/types/analysis';
 import { useAnalysisStore } from '@/stores/analysisStore';
-import { useDisplayStore } from '@/stores/displayStore';
 import { useModelStore } from '@/stores/modelStore';
 import { useToastStore } from '@/stores/toastStore';
 import { runAnalysis, getAnalysisStatus, getResults } from '@/services/api';
 import { useRunAsync } from './useRunAsync';
+import { applyPostAnalysisDisplayDefaults } from './applyPostAnalysisDisplayDefaults';
 
 const POLL_INTERVAL_MS = 500;
 
@@ -17,88 +16,69 @@ export function useRunAnalysis() {
   const setResults = useAnalysisStore((s) => s.setResults);
   const setError = useAnalysisStore((s) => s.setError);
 
-  const config = useMemo(
-    () => ({
-      runFn: async (modelId: string, params: AnalysisParams): Promise<AnalysisResults> => {
-        setAnalysisType(params.type);
-        const { analysisId } = await runAnalysis(modelId, params);
-        setAnalysisId(analysisId);
+  return useRunAsync({
+    runFn: async (modelId: string, params: AnalysisParams): Promise<AnalysisResults> => {
+      setAnalysisType(params.type);
+      const { analysisId } = await runAnalysis(modelId, params);
+      setAnalysisId(analysisId);
 
-        // Poll for status until complete/failed
-        const poll = async (): Promise<AnalysisResults> => {
-          const statusResp = await getAnalysisStatus(analysisId);
-          const status = statusResp.status;
-          const progress =
-            typeof statusResp.progress === 'number'
-              ? statusResp.progress
-              : status === 'completed' || status === 'complete'
-                ? 1
-                : 0;
+      // Poll for status until complete/failed
+      const poll = async (): Promise<AnalysisResults> => {
+        const statusResp = await getAnalysisStatus(analysisId);
+        const status = statusResp.status;
+        const progress =
+          typeof statusResp.progress === 'number'
+            ? statusResp.progress
+            : status === 'completed' || status === 'complete'
+              ? 1
+              : 0;
 
-          if (status === 'running' || status === 'pending') {
-            setProgress(progress * 100, Math.round(progress * 100), 100);
-            return new Promise((resolve, reject) => {
-              setTimeout(() => poll().then(resolve, reject), POLL_INTERVAL_MS);
-            });
-          }
-
-          if (status === 'error' || status === 'failed') {
-            const serverError =
-              typeof statusResp.error === 'string' && statusResp.error
-                ? statusResp.error
-                : `Analysis failed (status: ${status})`;
-            throw new Error(serverError);
-          }
-
-          // status === 'complete' or 'completed'
-          return getResults(analysisId);
-        };
-
-        return poll();
-      },
-      onStart: () => startAnalysis(),
-      onResult: (result: AnalysisResults) => {
-        setResults(result);
-
-        const display = useDisplayStore.getState();
-        const hasBearings = useModelStore.getState().bearings.size > 0;
-
-        // Post-analysis defaults: deformed shape at 100, results overlays off.
-        if (
-          result.type === 'static' ||
-          result.type === 'pushover' ||
-          result.type === 'time_history'
-        ) {
-          display.setShowDeformed(true);
-          display.setHideUndeformed(false);
-          display.setScaleFactor(100);
-          display.setShowForces(false);
-          display.setForceType('none');
-          display.setColorMap('none');
+        if (status === 'running' || status === 'pending') {
+          setProgress(progress * 100, Math.round(progress * 100), 100);
+          return new Promise((resolve, reject) => {
+            setTimeout(() => poll().then(resolve, reject), POLL_INTERVAL_MS);
+          });
         }
 
-        display.setShowComparisonOverlay(false);
-        display.setShowBearingDisplacement(hasBearings);
-        display.setShowBaseShearLabels(result.type === 'pushover');
-
-        if (result.type === 'time_history') {
-          useAnalysisStore.getState().setTimeStep(0);
-          useAnalysisStore.getState().setIsPlaying(false);
+        if (status === 'error' || status === 'failed') {
+          const serverError =
+            typeof statusResp.error === 'string' && statusResp.error
+              ? statusResp.error
+              : `Analysis failed (status: ${status})`;
+          throw new Error(serverError);
         }
 
-        if (result.type === 'modal') {
-          useAnalysisStore.getState().setSelectedModeNumber(1);
-        }
+        // status === 'complete' or 'completed'
+        return getResults(analysisId);
+      };
 
-        useToastStore.getState().addToast('success', 'Analysis completed successfully.');
-      },
-      onError: (message: string) => {
-        setError(message);
-        useToastStore.getState().addToast('error', `Analysis failed: ${message}`);
-      },
-    }),
-    [startAnalysis, setAnalysisId, setAnalysisType, setProgress, setResults, setError],
-  );
+      return poll();
+    },
+    onStart: () => startAnalysis(),
+    onResult: (result: AnalysisResults) => {
+      setResults(result);
 
-  return useRunAsync(config);
+      const hasBearings = useModelStore.getState().bearings.size > 0;
+      applyPostAnalysisDisplayDefaults({
+        resultType: result.type,
+        hasBearings,
+        showComparisonOverlay: false,
+      });
+
+      if (result.type === 'time_history') {
+        useAnalysisStore.getState().setTimeStep(0);
+        useAnalysisStore.getState().setIsPlaying(false);
+      }
+
+      if (result.type === 'modal') {
+        useAnalysisStore.getState().setSelectedModeNumber(1);
+      }
+
+      useToastStore.getState().addToast('success', 'Analysis completed successfully.');
+    },
+    onError: (message: string) => {
+      setError(message);
+      useToastStore.getState().addToast('error', `Analysis failed: ${message}`);
+    },
+  });
 }

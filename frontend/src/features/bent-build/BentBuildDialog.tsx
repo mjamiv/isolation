@@ -59,6 +59,7 @@ function SliderRow({
         max={max}
         step={step}
         value={value}
+        aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
         className="h-1 w-full cursor-pointer accent-yellow-500"
       />
@@ -202,6 +203,7 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
     const parts = spanLengthsStr.split(',').map((s) => s.trim());
     while (parts.length < numSpans) parts.push(parts[parts.length - 1] ?? '80');
     setSpanLengthsStr(parts.slice(0, numSpans).join(', '));
+    // Intentional: only resize when span count changes; preserve user-typed values otherwise.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numSpans]);
 
@@ -217,6 +219,7 @@ export function BentBuildDialog({ open, onOpenChange }: BentBuildDialogProps) {
       .filter(Boolean);
     while (parts.length < numPiers) parts.push(parts[parts.length - 1] ?? '20');
     setColumnHeightsStr(parts.slice(0, numPiers).join(', '));
+    // Intentional: only resize with pier count changes, not every text edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numPiers]);
 

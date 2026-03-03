@@ -10,6 +10,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.core.config import settings
 
 class NodeSchema(BaseModel):
     """A structural node with coordinates and boundary conditions.
@@ -246,7 +247,12 @@ class GroundMotionSchema(BaseModel):
     model_config = ConfigDict(strict=False)
 
     dt: float = Field(..., gt=0, description="Time step (s)")
-    acceleration: list[float] = Field(..., min_length=1, description="Acceleration values")
+    acceleration: list[float] = Field(
+        ...,
+        min_length=1,
+        max_length=settings.MAX_GROUND_MOTION_POINTS,
+        description="Acceleration values",
+    )
     direction: int = Field(default=1, ge=1, le=3, description="DOF direction (1=X, 2=Y, 3=Z)")
     scale_factor: float = Field(default=1.0, description="Scale factor for the record")
 
@@ -272,8 +278,18 @@ class AnalysisParamsSchema(BaseModel):
         ..., description="Analysis type"
     )
     dt: float | None = Field(default=None, gt=0, description="Analysis time step (s)")
-    num_steps: int | None = Field(default=None, gt=0, description="Number of analysis steps")
-    num_modes: int | None = Field(default=None, gt=0, description="Number of modes to extract")
+    num_steps: int | None = Field(
+        default=None,
+        gt=0,
+        le=settings.MAX_ANALYSIS_STEPS,
+        description="Number of analysis steps",
+    )
+    num_modes: int | None = Field(
+        default=None,
+        gt=0,
+        le=settings.MAX_MODAL_MODES,
+        description="Number of modes to extract",
+    )
     ground_motions: list[GroundMotionSchema] | None = Field(
         default=None,
         description="Ground motion records for time-history",

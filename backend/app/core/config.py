@@ -5,7 +5,6 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     PROJECT_NAME: str = "IsoVis"
-    API_V1_PREFIX: str = "/api/v1"
 
     # CORS
     CORS_ORIGINS: list[str] = [
@@ -25,6 +24,19 @@ class Settings(BaseSettings):
     # Simulation defaults
     MAX_SIMULATION_DURATION: float = 300.0  # seconds
     DEFAULT_TIME_STEP: float = 0.01  # seconds
+    MAX_ANALYSIS_STEPS: int = 500_000
+    MAX_MODAL_MODES: int = 100
+    MAX_GROUND_MOTION_POINTS: int = 500_000
+
+    # API auth (disabled by default for local development)
+    AUTH_REQUIRED: bool = False
+    AUTH_API_KEYS: list[str] = []
+
+    # In-memory rate limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_DEFAULT_MAX: int = 120
+    RATE_LIMIT_HEAVY_MAX: int = 10
 
     model_config = {
         "env_file": ".env",

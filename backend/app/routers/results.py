@@ -11,13 +11,18 @@ import logging
 import math
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.security import require_api_key
 from app.routers.analysis import get_analysis_store
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/results", tags=["results"])
+router = APIRouter(
+    prefix="/api/results",
+    tags=["results"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 # --------------------------------------------------------------------------

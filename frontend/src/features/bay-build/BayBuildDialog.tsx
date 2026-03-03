@@ -51,6 +51,7 @@ function SliderRow({
         max={max}
         step={step}
         value={value}
+        aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
         className="h-1 w-full cursor-pointer accent-yellow-500"
       />

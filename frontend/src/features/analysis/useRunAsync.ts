@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useModelStore } from '@/stores/modelStore';
 import { serializeModel } from '@/services/modelSerializer';
 import { submitModel } from '@/services/api';
@@ -24,34 +24,36 @@ interface RunAsyncConfig<TParams, TResult> {
  */
 export function useRunAsync<TParams, TResult>(config: RunAsyncConfig<TParams, TResult>) {
   const [submitting, setSubmitting] = useState(false);
+  const configRef = useRef(config);
 
-  const run = useCallback(
-    async (params: TParams) => {
-      setSubmitting(true);
-      try {
-        // 1. Serialize the current model
-        const storeState = useModelStore.getState();
-        const serialized = serializeModel(storeState);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
-        // 2. Submit model to backend
-        const { modelId } = await submitModel(serialized);
+  const run = useCallback(async (params: TParams) => {
+    setSubmitting(true);
+    try {
+      // 1. Serialize the current model
+      const storeState = useModelStore.getState();
+      const serialized = serializeModel(storeState);
 
-        // 3. Signal start
-        config.onStart();
+      // 2. Submit model to backend
+      const { modelId } = await submitModel(serialized);
 
-        // 4. Run the caller-supplied async function
-        const result = await config.runFn(modelId, params);
+      // 3. Signal start
+      configRef.current.onStart();
 
-        // 5. Deliver result
-        config.onResult(result);
-      } catch (err) {
-        config.onError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [config],
-  );
+      // 4. Run the caller-supplied async function
+      const result = await configRef.current.runFn(modelId, params);
+
+      // 5. Deliver result
+      configRef.current.onResult(result);
+    } catch (err) {
+      configRef.current.onError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setSubmitting(false);
+    }
+  }, []);
 
   return { run, submitting };
 }

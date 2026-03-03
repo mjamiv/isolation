@@ -15,9 +15,12 @@ import logging
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel, Field
 
+from app.core.config import settings
+from app.core.rate_limit import rate_limit
+from app.core.security import require_api_key
 from app.routers.models import get_model_store
 from app.schemas.model import AnalysisParamsSchema
 
@@ -27,10 +30,17 @@ from app.schemas.model import AnalysisParamsSchema
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["analysis"])
+router = APIRouter(
+    prefix="/api/analysis",
+    tags=["analysis"],
+    dependencies=[Depends(require_api_key)],
+)
 
 # In-memory analysis results store  --  analysis_id -> result dict
 _analysis_store: dict[str, dict[str, Any]] = {}
+
+PUBLIC_ANALYSIS_ERROR = "Analysis failed due to an internal error"
+PUBLIC_ANALYSIS_ERROR_CODE = "ANALYSIS_INTERNAL_ERROR"
 
 
 def get_analysis_store() -> dict[str, dict[str, Any]]:
@@ -59,10 +69,18 @@ class RunAnalysisRequest(BaseModel):
 
 
 @router.post(
-    "/api/analysis/run",
+    "/run",
     status_code=status.HTTP_200_OK,
     summary="Run a structural analysis",
     response_description="Analysis results with status",
+    dependencies=[
+        Depends(
+            rate_limit(
+                scope="analysis_run",
+                max_requests=settings.RATE_LIMIT_HEAVY_MAX,
+            )
+        )
+    ],
 )
 async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
     """Execute a structural analysis synchronously and return results.
@@ -135,11 +153,19 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
                 }
                 for gm in params.ground_motions
             ]
+            dt_value = params.dt or gm_list[0]["dt"]
+            num_steps_value = params.num_steps or len(gm_list[0]["acceleration"])
+            duration_seconds = dt_value * num_steps_value
+            if duration_seconds > settings.MAX_SIMULATION_DURATION:
+                raise ValueError(
+                    f"Requested simulation duration ({duration_seconds:.3f}s) exceeds "
+                    f"limit ({settings.MAX_SIMULATION_DURATION:.3f}s)"
+                )
             results = run_time_history(
                 model_data,
                 ground_motions=gm_list,
-                dt=params.dt or gm_list[0]["dt"],
-                num_steps=params.num_steps or len(gm_list[0]["acceleration"]),
+                dt=dt_value,
+                num_steps=num_steps_value,
             )
 
         elif analysis_type == "pushover":
@@ -162,14 +188,35 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
             {"status": "completed", "progress": 1.0, "results": results}
         )
 
+    except ValueError as exc:
+        logger.warning("Analysis %s rejected: %s", analysis_id, exc)
+        _analysis_store[analysis_id].update(
+            {
+                "status": "failed",
+                "progress": 0.0,
+                "error": str(exc),
+                "public_error": str(exc),
+                "error_code": "ANALYSIS_INVALID_REQUEST",
+            }
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        )
     except Exception as exc:
         logger.exception("Analysis %s failed", analysis_id)
         _analysis_store[analysis_id].update(
-            {"status": "failed", "progress": 0.0, "error": str(exc)}
+            {
+                "status": "failed",
+                "progress": 0.0,
+                "error": str(exc),
+                "public_error": PUBLIC_ANALYSIS_ERROR,
+                "error_code": PUBLIC_ANALYSIS_ERROR_CODE,
+            }
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Analysis failed due to an internal error",
+            detail=PUBLIC_ANALYSIS_ERROR,
         )
 
     return _analysis_store[analysis_id]
@@ -181,7 +228,7 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
 
 
 @router.get(
-    "/api/analysis/{analysis_id}/status",
+    "/{analysis_id}/status",
     summary="Get analysis status",
     response_description="Current status of the analysis",
 )
@@ -217,7 +264,8 @@ async def get_analysis_status(analysis_id: str) -> dict[str, Any]:
         "status": status_value,
         "type": entry["type"],
         "progress": progress,
-        "error": entry.get("error"),
+        "error": entry.get("public_error"),
+        "error_code": entry.get("error_code"),
     }
 
 
@@ -311,7 +359,8 @@ async def ws_analysis_stream(websocket: WebSocket, analysis_id: str) -> None:
                 await websocket.send_json({
                     "type": "status",
                     "status": entry["status"],
-                    "error": entry.get("error"),
+                    "error": entry.get("public_error"),
+                    "error_code": entry.get("error_code"),
                 })
         else:
             await websocket.send_json({
