@@ -176,6 +176,17 @@ Phases 1 through 5 are complete. The app provides:
 - **Dependency pinning** — `~` ranges in package.json, `==` exact versions in requirements.txt, package-lock.json committed
 - **Code quality** — generic `useRunAsync()` hook extracted from duplicated analysis/comparison hooks, magic numbers replaced with named constants, 69 backend unit tests for solver.py, husky + lint-staged pre-commit hooks
 
+### Phase 6 — End-to-End Hardening & Remediation (2026-03-03)
+- **API auth scaffold** — backend routers now use an environment-gated API key dependency (`AUTH_REQUIRED` + `AUTH_API_KEYS`) so local development remains simple while production can enforce auth
+- **Public-safe analysis errors** — analysis status returns stable public error messages/codes while preserving full exception details in server logs only
+- **Abuse resistance controls** — upper bounds added for `num_steps`, `num_modes`, and ground motion length; time-history runtime now enforces max simulation duration in both analysis and comparison paths
+- **Rate limiting** — in-memory per-client throttling added with stricter limits for heavy compute endpoints and default limits for all API routers
+- **Least-privilege container runtime** — backend Docker image now runs as a non-root user
+- **UX/accessibility fixes** — right panel now has proper ARIA tab semantics, model reset uses non-blocking dialog, sliders and display mode controls have improved labeling, and focus-visible styling is more prominent
+- **Responsive baseline** — toolbar wraps on narrow screens, AppLayout includes a mobile stacked fallback, and Tailwind screen breakpoints are explicitly defined
+- **Frontend maintainability** — post-analysis display defaults deduplicated into a shared helper, async run hook callback stability improved, and API normalization/error handling refactored for shared typed flows
+- **Security operations** — dependency audit workflow added at `.github/workflows/dependency-audit.yml` (initial non-blocking rollout with `npm audit` and `pip-audit`)
+
 ## Tech Stack
 
 ### Frontend
@@ -274,6 +285,11 @@ pip install openseespy fastapi 'uvicorn[standard]' numpy scipy pydantic pydantic
 
 The API server starts at `http://localhost:8000`.
 
+For production-oriented hardening, backend supports optional environment settings:
+`AUTH_REQUIRED`, `AUTH_API_KEYS`, `RATE_LIMIT_ENABLED`, `RATE_LIMIT_WINDOW_SECONDS`,
+`RATE_LIMIT_DEFAULT_MAX`, `RATE_LIMIT_HEAVY_MAX`, `MAX_ANALYSIS_STEPS`,
+`MAX_MODAL_MODES`, `MAX_GROUND_MOTION_POINTS`, and `MAX_SIMULATION_DURATION`.
+
 ### Docker (All Services)
 
 ```bash
@@ -285,7 +301,7 @@ This starts the frontend dev server, backend API, and Redis.
 ## Development
 
 ```bash
-# Frontend tests (471 tests across 22 suites)
+# Frontend tests (490 tests across 24 suites)
 cd frontend && npm test
 
 # Frontend lint

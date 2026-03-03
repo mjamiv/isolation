@@ -1,5 +1,44 @@
 # MEMORY
 
+## Completed Work (2026-03-03 — Full Findings Remediation)
+- Implemented end-to-end remediation from multi-agent review findings across backend security, abuse resistance, frontend accessibility/UX, maintainability refactors, and CI security checks.
+- Backend hardening:
+  - Added optional API-key auth scaffold in `backend/app/core/security.py` and applied dependency to models/analysis/results/comparison routers.
+  - Added in-memory rate limiting in `backend/app/core/rate_limit.py` with default and heavy-endpoint limits wired from `backend/app/main.py`.
+  - Added safe public analysis error reporting (`error` + `error_code`) while preserving internal exception details server-side in `backend/app/routers/analysis.py`.
+  - Enforced simulation abuse bounds: schema caps for `num_steps`, `num_modes`, and ground motion record length; runtime duration checks in analysis/comparison time-history execution.
+  - Normalized router prefix style for analysis/comparison to align with other API routers.
+  - Updated `backend/Dockerfile` to run as non-root user.
+- Frontend UX/accessibility:
+  - Added ARIA tab semantics for right panel tabs and corresponding tabpanels in `frontend/src/features/layout/AppLayout.tsx`.
+  - Replaced blocking browser confirm with `ConfirmDialog` for model reset in `frontend/src/features/layout/Toolbar.tsx`.
+  - Added ARIA labels for display mode controls and slider inputs in Bay/Bent build dialogs.
+  - Strengthened focus-visible styling in `frontend/src/index.css`.
+  - Added responsive baseline with explicit Tailwind breakpoints and mobile stacked AppLayout fallback.
+- Frontend maintainability:
+  - Stabilized `useRunAsync` callback behavior via `useRef` config indirection.
+  - Extracted shared display-default helper `frontend/src/features/analysis/applyPostAnalysisDisplayDefaults.ts` and reused in analysis/comparison hooks.
+  - Refactored API normalizers in `frontend/src/services/api.ts` to reduce duplication and improve typing (`unknown`-first parsing helpers).
+  - Unified `deleteModel` onto shared response/error handling path.
+- Security ops:
+  - Added `.github/workflows/dependency-audit.yml` to run `npm audit` and `pip-audit` (non-blocking initial rollout).
+
+## Verification (2026-03-03 — Full Findings Remediation)
+- Frontend: `cd frontend && npm run lint` (pass)
+- Frontend: `cd frontend && npm run test -- --run` (pass, `490/490`)
+- Backend: `cd backend && source .venv/bin/activate && pytest tests/ -q` (pass, `128 passed, 2 skipped`)
+- Note: `ruff` command unavailable in current backend environment during verification.
+
+## Current State (2026-03-03 — Full Findings Remediation)
+- Branch: `main` (tracking `origin/main`).
+- Working tree contains the remediation implementation across backend/frontend plus wrap-up doc updates.
+- Untracked local artifacts present: `.mcp.json`, `frontend/test-results/`.
+
+## Next Steps (2026-03-03 — Full Findings Remediation)
+- Decide whether to keep or clean untracked local artifacts (`.mcp.json`, `frontend/test-results/`).
+- Optionally move dependency audit workflow from non-blocking to blocking once baseline vulnerabilities are triaged.
+- Run a focused browser E2E pass outside sandbox constraints to validate the new responsive/tab semantics path.
+
 ## Completed Work (2026-03-03 — Session Wrap-Up 2)
 - Updated Bent Build startup defaults to a simple straight 3-span baseline (no horizontal/vertical curve profile) by simplifying `DEFAULT_BENT_BUILD_SHOWCASE_PARAMS` in `frontend/src/features/bent-build/bentBuildTypes.ts`.
 - Updated bent-build tests to reflect the simple baseline defaults (no chord nodes, no default bearings, flat profile) in `frontend/src/features/bent-build/__tests__/generateBentFrame.test.ts`.
