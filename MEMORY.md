@@ -1,5 +1,35 @@
 # MEMORY
 
+## Completed Work (2026-03-03)
+- Restored bent-build rigid diaphragm generation from a single global deck diaphragm to panel-based diaphragms in `frontend/src/features/bent-build/generateBentFrame.ts`.
+- Implemented deterministic panel generation per adjacent girder pair and longitudinal segment using:
+  - `diaphragmCount = (numGirders - 1) * numSpans * chordsPerSpan`
+  - accepted check: `3 spans`, `5 girders`, `chordsPerSpan=1` => `12` diaphragms.
+- Updated bent-build diaphragm tests in `frontend/src/features/bent-build/__tests__/generateBentFrame.test.ts` to assert panel-count behavior and remove single-diaphragm assumptions.
+- Kept/bundled viewer-side bearing visualization improvements and kinematics alignment updates:
+  - `frontend/src/features/viewer-3d/BearingSymbols.tsx`
+  - `frontend/src/features/viewer-3d/SupportSymbols.tsx`
+  - `frontend/src/features/viewer-3d/tfpKinematics.ts`
+  - `frontend/src/test/features/tfpKinematics.test.ts`
+- Created code commit: `1c6ed3b` (`fix(bent-build): restore panel diaphragms and stabilize support behavior`).
+
+## Key Decisions / Tradeoffs (2026-03-03)
+- Chose panel-based diaphragm topology (from earlier working behavior) over per-support-line or single-global diaphragm behavior.
+- Used the explicit panel formula as the primary acceptance contract to prevent future regressions.
+- Preserved existing support modeling rules (monolithic FIX piers vs explicit EXP/isolated constraints) while reintroducing panel diaphragms.
+
+## Verification (2026-03-03)
+- `cd frontend && npm test -- src/features/bent-build/__tests__/generateBentFrame.test.ts src/test/features/tfpKinematics.test.ts` (`145 passed`).
+- `cd frontend && npm test -- src/test/services/modelSerializer.test.ts` (`21 passed`).
+- Lint diagnostics on edited bent-build files: no errors.
+
+## Current State (2026-03-03)
+- Branch: `main` (tracking `origin/main`).
+- Working tree after code commit:
+  - modified: `README.md`
+  - untracked: `.mcp.json`
+- Pending wrap-up docs commit to capture this session in repo docs.
+
 ## Completed Work (2026-03-02 — Session Closeout)
 - Shipped and merged Bent Build showcase defaults via PR `#1`:
   - merge commit: `78d2356015ac2284a3b88dc7fbea0bce2aa6aa51`

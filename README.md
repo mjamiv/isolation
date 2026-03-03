@@ -135,12 +135,13 @@ Phases 1 through 5 are complete. The app provides:
 
 ### Bent Build — Parametric Bridge Generator
 - **Real-time parametric bridge** — "Bent Build" button in toolbar opens a dialog to generate multi-span girder bridges with per-pier support configuration
+- **Comparison-ready startup preset** — Bent Build opens with a steel 3-span isolated bridge (`100-140-100 ft`) using bearing-level TFP, active horizontal curvature, active vertical profile, and `4` chords/span to immediately exercise fixed-vs-isolated comparison workflows
 - **Span/girder layout** — 1-8 spans with per-span lengths, 3-10 girders, steel (W30-W44) or concrete (AASHTO Type II-VI) girder sections, adjustable roadway width and overhang
 - **Pier configuration** — 1-4 bent columns per pier with independent heights, concrete circular RC columns (36-60in) auto-sized by height
-- **Support modes** — Conventional (FIX monolithic or EXP expansion with equalDOF constraints) with auto-stabilization for mechanism-prone all-EXP cases (single-column bents auto-promote Pier 1 to FIX; multi-column all-EXP adds one longitudinal anchor equalDOF), and Isolated (bearing-level TFP at all girder support points, or column-base TFP with rigid deck-to-cap equalDOF links so only the column base isolates)
+- **Support modes** — Conventional supports use FIX monolithic deck-pier connectivity (no equalDOF links on FIX piers) and EXP expansion behavior via equalDOF constraints, with auto-stabilization for mechanism-prone all-EXP cases (single-column bents auto-promote Pier 1 to FIX; multi-column all-EXP adds one longitudinal anchor equalDOF). Isolated mode supports bearing-level TFP at all girder support points, or column-base TFP with rigid deck-to-cap equalDOF links so only the column base isolates
 - **Pier cap beams** — distinct `pierCap` element type rendered in stone/gray (substructure) vs gold girders (superstructure); strong-axis section orientation for gravity bending (Ix > Iy); section depth offsets place deck nodes at girder centroid and cap nodes at cap centroid for realistic rigid end geometry
 - **AASHTO loads** — dead load components (deck slab, overlay, barriers, utilities, future wearing surface, misc), AASHTO lane live load with multi-presence factors
-- **Single deck diaphragm** — bent-build creates one rigid deck-level diaphragm across all deck/chord nodes (when enabled), keeping the superstructure in-plane as one rigid body
+- **Panel deck diaphragms** — bent-build creates one rigid diaphragm panel per adjacent girder pair and longitudinal segment, with count `(numGirders - 1) * numSpans * chordsPerSpan` (e.g., `3 spans x 5 girders x 1 chord = 12`)
 - **Column discretization** — each pier column is split into 3 sub-elements with intermediate nodes at 1/3 and 2/3 height for improved deformed shape visualization (node ID range 4000+)
 - **Robust bearing sizing** — TFP bearings use lower friction (inner mu 0.02/0.06, outer 0.04/0.10), larger displacement capacities [6, 25, 6] inches, and weight-scaled vertical stiffness for improved convergence under larger earthquakes
 - **Live 3D preview** — model regenerates as any parameter changes
@@ -152,7 +153,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Node visibility** — nodes render with bright gold color and emissive glow, clearly visible against all backgrounds
 - **Bearing orbit overlay** — collapsible plan-view panel showing real-time isolation bearing displacement orbits during time-history playback with amplification presets (1x-50x), prev/next navigation, and capacity circles
 - **Bearing displacement emphasis controls** — compare/deformed rendering supports a dedicated vertical expansion scale (`0.5x` to `3.0x`), and displacement markers are rendered at the lower concave stage for clearer bearing motion interpretation
-- **Bearing top-assembly displacement** — upper bearing assembly components now translate with top-stage (`slider3`) cumulative displacement, so top plate motion matches playback displacement response
+- **Bearing assembly anchoring** — lower and upper bearing assemblies now follow their connected node displacements directly (node I / node J), and relative displacement orbits are plotted at the lower bearing footprint for clearer interpretation
 - **Global bearing hysteresis** — hysteresis loop charts use global node displacements and global element forces (not element-local `basicDisplacement`/`basicForce`), producing correct nonlinear loops for multi-directional excitation
 
 ### Bug Fixes & Polish
