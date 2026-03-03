@@ -10,6 +10,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "sync:three-span-diaphragms": "node scripts/regenerate-three-span-diaphragms.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "type-check": "tsc --noEmit",

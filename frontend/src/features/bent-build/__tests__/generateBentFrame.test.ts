@@ -1915,30 +1915,35 @@ describe('alignment integration', () => {
 // ===========================================================================
 
 describe('showcase defaults', () => {
-  it('produce a curved/profiled isolated steel bridge for comparison workflows', () => {
+  it('produce a simple straight 3-span conventional bridge baseline', () => {
     const model = generateBentFrame(DEFAULT_BENT_BUILD_SHOWCASE_PARAMS);
     const { numSpans, numGirders } = DEFAULT_BENT_BUILD_SHOWCASE_PARAMS;
 
     expect(DEFAULT_BENT_BUILD_SHOWCASE_PARAMS.girderType).toBe('steel');
-    expect(DEFAULT_BENT_BUILD_SHOWCASE_PARAMS.supportMode).toBe('isolated');
+    expect(DEFAULT_BENT_BUILD_SHOWCASE_PARAMS.supportMode).toBe('conventional');
     expect(DEFAULT_BENT_BUILD_SHOWCASE_PARAMS.isolationLevel).toBe('bearing');
+    expect(DEFAULT_BENT_BUILD_SHOWCASE_PARAMS.alignment).toBeUndefined();
+    expect(DEFAULT_BENT_BUILD_SHOWCASE_PARAMS.slopePercent).toBe(0);
 
-    // Bearing-level isolation should provide one bearing per girder at each support line.
-    expect(model.bearings).toHaveLength((numSpans + 1) * numGirders);
+    // Conventional baseline should have no bearings.
+    expect(model.bearings).toHaveLength(0);
 
-    // Curved alignment should create chord nodes and non-collinear support points in plan.
+    // Straight baseline should create no chord nodes.
     const chordNodes = model.nodes.filter((n) => n.label?.startsWith('Chord'));
-    expect(chordNodes.length).toBeGreaterThan(0);
+    expect(chordNodes).toHaveLength(0);
 
     const supportG1 = model.nodes
       .filter((n) => /^Deck SL\d+ G1$/.test(n.label ?? ''))
       .sort((a, b) => a.id - b.id);
     const uniqueSupportZ = new Set(supportG1.map((n) => Math.round(n.z)));
-    expect(uniqueSupportZ.size).toBeGreaterThan(1);
+    expect(uniqueSupportZ.size).toBe(1);
 
-    // Vertical profile should produce meaningful elevation change along support lines.
+    // No vertical profile by default.
     const supportY = supportG1.map((n) => n.y);
     const yRange = Math.max(...supportY) - Math.min(...supportY);
-    expect(yRange).toBeGreaterThan(12); // >1 ft
+    expect(yRange).toBe(0);
+
+    // Panel diaphragm count should match baseline formula.
+    expect(model.diaphragms).toHaveLength((numGirders - 1) * numSpans);
   });
 });
