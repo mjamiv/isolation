@@ -62,10 +62,7 @@ function FixedSupports({ nodes }: { nodes: Node[] }) {
 function PinnedSupports({ nodes }: { nodes: Node[] }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
 
-  const geometry = useMemo(
-    () => new THREE.ConeGeometry(SUPPORT_SIZE, SUPPORT_SIZE * 1.5, 4),
-    [],
-  );
+  const geometry = useMemo(() => new THREE.ConeGeometry(SUPPORT_SIZE, SUPPORT_SIZE * 1.5, 4), []);
 
   const count = nodes.length;
 
@@ -99,10 +96,7 @@ function PinnedSupports({ nodes }: { nodes: Node[] }) {
 function RollerSupports({ nodes }: { nodes: Node[] }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
 
-  const geometry = useMemo(
-    () => new THREE.SphereGeometry(SUPPORT_SIZE * 0.6, 12, 12),
-    [],
-  );
+  const geometry = useMemo(() => new THREE.SphereGeometry(SUPPORT_SIZE * 0.6, 12, 12), []);
 
   const count = nodes.length;
 
@@ -134,13 +128,22 @@ function RollerSupports({ nodes }: { nodes: Node[] }) {
 
 export function SupportSymbols() {
   const nodes = useModelStore((state) => state.nodes);
+  const bearings = useModelStore((state) => state.bearings);
 
   const { fixedNodes, pinnedNodes, rollerNodes } = useMemo(() => {
+    // Exclude nodes connected to bearings — those get their own 3D symbol.
+    const bearingNodeIds = new Set<number>();
+    for (const b of bearings.values()) {
+      bearingNodeIds.add(b.nodeI);
+      bearingNodeIds.add(b.nodeJ);
+    }
+
     const fixed: Node[] = [];
     const pinned: Node[] = [];
     const roller: Node[] = [];
 
     for (const node of nodes.values()) {
+      if (bearingNodeIds.has(node.id)) continue;
       const supportType = classifySupport(node);
       switch (supportType) {
         case 'fixed':
@@ -156,7 +159,7 @@ export function SupportSymbols() {
     }
 
     return { fixedNodes: fixed, pinnedNodes: pinned, rollerNodes: roller };
-  }, [nodes]);
+  }, [nodes, bearings]);
 
   return (
     <group>

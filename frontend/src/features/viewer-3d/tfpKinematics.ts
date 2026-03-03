@@ -8,6 +8,12 @@ export interface PlanDisplacement {
   magnitude: number;
 }
 
+export interface NodeViewerDisplacement {
+  dx: number;
+  dy: number;
+  dz: number;
+}
+
 export interface TfpStageOffsets {
   slider1: [number, number];
   slider2: [number, number];
@@ -44,19 +50,35 @@ function splitSequentialTravel(
  * - X from backend DOF 1
  * - Z from backend DOF 2 (backend Y, mapped to frontend Z)
  */
+export function extractNodeViewerDisplacement(
+  step: TimeStep | undefined,
+  nodeId: number,
+): NodeViewerDisplacement {
+  if (!step) return { dx: 0, dy: 0, dz: 0 };
+  const disp = step.nodeDisplacements[nodeId];
+  if (!disp) return { dx: 0, dy: 0, dz: 0 };
+
+  return {
+    dx: disp[0] ?? 0,
+    // Bearing models are solved in Z-up; frontend view is Y-up.
+    dy: disp[2] ?? 0,
+    dz: disp[1] ?? 0,
+  };
+}
+
 export function extractPlanDisplacement(
   step: TimeStep | undefined,
   nodeI: number,
   nodeJ: number,
 ): PlanDisplacement {
   if (!step) return { dx: 0, dz: 0, magnitude: 0 };
+  if (!step.nodeDisplacements[nodeJ]) return { dx: 0, dz: 0, magnitude: 0 };
 
-  const dispI = step.nodeDisplacements[nodeI];
-  const dispJ = step.nodeDisplacements[nodeJ];
-  if (!dispJ) return { dx: 0, dz: 0, magnitude: 0 };
+  const dispI = extractNodeViewerDisplacement(step, nodeI);
+  const dispJ = extractNodeViewerDisplacement(step, nodeJ);
 
-  const dx = (dispJ[0] ?? 0) - (dispI?.[0] ?? 0);
-  const dz = (dispJ[1] ?? 0) - (dispI?.[1] ?? 0);
+  const dx = dispJ.dx - dispI.dx;
+  const dz = dispJ.dz - dispI.dz;
   return { dx, dz, magnitude: Math.hypot(dx, dz) };
 }
 

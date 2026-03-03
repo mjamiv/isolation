@@ -166,6 +166,24 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
 
   const numPiers = numSpans - 1;
   const numSupportLines = numSpans + 1; // abutments + piers
+  const defaultPierCfg = { type: 'FIX' as const, guided: false };
+
+  // Normalize pier support config once so node topology and equalDOF rules stay consistent.
+  const hasUserFixPier = Array.from({ length: numPiers }, (_, pi) => {
+    const cfg = pierSupports[pi] ?? defaultPierCfg;
+    return cfg.type === 'FIX';
+  }).some(Boolean);
+  const forceFixPier0 =
+    supportMode === 'conventional' && !hasUserFixPier && numBentColumns === 1 && numPiers > 0;
+  const effectivePierSupports = Array.from({ length: numPiers }, (_, pi) => {
+    const cfg = pierSupports[pi] ?? defaultPierCfg;
+    const autoFixed = forceFixPier0 && pi === 0;
+    return {
+      type: (autoFixed ? 'FIX' : cfg.type) as 'FIX' | 'EXP',
+      guided: cfg.guided,
+      autoFixed,
+    };
+  });
 
   // ── 1. Unit conversions (ft -> in) & Alignment setup ────────────────
 
@@ -333,6 +351,13 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     return supportMode === 'isolated' && isolationLevel === 'bearing';
   }
 
+  function pierNeedsSeparateCap(pi: number): boolean {
+    if (supportMode === 'isolated') {
+      return true;
+    }
+    return effectivePierSupports[pi]?.type !== 'FIX';
+  }
+
   // ── Helper: compute XZ coords for a node at a given support line + offset ──
 
   function deckNodeCoords(sli: number, gi: number): { x: number; z: number } {
@@ -417,8 +442,9 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
     }
   }
 
-  // Cap nodes for all piers
+  // Cap nodes for piers that require a separate support plane.
   for (let pi = 0; pi < numPiers; pi++) {
+    if (!pierNeedsSeparateCap(pi)) continue;
     const sli = pi + 1;
     const capY = deckY[sli]! - halfCap;
     for (let gi = 0; gi < numGirders; gi++) {
@@ -438,9 +464,16 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   // Dedicated cap nodes for columns whose spacing does not align with girders.
   for (let pi = 0; pi < numPiers; pi++) {
     const sli = pi + 1;
-    const capY = deckY[sli]! - halfCap;
     for (let ci = 0; ci < numBentColumns; ci++) {
       const colOffset = columnOffsets[ci]!;
+      if (!pierNeedsSeparateCap(pi)) {
+        const matchedGi = matchingGirderIndex(colOffset, girderOffsets);
+        const gi = matchedGi ?? closestGirderIndex(colOffset, girderOffsets);
+        columnCapNodeIds[pi]![ci] = deckNodeId(sli, gi, numGirders);
+        continue;
+      }
+
+      const capY = deckY[sli]! - halfCap;
       const matchedGi = matchingGirderIndex(colOffset, girderOffsets);
       if (matchedGi !== null) {
         columnCapNodeIds[pi]![ci] = capNodeId(pi, matchedGi, numGirders);
@@ -622,6 +655,13 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
 
   // 6b. Cross-beams at deck level (at every support line)
   for (let sli = 0; sli < numSupportLines; sli++) {
+    const pi = sli - 1;
+    const isPierLine = pi >= 0 && pi < numPiers;
+    if (isPierLine && !pierNeedsSeparateCap(pi)) {
+      // Monolithic FIX piers use pier-cap members on deck nodes at this line.
+      // Skip duplicate cross-beam members that would double stiffness.
+      continue;
+    }
     for (let gi = 0; gi < numGirders - 1; gi++) {
       elements.push({
         id: nextElementId++,
@@ -639,6 +679,22 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   // Include both girder-cap nodes and any dedicated cap-column nodes so
   // column spacing and girder spacing remain independent along the cap.
   for (let pi = 0; pi < numPiers; pi++) {
+    if (!pierNeedsSeparateCap(pi)) {
+      const sli = pi + 1;
+      for (let seg = 0; seg < numGirders - 1; seg++) {
+        elements.push({
+          id: nextElementId++,
+          type: 'pierCap',
+          nodeI: deckNodeId(sli, seg, numGirders),
+          nodeJ: deckNodeId(sli, seg + 1, numGirders),
+          sectionId: pierCapSectionId,
+          materialId: concreteMatId,
+          label: `PierCap P${pi + 1} S${seg + 1}`,
+        });
+      }
+      continue;
+    }
+
     const capLine: { offset: number; nodeId: number }[] = [];
     for (let gi = 0; gi < numGirders; gi++) {
       capLine.push({ offset: girderOffsets[gi]!, nodeId: capNodeId(pi, gi, numGirders) });
@@ -878,25 +934,25 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   if (supportMode === 'conventional') {
     let eqId = 1;
     let hasLongitudinalFixPier = false;
-    const hasUserFixPier = Array.from({ length: numPiers }, (_, pi) => {
-      const cfg = pierSupports[pi] ?? { type: 'FIX' as const, guided: false };
-      return cfg.type === 'FIX';
-    }).some(Boolean);
-    // Single-column bents with all EXP supports are mechanism-prone.
-    // Promote Pier 1 to FIX to keep the generated model constructible/stable.
-    const forceFixPier0 = !hasUserFixPier && numBentColumns === 1 && numPiers > 0;
 
     for (let pi = 0; pi < numPiers; pi++) {
-      const cfg = pierSupports[pi] ?? { type: 'FIX' as const, guided: false };
+      const cfg = effectivePierSupports[pi] ?? {
+        type: 'FIX' as const,
+        guided: false,
+        autoFixed: false,
+      };
       const sli = pi + 1;
-      const effectiveType = forceFixPier0 && pi === 0 ? 'FIX' : cfg.type;
-      const autoFixed = forceFixPier0 && pi === 0;
-      if (effectiveType === 'FIX') {
+      if (cfg.type === 'FIX') {
         hasLongitudinalFixPier = true;
+      }
+      if (!pierNeedsSeparateCap(pi)) {
+        // FIX pier is modeled monolithically by sharing deck nodes at the
+        // column top, so no equalDOF coupling is required.
+        continue;
       }
 
       let dofs: number[];
-      if (effectiveType === 'FIX') {
+      if (cfg.type === 'FIX') {
         // Pinned connection: translations constrained, rotations free
         // Girders sit on cap — bending rotations do not transfer to substructure
         dofs = [1, 2, 3];
@@ -911,7 +967,7 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
           retainedNodeId: capNodeId(pi, gi, numGirders),
           constrainedNodeId: deckNodeId(sli, gi, numGirders),
           dofs,
-          label: autoFixed
+          label: cfg.autoFixed
             ? `EqDOF P${pi + 1} G${gi + 1} [Auto-FIX]`
             : `EqDOF P${pi + 1} G${gi + 1}`,
         });
@@ -949,42 +1005,40 @@ export function generateBentFrame(params: BentBuildParams): ModelJSON {
   }
 
   // ── 10. Generate Rigid Diaphragms ───────────────────────────────────
-  // Single deck-level rigid diaphragm: all deck/chord nodes move as one
-  // in-plane rigid body.
+  // Panel diaphragms: one quad per adjacent girder pair per longitudinal
+  // deck segment. This yields (numGirders - 1) * numSpans * chordsPerSpan.
 
   const diaphragms: RigidDiaphragm[] = [];
 
   if (includeDiaphragms && numGirders >= 2) {
-    const deckNodeIds: number[] = [];
+    let diaId = 1;
 
-    // Support-line deck nodes
-    for (let sli = 0; sli < numSupportLines; sli++) {
-      for (let gi = 0; gi < numGirders; gi++) {
-        deckNodeIds.push(deckNodeId(sli, gi, numGirders));
-      }
-    }
+    const spanStationNodeId = (span: number, stationIdx: number, gi: number): number => {
+      if (stationIdx === 0) return deckNodeId(span, gi, numGirders);
+      if (stationIdx === chordsPerSpan) return deckNodeId(span + 1, gi, numGirders);
+      return chordNodeId(span, stationIdx - 1, gi, chordsPerSpan, numGirders);
+    };
 
-    // Interior chord nodes for curved alignment discretization
-    if (chordsPerSpan > 1) {
-      for (let span = 0; span < numSpans; span++) {
-        const numInterior = chordsPerSpan - 1;
-        for (let ci = 0; ci < numInterior; ci++) {
-          for (let gi = 0; gi < numGirders; gi++) {
-            deckNodeIds.push(chordNodeId(span, ci, gi, chordsPerSpan, numGirders));
-          }
+    for (let span = 0; span < numSpans; span++) {
+      for (let seg = 0; seg < chordsPerSpan; seg++) {
+        for (let gi = 0; gi < numGirders - 1; gi++) {
+          const n1 = spanStationNodeId(span, seg, gi);
+          const n2 = spanStationNodeId(span, seg, gi + 1);
+          const n3 = spanStationNodeId(span, seg + 1, gi + 1);
+          const n4 = spanStationNodeId(span, seg + 1, gi);
+
+          const constrainedNodeIds = [...new Set([n2, n3, n4].filter((id) => id !== n1))];
+          if (constrainedNodeIds.length === 0) continue;
+
+          diaphragms.push({
+            id: diaId++,
+            masterNodeId: n1,
+            constrainedNodeIds,
+            perpDirection: 2 as const,
+            label: `Deck Panel S${span + 1} C${seg + 1} G${gi + 1}-${gi + 2}`,
+          });
         }
       }
-    }
-
-    const allDeckNodeIds = [...new Set(deckNodeIds)];
-    if (allDeckNodeIds.length >= 2) {
-      diaphragms.push({
-        id: 1,
-        masterNodeId: allDeckNodeIds[0]!,
-        constrainedNodeIds: allDeckNodeIds.slice(1),
-        perpDirection: 2 as const,
-        label: 'Deck Rigid',
-      });
     }
   }
 

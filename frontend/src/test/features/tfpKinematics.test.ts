@@ -3,6 +3,7 @@ import type { TimeStep } from '@/types/analysis';
 import {
   computeTfpStageOffsets,
   extractPlanDisplacement,
+  extractNodeViewerDisplacement,
   extractOrbitPoints,
 } from '@/features/viewer-3d/tfpKinematics';
 
@@ -72,6 +73,30 @@ describe('tfpKinematics — extractPlanDisplacement', () => {
       bearingResponses: {},
     };
     expect(extractPlanDisplacement(step, 1, 2)).toEqual({ dx: 0, dz: 0, magnitude: 0 });
+  });
+});
+
+describe('tfpKinematics — extractNodeViewerDisplacement', () => {
+  it('maps solver Z-up displacement components to viewer Y-up components', () => {
+    const step = makeStep([1.5, -0.5, 7], [4.25, 2.0, 9]);
+    expect(extractNodeViewerDisplacement(step, 2)).toEqual({
+      dx: 4.25,
+      dy: 9,
+      dz: 2.0,
+    });
+  });
+
+  it('returns zero displacement when step or node displacement is missing', () => {
+    expect(extractNodeViewerDisplacement(undefined, 2)).toEqual({ dx: 0, dy: 0, dz: 0 });
+
+    const step: TimeStep = {
+      step: 0,
+      time: 0,
+      nodeDisplacements: {},
+      elementForces: {},
+      bearingResponses: {},
+    };
+    expect(extractNodeViewerDisplacement(step, 99)).toEqual({ dx: 0, dy: 0, dz: 0 });
   });
 });
 
