@@ -84,7 +84,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Load Model dropdown** — toolbar dropdown with 6 focused presets and an "Import JSON File..." option
 - **Preset models**: 20-Story Tower (Fixed/Isolated), 2-Story 2x2 (Fixed/Isolated), 3-Span Bridge (Fixed/Isolated)
 - **20-story steel tower** — 1-bay 20'x20' moment frame, 3 column tiers (W14x500/370/257), 3 beam tiers (W36x300/W30x211/W24x146), T1=1.41s, fully verified with all 4 analysis types
-- **3-span girder bridge** — 80'-100'-80' continuous steel girder bridge with 6 W36x150 girders at 8'-0" spacing, W24x84 abutment cross-beams, RC pier caps (5'x6' concrete, Ix=1,866,240 in⁴), 2-column W14x257 portal frame piers with 3 sub-elements per column (intermediate nodes at 1/3 and 2/3 height), a single rigid deck diaphragm, and 120 psf composite concrete deck dead load. Fixed model has roller abutments (36 nodes, 50 elements). Isolated variant has 24 TFP bearings at all girder support points with upsized pier bearings (R_eff=180", dispCap=30") and RC pier cap beams below the isolation plane (60 nodes, 60 elements)
+- **3-span girder bridge** — 80'-100'-80' continuous steel girder bridge with 6 W36x150 girders at 8'-0" spacing, W24x84 abutment cross-beams, RC pier caps (5'x6' concrete, Ix=1,866,240 in⁴), 2-column W14x257 portal frame piers with 3 sub-elements per column (intermediate nodes at 1/3 and 2/3 height), panel deck diaphragms (`(numGirders - 1) * numSpans * chordsPerSpan`), and 120 psf composite concrete deck dead load. Fixed model has roller abutments (36 nodes, 50 elements). Isolated variant has 24 TFP bearings at all girder support points with upsized pier bearings (R_eff=180", dispCap=30") and RC pier cap beams below the isolation plane (60 nodes, 60 elements)
 - **Auto-generated ground motions** — models imported without ground motion records automatically get 5 synthetic records (Serviceability, Subduction, Harmonic, El Centro, Near-Fault) ordered by intensity, enabling immediate time-history analysis starting from low-amplitude events
 - **JSON file import** — load any arbitrary model JSON via file picker with validation and toast notifications
 - **Session result caching** — analysis results are cached per model name; switching between presets preserves results within a dev session without re-running analyses
@@ -135,7 +135,7 @@ Phases 1 through 5 are complete. The app provides:
 
 ### Bent Build — Parametric Bridge Generator
 - **Real-time parametric bridge** — "Bent Build" button in toolbar opens a dialog to generate multi-span girder bridges with per-pier support configuration
-- **Comparison-ready startup preset** — Bent Build opens with a steel 3-span isolated bridge (`100-140-100 ft`) using bearing-level TFP, active horizontal curvature, active vertical profile, and `4` chords/span to immediately exercise fixed-vs-isolated comparison workflows
+- **Simple startup preset** — Bent Build opens with a straight steel 3-span conventional bridge (`80-100-80 ft`) with no horizontal/vertical curve profile so baseline geometry is immediately clear
 - **Span/girder layout** — 1-8 spans with per-span lengths, 3-10 girders, steel (W30-W44) or concrete (AASHTO Type II-VI) girder sections, adjustable roadway width and overhang
 - **Pier configuration** — 1-4 bent columns per pier with independent heights, concrete circular RC columns (36-60in) auto-sized by height
 - **Support modes** — Conventional supports use FIX monolithic deck-pier connectivity (no equalDOF links on FIX piers) and EXP expansion behavior via equalDOF constraints, with auto-stabilization for mechanism-prone all-EXP cases (single-column bents auto-promote Pier 1 to FIX; multi-column all-EXP adds one longitudinal anchor equalDOF). Isolated mode supports bearing-level TFP at all girder support points, or column-base TFP with rigid deck-to-cap equalDOF links so only the column base isolates
@@ -300,6 +300,9 @@ python3 tests/integration_test.py
 
 # Type checking
 cd frontend && npx tsc --noEmit
+
+# Regenerate bundled 3-span preset diaphragms from model nodes
+cd frontend && npm run sync:three-span-diaphragms
 ```
 
 Pre-commit hooks (husky + lint-staged) automatically run ESLint and Prettier on staged `.ts`/`.tsx` files.

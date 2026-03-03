@@ -1,5 +1,27 @@
 # MEMORY
 
+## Completed Work (2026-03-03 — Session Wrap-Up 2)
+- Updated Bent Build startup defaults to a simple straight 3-span baseline (no horizontal/vertical curve profile) by simplifying `DEFAULT_BENT_BUILD_SHOWCASE_PARAMS` in `frontend/src/features/bent-build/bentBuildTypes.ts`.
+- Updated bent-build tests to reflect the simple baseline defaults (no chord nodes, no default bearings, flat profile) in `frontend/src/features/bent-build/__tests__/generateBentFrame.test.ts`.
+- Fixed bundled 3-span preset model JSONs to use panel diaphragms instead of a single global diaphragm:
+  - `frontend/public/models/three-span-bridge-fixed.json`
+  - `frontend/public/models/three-span-bridge-isolated.json`
+- Added preset sync automation:
+  - script: `frontend/scripts/regenerate-three-span-diaphragms.mjs`
+  - npm command: `cd frontend && npm run sync:three-span-diaphragms`
+- Created code commit: `554bf8d` (`fix(bent-build): simplify defaults and sync 3-span presets`).
+
+## Verification (2026-03-03 — Session Wrap-Up 2)
+- `cd frontend && npm test -- src/features/bent-build/__tests__/generateBentFrame.test.ts` (`136 passed`).
+- Ran `cd frontend && npm run sync:three-span-diaphragms` and confirmed both preset files produce `15` diaphragms.
+- JSON parse checks for both updated preset files passed.
+
+## Current State (2026-03-03 — Session Wrap-Up 2)
+- Branch: `main` (tracking `origin/main`).
+- Working tree before docs commit:
+  - modified: `README.md`
+  - untracked: `.mcp.json`
+
 ## Completed Work (2026-03-03)
 - Restored bent-build rigid diaphragm generation from a single global deck diaphragm to panel-based diaphragms in `frontend/src/features/bent-build/generateBentFrame.ts`.
 - Implemented deterministic panel generation per adjacent girder pair and longitudinal segment using:
