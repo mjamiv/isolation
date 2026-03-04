@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { useAnalysisStore } from '@/stores/analysisStore';
 import { Viewer3D } from '../viewer-3d/Viewer3D';
 import { ViewerControls } from '../controls/ViewerControls';
 import { ModelEditor } from '../model-editor/ModelEditor';
@@ -27,7 +28,7 @@ function LeftPanel() {
         </h2>
       </div>
       <div className="flex-1 overflow-y-auto">
-        <ModelEditor />
+        <ModelEditor defaultOpenSections={['nodes', 'elements']} />
         <div className="border-t border-white/[0.06] p-3">
           <ViewerControls />
         </div>
@@ -46,6 +47,13 @@ const TABS: { value: RightTab; label: string }[] = [
 
 function RightPanel() {
   const [activeTab, setActiveTab] = useState<RightTab>('properties');
+  const analysisStatus = useAnalysisStore((s) => s.status);
+
+  useEffect(() => {
+    if (analysisStatus === 'complete') {
+      setActiveTab('results');
+    }
+  }, [analysisStatus]);
 
   return (
     <div className="flex h-full flex-col bg-surface-1">
@@ -76,6 +84,14 @@ function RightPanel() {
       </div>
       <div className="flex-1 overflow-y-auto">
         <div
+          id="right-panel-properties"
+          role="tabpanel"
+          aria-labelledby="tab-properties"
+          hidden={activeTab !== 'properties'}
+        >
+          <PropertyInspector />
+        </div>
+        <div
           id="right-panel-results"
           role="tabpanel"
           aria-labelledby="tab-results"
@@ -90,14 +106,6 @@ function RightPanel() {
           hidden={activeTab !== 'comparison'}
         >
           <ComparisonPanel />
-        </div>
-        <div
-          id="right-panel-properties"
-          role="tabpanel"
-          aria-labelledby="tab-properties"
-          hidden={activeTab !== 'properties'}
-        >
-          <PropertyInspector />
         </div>
       </div>
     </div>

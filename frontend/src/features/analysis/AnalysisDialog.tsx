@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import type { AnalysisType, AnalysisParams, PushDirection, LoadPattern } from '@/types/analysis';
@@ -95,6 +95,13 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   };
 
   const validationError = validate();
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (validationError && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [validationError]);
 
   const handleRun = () => {
     if (validationError) return;
@@ -447,8 +454,14 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
 
             {/* Validation error */}
             {validationError && (
-              <div role="alert" aria-live="polite">
-                <p className="text-[11px] text-red-400">{validationError}</p>
+              <div
+                ref={errorRef}
+                id="analysis-validation-error"
+                role="alert"
+                aria-live="polite"
+                className="rounded-md border border-red-500/40 bg-red-950/30 px-3 py-2"
+              >
+                <p className="text-[11px] font-medium text-red-400">{validationError}</p>
               </div>
             )}
           </div>
@@ -467,6 +480,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
               type="button"
               onClick={handleRun}
               disabled={!!validationError || submitting}
+              aria-describedby={validationError ? 'analysis-validation-error' : undefined}
               className="rounded-md bg-gradient-to-r from-yellow-600 to-yellow-500 px-4 py-1.5 text-[11px] font-semibold text-white shadow-glow-gold transition-all hover:from-yellow-500 hover:to-yellow-400 hover:shadow-glow-gold-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
             >
               {submitting

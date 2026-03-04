@@ -8,9 +8,13 @@ import { DiaphragmList } from './DiaphragmList';
 import { LoadList } from './LoadList';
 import { GroundMotionList } from './GroundMotionList';
 
-export function ModelEditor() {
+interface ModelEditorProps {
+  defaultOpenSections?: string[];
+}
+
+export function ModelEditor({ defaultOpenSections = [] }: ModelEditorProps) {
   return (
-    <Accordion.Root type="multiple" defaultValue={[]} className="text-gray-300">
+    <Accordion.Root type="multiple" defaultValue={defaultOpenSections} className="text-gray-300">
       <NodeList />
       <ElementList />
       <SectionList />

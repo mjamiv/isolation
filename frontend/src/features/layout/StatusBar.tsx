@@ -30,7 +30,7 @@ export function StatusBar() {
   const elementCount = elements.size;
 
   return (
-    <div className="flex h-7 items-center justify-between border-t border-white/[0.06] bg-surface-1 px-4 text-[10px]">
+    <div className="flex h-7 items-center justify-between border-t border-white/[0.06] bg-surface-1 px-4 text-ui-xs">
       {/* Left: Status indicator */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
@@ -71,12 +71,12 @@ export function StatusBar() {
       )}
 
       {/* Right: Model info */}
-      <div className="flex items-center gap-3 text-white/25">
-        {model && <span className="font-medium text-white/35">{model.name}</span>}
+      <div className="flex items-center gap-3 text-white/45">
+        {model && <span className="font-medium text-white/60">{model.name}</span>}
         <span className="font-mono">{nodeCount}N</span>
         <span className="font-mono">{elementCount}E</span>
-        <span className="rounded border border-white/[0.06] px-1.5 py-0.5 font-mono text-[9px]">
-          kip-in
+        <span className="rounded border border-white/[0.06] px-1.5 py-0.5 font-mono text-ui-xs text-white/55">
+          Units: kip-in
         </span>
       </div>
     </div>

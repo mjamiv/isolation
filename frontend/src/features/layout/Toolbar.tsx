@@ -134,86 +134,92 @@ export function Toolbar() {
           </span>
         </h1>
         <div className="mx-1 h-5 w-px bg-white/10" />
-        <span className="text-[11px] font-medium tracking-wide text-white/30">
+        <span className="text-[11px] font-medium tracking-wide text-white/50">
           TFP Bearing Simulator
         </span>
       </div>
 
       {/* Center: Action buttons */}
       <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={() => setBayBuildOpen(true)}
-          aria-label="Open Bay Build dialog"
-          className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white hover:shadow-glow-gold"
-        >
-          Bay Build
-        </button>
+        {/* Group 1: Bay Build, Bent Build, Load Model */}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setBayBuildOpen(true)}
+            aria-label="Open Bay Build dialog"
+            className="shrink-0 rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white hover:shadow-glow-gold"
+          >
+            Bay Build
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setBentBuildOpen(true)}
-          aria-label="Open Bent Build dialog"
-          className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white hover:shadow-glow-gold"
-        >
-          Bent Build
-        </button>
+          <button
+            type="button"
+            onClick={() => setBentBuildOpen(true)}
+            aria-label="Open Bent Build dialog"
+            className="shrink-0 rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white hover:shadow-glow-gold"
+          >
+            Bent Build
+          </button>
 
-        <select
-          defaultValue=""
-          onChange={(e) => {
-            void handleModelSelect(e.target.value);
-            e.target.value = '';
-          }}
-          className="cursor-pointer rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white"
-          aria-label="Load model"
-        >
-          <option value="" disabled>
-            Load Model
-          </option>
-          {PRESET_MODELS.map((preset, i) => (
-            <option key={preset.label} value={String(i)}>
-              {preset.label}
+          <select
+            defaultValue=""
+            onChange={(e) => {
+              void handleModelSelect(e.target.value);
+              e.target.value = '';
+            }}
+            className="shrink-0 cursor-pointer rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-300 transition-all duration-150 hover:border-yellow-500/30 hover:bg-surface-4 hover:text-white"
+            aria-label="Load model"
+          >
+            <option value="" disabled>
+              Load Model
             </option>
-          ))}
-          <option value={IMPORT_FILE_VALUE}>Import JSON File...</option>
-        </select>
+            {PRESET_MODELS.map((preset, i) => (
+              <option key={preset.label} value={String(i)}>
+                {preset.label}
+              </option>
+            ))}
+            <option value={IMPORT_FILE_VALUE}>Import JSON File...</option>
+          </select>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          className="hidden"
-          onChange={handleFileImport}
-        />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleFileImport}
+          />
+        </div>
 
-        <div className="mx-1 h-5 w-px bg-white/[0.06]" />
+        <div className="mx-1 h-5 w-px bg-white/20" aria-hidden />
 
-        <button
-          type="button"
-          onClick={() => setDialogOpen(true)}
-          disabled={analysisStatus === 'running'}
-          aria-label="Open analysis dialog"
-          className="rounded-md bg-gradient-to-r from-yellow-600 to-yellow-500 px-4 py-1.5 text-[11px] font-semibold text-white shadow-glow-gold transition-all duration-150 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-glow-gold-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-        >
-          {analysisStatus === 'running' ? (
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-white/80 border-t-transparent" />
-              Running...
-            </span>
-          ) : (
-            'Run Analysis'
-          )}
-        </button>
+        {/* Group 2: Run Analysis, Reset */}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setDialogOpen(true)}
+            disabled={analysisStatus === 'running'}
+            aria-label="Open analysis dialog"
+            className="shrink-0 rounded-md bg-gradient-to-r from-yellow-600 to-yellow-500 px-4 py-1.5 text-[11px] font-semibold text-white shadow-glow-gold transition-all duration-150 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-glow-gold-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+          >
+            {analysisStatus === 'running' ? (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-white/80 border-t-transparent" />
+                Running...
+              </span>
+            ) : (
+              'Run Analysis'
+            )}
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setResetConfirmOpen(true)}
-          aria-label="Reset current model"
-          className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-400 transition-all duration-150 hover:border-red-500/30 hover:text-red-400"
-        >
-          Reset
-        </button>
+          <button
+            type="button"
+            onClick={() => setResetConfirmOpen(true)}
+            aria-label="Reset current model"
+            className="shrink-0 rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] font-medium text-gray-400 transition-all duration-150 hover:border-red-500/30 hover:text-red-400"
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       {/* Right: Display mode toggle */}
@@ -224,7 +230,7 @@ export function Toolbar() {
             type="button"
             onClick={() => setDisplayMode(mode.value)}
             aria-label={`Display mode: ${mode.label}`}
-            className={`rounded-md px-3 py-1 text-[11px] font-medium transition-all duration-150 ${
+            className={`shrink-0 rounded-md px-3 py-1 text-[11px] font-medium transition-all duration-150 ${
               displayMode === mode.value
                 ? 'bg-gradient-to-r from-yellow-600/80 to-yellow-500/80 text-white shadow-glow-gold'
                 : 'text-gray-500 hover:text-gray-300'

@@ -13,6 +13,34 @@ import { HingeDistribution } from './HingeDistribution';
 
 const Plot = lazy(() => import('react-plotly.js'));
 
+function Toggle({
+  label,
+  checked,
+  onChange,
+  ariaLabel,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between py-0.5">
+      <span className="text-ui-xs text-gray-400">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={ariaLabel}
+        onClick={() => onChange(!checked)}
+        className="toggle-track"
+      >
+        <div className="toggle-thumb" />
+      </button>
+    </label>
+  );
+}
+
 function AccordionItem({
   value,
   title,
@@ -23,9 +51,9 @@ function AccordionItem({
   children: React.ReactNode;
 }) {
   return (
-    <Accordion.Item value={value} className="border-b border-gray-800">
+    <Accordion.Item value={value} className="border-b border-white/[0.06]">
       <Accordion.Header className="flex">
-        <Accordion.Trigger className="group flex flex-1 items-center gap-2 px-3 py-2 text-left text-xs font-semibold text-gray-300 hover:bg-gray-800/50">
+        <Accordion.Trigger className="group flex flex-1 items-center gap-2 px-3 py-2 text-left text-ui-sm font-semibold text-gray-300 hover:bg-surface-3">
           <ChevronDownIcon className="h-3 w-3 shrink-0 text-gray-500 transition-transform group-data-[state=open]:rotate-180" />
           <span className="flex-1">{title}</span>
         </Accordion.Trigger>
@@ -44,7 +72,7 @@ function TimeHistoryComparisonPanel() {
   const setShowComparisonOverlay = useDisplayStore((s) => s.setShowComparisonOverlay);
 
   if (!isolated || !fixedBase) {
-    return <div className="p-3 text-xs text-gray-500">Comparison data incomplete.</div>;
+    return <div className="p-3 text-ui-sm text-gray-500">Comparison data incomplete.</div>;
   }
 
   const isoTH = isolated.timeHistoryResults;
@@ -67,55 +95,54 @@ function TimeHistoryComparisonPanel() {
   return (
     <div className="space-y-2 p-3">
       {/* Summary header */}
-      <div className="rounded bg-gray-800/50 p-2">
+      <div className="metric-card rounded-lg p-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-gray-300">Time-History Comparison</span>
-          <span className="text-[10px] text-yellow-400">{totalSteps} steps</span>
+          <span className="text-ui-sm font-semibold text-gray-300">Time-History Comparison</span>
+          <span className="text-ui-xs text-yellow-400">{totalSteps} steps</span>
         </div>
       </div>
 
       {/* Key metrics */}
-      <div className="grid grid-cols-3 gap-1 text-center">
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">{shearReduction.toFixed(0)}%</div>
-          <div className="text-[9px] text-gray-400">Shear Reduction</div>
+      <div className="grid grid-cols-1 gap-1 text-center sm:grid-cols-3">
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">{shearReduction.toFixed(0)}%</div>
+          <div className="text-ui-xs text-gray-400">Shear Reduction</div>
         </div>
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">{isoPeakShear.toFixed(1)}</div>
-          <div className="text-[9px] text-gray-400">Iso Shear (kip)</div>
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">{isoPeakShear.toFixed(1)}</div>
+          <div className="text-ui-xs text-gray-400">Isolated Shear (kip)</div>
         </div>
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">{fbPeakShear.toFixed(1)}</div>
-          <div className="text-[9px] text-gray-400">FB Shear (kip)</div>
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">{fbPeakShear.toFixed(1)}</div>
+          <div className="text-ui-xs text-gray-400">Fixed-Base Shear (kip)</div>
         </div>
       </div>
 
       {/* Displacement metrics */}
-      <div className="grid grid-cols-3 gap-1 text-center">
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">{dispReduction.toFixed(0)}%</div>
-          <div className="text-[9px] text-gray-400">Disp Reduction</div>
+      <div className="grid grid-cols-1 gap-1 text-center sm:grid-cols-3">
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">{dispReduction.toFixed(0)}%</div>
+          <div className="text-ui-xs text-gray-400">Displacement Reduction</div>
         </div>
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">{isoPeakDisp.toFixed(2)}</div>
-          <div className="text-[9px] text-gray-400">Iso Disp (in)</div>
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">{isoPeakDisp.toFixed(2)}</div>
+          <div className="text-ui-xs text-gray-400">Isolated Displacement (in)</div>
         </div>
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">{fbPeakDisp.toFixed(2)}</div>
-          <div className="text-[9px] text-gray-400">FB Disp (in)</div>
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">{fbPeakDisp.toFixed(2)}</div>
+          <div className="text-ui-xs text-gray-400">Fixed-Base Displacement (in)</div>
         </div>
       </div>
 
       {/* 3D Overlay toggle */}
-      <label className="flex items-center gap-2 px-1 cursor-pointer">
-        <input
-          type="checkbox"
+      <div className="px-1">
+        <Toggle
+          label="Show 3D overlay (both deformed shapes)"
           checked={showComparisonOverlay}
-          onChange={(e) => setShowComparisonOverlay(e.target.checked)}
-          className="h-3 w-3 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+          onChange={setShowComparisonOverlay}
+          ariaLabel="Show 3D overlay with both deformed shapes"
         />
-        <span className="text-[10px] text-gray-400">Show 3D overlay (both deformed shapes)</span>
-      </label>
+      </div>
 
       {/* Playback controls */}
       <PlaybackControls
@@ -151,8 +178,8 @@ export function ComparisonPanel() {
   if (status === 'idle') {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-        <p className="text-sm font-medium text-gray-400">No comparison data</p>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="text-ui-base font-medium text-gray-400">No comparison data</p>
+        <p className="mt-1 text-ui-sm text-gray-500">
           Run a pushover or time-history comparison to compare isolated vs fixed-base performance
         </p>
       </div>
@@ -161,7 +188,7 @@ export function ComparisonPanel() {
 
   if (status === 'running') {
     return (
-      <div className="p-3 text-xs text-gray-400">
+      <div className="p-3 text-ui-sm text-gray-400">
         <div className="flex items-center gap-2">
           <div className="h-3 w-3 animate-spin rounded-full border-2 border-yellow-500 border-t-transparent" />
           Running comparison analysis...
@@ -171,11 +198,11 @@ export function ComparisonPanel() {
   }
 
   if (status === 'error') {
-    return <div className="p-3 text-xs text-red-400">Comparison failed: {error}</div>;
+    return <div className="p-3 text-ui-sm text-red-400">Comparison failed: {error}</div>;
   }
 
   if (!isolated || !fixedBase) {
-    return <div className="p-3 text-xs text-gray-500">Comparison data incomplete.</div>;
+    return <div className="p-3 text-ui-sm text-gray-500">Comparison data incomplete.</div>;
   }
 
   // Time-history comparison panel
@@ -185,7 +212,7 @@ export function ComparisonPanel() {
 
   // Pushover comparison panel
   if (!summary) {
-    return <div className="p-3 text-xs text-gray-500">Comparison data incomplete.</div>;
+    return <div className="p-3 text-ui-sm text-gray-500">Comparison data incomplete.</div>;
   }
 
   // Build capacity curve traces
@@ -237,13 +264,13 @@ export function ComparisonPanel() {
   return (
     <div className="space-y-2 p-3">
       {/* Summary header */}
-      <div className="rounded bg-gray-800/50 p-2">
+      <div className="metric-card rounded-lg p-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-gray-300">
+          <span className="text-ui-sm font-semibold text-gray-300">
             Isolated vs Fixed-Base Comparison
           </span>
           {lambdaFactors && (
-            <span className="text-[10px] text-yellow-400">
+            <span className="text-ui-xs text-yellow-400">
               Lambda {lambdaFactors.min}/{lambdaFactors.max}
             </span>
           )}
@@ -251,45 +278,44 @@ export function ComparisonPanel() {
       </div>
 
       {/* Key metrics bar */}
-      <div className="grid grid-cols-3 gap-1 text-center">
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">
+      <div className="grid grid-cols-1 gap-1 text-center sm:grid-cols-3">
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">
             {summary.baseShear.reductionPercent.toFixed(0)}%
           </div>
-          <div className="text-[9px] text-gray-400">Shear Reduction</div>
+          <div className="text-ui-xs text-gray-400">Shear Reduction</div>
         </div>
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">
             {isolated.maxBaseShear.toFixed(1)}
           </div>
-          <div className="text-[9px] text-gray-400">Iso Shear (kip)</div>
+          <div className="text-ui-xs text-gray-400">Isolated Shear (kip)</div>
         </div>
-        <div className="rounded bg-gray-800/50 p-2">
-          <div className="text-sm font-bold text-yellow-400">
+        <div className="metric-card rounded-lg p-2">
+          <div className="text-ui-lg font-bold text-yellow-400">
             {fixedBase.maxBaseShear.toFixed(1)}
           </div>
-          <div className="text-[9px] text-gray-400">FB Shear (kip)</div>
+          <div className="text-ui-xs text-gray-400">Fixed-Base Shear (kip)</div>
         </div>
       </div>
 
       {/* 3D Overlay toggle */}
-      <label className="flex items-center gap-2 px-1 cursor-pointer">
-        <input
-          type="checkbox"
+      <div className="px-1">
+        <Toggle
+          label="Show 3D overlay (both deformed shapes)"
           checked={showComparisonOverlay}
-          onChange={(e) => setShowComparisonOverlay(e.target.checked)}
-          className="h-3 w-3 rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
+          onChange={setShowComparisonOverlay}
+          ariaLabel="Show 3D overlay with both deformed shapes"
         />
-        <span className="text-[10px] text-gray-400">Show 3D overlay (both deformed shapes)</span>
-      </label>
+      </div>
 
       {/* Dashboard accordion */}
       <Accordion.Root type="multiple" defaultValue={['capacity', 'drift', 'shear']}>
         <AccordionItem value="capacity" title="Capacity Curve">
-          <div className="h-48 rounded bg-gray-800/50">
+          <div className="metric-card h-48 rounded-lg">
             <Suspense
               fallback={
-                <div className="flex h-full items-center justify-center text-xs text-gray-500">
+                <div className="flex h-full items-center justify-center text-ui-sm text-gray-500">
                   Loading chart...
                 </div>
               }
@@ -327,8 +353,11 @@ export function ComparisonPanel() {
           <BaseShearComparison data={summary.baseShear} />
         </AccordionItem>
 
-        <AccordionItem value="bearings" title="Bearing D/C">
-          <BearingDemandCapacity data={summary.bearingDemands} />
+        <AccordionItem value="bearings" title="Bearing Demand/Capacity">
+          <div className="space-y-1.5">
+            <p className="text-ui-xs text-gray-500">Demand over capacity ratio for each bearing.</p>
+            <BearingDemandCapacity data={summary.bearingDemands} />
+          </div>
         </AccordionItem>
 
         <AccordionItem value="hinges" title="Hinge Distribution">

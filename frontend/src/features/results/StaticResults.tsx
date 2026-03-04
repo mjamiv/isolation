@@ -63,15 +63,15 @@ export function StaticResults({ data }: StaticResultsProps) {
     <div className="space-y-3">
       {/* Displacement table */}
       <div>
-        <h3 className="mb-1 text-xs font-semibold text-gray-300">Node Displacements</h3>
+        <h3 className="mb-1 text-ui-sm font-semibold text-gray-300">Node Displacements</h3>
         <div className="overflow-x-auto rounded bg-gray-800/50">
-          <table className="w-full text-[10px]">
+          <table className="w-full text-ui-xs">
             <thead>
               <tr className="border-b border-gray-700 text-gray-500">
                 <th className="px-2 py-1 text-left">Node</th>
-                <th className="px-2 py-1 text-right">dx</th>
-                <th className="px-2 py-1 text-right">dy</th>
-                <th className="px-2 py-1 text-right">dz</th>
+                <th className="px-2 py-1 text-right">dx (in)</th>
+                <th className="px-2 py-1 text-right">dy (in)</th>
+                <th className="px-2 py-1 text-right">dz (in)</th>
               </tr>
             </thead>
             <tbody className="text-gray-400">
@@ -90,7 +90,7 @@ export function StaticResults({ data }: StaticResultsProps) {
           </table>
         </div>
         {maxDispMag > 0 && (
-          <p className="mt-1 text-[10px] text-gray-500">
+          <p className="mt-1 text-ui-xs text-gray-500">
             Max displacement: {maxDispMag.toFixed(4)} in at Node {maxDispNodeId}
           </p>
         )}
@@ -99,15 +99,15 @@ export function StaticResults({ data }: StaticResultsProps) {
       {/* Reactions table */}
       {reactions.length > 0 && (
         <div>
-          <h3 className="mb-1 text-xs font-semibold text-gray-300">Support Reactions</h3>
+          <h3 className="mb-1 text-ui-sm font-semibold text-gray-300">Support Reactions</h3>
           <div className="overflow-x-auto rounded bg-gray-800/50">
-            <table className="w-full text-[10px]">
+            <table className="w-full text-ui-xs">
               <thead>
                 <tr className="border-b border-gray-700 text-gray-500">
                   <th className="px-2 py-1 text-left">Node</th>
-                  <th className="px-2 py-1 text-right">Fx</th>
-                  <th className="px-2 py-1 text-right">Fy</th>
-                  <th className="px-2 py-1 text-right">Fz</th>
+                  <th className="px-2 py-1 text-right">Fx (kip)</th>
+                  <th className="px-2 py-1 text-right">Fy (kip)</th>
+                  <th className="px-2 py-1 text-right">Fz (kip)</th>
                 </tr>
               </thead>
               <tbody className="text-gray-400">
@@ -129,11 +129,11 @@ export function StaticResults({ data }: StaticResultsProps) {
       {elementEntries.length > 0 && (
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-gray-300">Element Forces & Moments</h3>
+            <h3 className="text-ui-sm font-semibold text-gray-300">Element Forces & Moments</h3>
             <select
               value={selectedElement}
               onChange={(e) => setSelectedElement(Number(e.target.value))}
-              className="rounded bg-gray-800 px-2 py-0.5 text-[10px] text-gray-300 outline-none ring-1 ring-gray-700"
+              className="rounded bg-gray-800 px-2 py-0.5 text-ui-xs text-gray-300 outline-none ring-1 ring-gray-700"
             >
               {elementEntries.map(([eid]) => (
                 <option key={eid} value={eid}>
@@ -145,7 +145,7 @@ export function StaticResults({ data }: StaticResultsProps) {
           <div className="h-44 rounded bg-gray-800/50">
             <Suspense
               fallback={
-                <div className="flex h-full items-center justify-center text-xs text-gray-500">
+                <div className="flex h-full items-center justify-center text-ui-sm text-gray-500">
                   Loading chart...
                 </div>
               }

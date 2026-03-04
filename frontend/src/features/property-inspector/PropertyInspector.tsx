@@ -31,7 +31,7 @@ export function PropertyInspector() {
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
         <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.06] bg-surface-2">
           <svg
-            className="h-5 w-5 text-white/15"
+            className="h-5 w-5 text-white/30"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -46,7 +46,7 @@ export function PropertyInspector() {
         </div>
         <p className="text-[11px] font-medium text-white/40">No selection</p>
         <p className="mt-1 text-[10px] text-white/20">
-          Click a node, element, or bearing in the 3D viewer
+          Select a node, element, or bearing in the 3D viewer or Model Tree.
         </p>
       </div>
     );

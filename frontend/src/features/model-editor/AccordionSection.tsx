@@ -17,7 +17,7 @@ export function AccordionSection({ value, title, count, onAdd, children }: Accor
         <Accordion.Trigger className="group flex flex-1 items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold text-white/60 transition-colors duration-150 hover:bg-white/[0.03] hover:text-white/80">
           <ChevronDownIcon className="h-3 w-3 shrink-0 text-white/20 transition-transform duration-200 ease-out-expo group-data-[state=open]:rotate-180 group-data-[state=open]:text-yellow-500/60" />
           <span className="flex-1">{title}</span>
-          <span className="rounded-full border border-white/[0.06] bg-surface-3 px-1.5 py-0.5 font-mono text-[9px] text-white/25">
+          <span className="rounded-full border border-white/[0.06] bg-surface-3 px-1.5 py-0.5 font-mono text-ui-xs text-white/50">
             {count}
           </span>
         </Accordion.Trigger>

@@ -19,7 +19,7 @@ export function ResultsPanel() {
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
         <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.06] bg-surface-2">
           <svg
-            className="h-5 w-5 text-white/15"
+            className="h-5 w-5 text-white/30"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -33,28 +33,32 @@ export function ResultsPanel() {
           </svg>
         </div>
         <p className="text-[11px] font-medium text-white/40">No analysis results</p>
-        <p className="mt-1 text-[10px] text-white/20">Run an analysis to see results here</p>
+        <p className="mt-1 text-[10px] text-white/20">
+          Use the toolbar Run Analysis action to run an analysis.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3 p-3">
-      {/* Summary header */}
-      <div className="metric-card rounded-lg p-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold text-white/70">
-            {analysisType === 'static' && 'Static Analysis'}
-            {analysisType === 'modal' && 'Modal Analysis'}
-            {analysisType === 'time_history' && 'Time-History Analysis'}
-            {analysisType === 'pushover' && 'Pushover Analysis'}
-            {!analysisType && 'Analysis'}
-          </span>
-          <span className="font-mono text-[10px] text-yellow-400/60">
-            {results.status === 'complete' && results.wallTime != null
-              ? `${results.wallTime.toFixed(2)}s`
-              : results.status}
-          </span>
+      {/* Keep summary visible while scrolling result sections */}
+      <div className="sticky top-0 z-10 -mx-3 border-b border-white/[0.06] bg-surface-1/98 px-3 pb-2 backdrop-blur-sm">
+        <div className="metric-card rounded-lg p-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-white/70">
+              {analysisType === 'static' && 'Static Analysis'}
+              {analysisType === 'modal' && 'Modal Analysis'}
+              {analysisType === 'time_history' && 'Time-History Analysis'}
+              {analysisType === 'pushover' && 'Pushover Analysis'}
+              {!analysisType && 'Analysis'}
+            </span>
+            <span className="font-mono text-[10px] text-yellow-400/60">
+              {results.status === 'complete' && results.wallTime != null
+                ? `${results.wallTime.toFixed(2)}s`
+                : results.status}
+            </span>
+          </div>
         </div>
       </div>
 
