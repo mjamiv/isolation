@@ -49,7 +49,11 @@ export function useRunAsync<TParams, TResult>(config: RunAsyncConfig<TParams, TR
       // 5. Deliver result
       configRef.current.onResult(result);
     } catch (err) {
-      configRef.current.onError(err instanceof Error ? err.message : 'Unknown error');
+      const rawMessage = err instanceof Error ? err.message : 'Unknown error';
+      const message = /failed to fetch/i.test(rawMessage)
+        ? 'Could not reach the backend API. Verify the backend is running and reachable.'
+        : rawMessage;
+      configRef.current.onError(message);
     } finally {
       setSubmitting(false);
     }

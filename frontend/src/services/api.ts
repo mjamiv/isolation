@@ -25,7 +25,7 @@ import type { ComparisonRun, LambdaFactors } from '../types/comparison.ts';
 // Configuration
 // ---------------------------------------------------------------------------
 
-const API_BASE: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api';
+const API_BASE: string = import.meta.env.VITE_API_URL ?? '/api';
 
 // ---------------------------------------------------------------------------
 // Case-Conversion Helpers

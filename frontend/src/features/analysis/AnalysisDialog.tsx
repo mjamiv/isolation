@@ -98,7 +98,11 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (validationError && errorRef.current) {
+    if (
+      validationError &&
+      errorRef.current &&
+      typeof errorRef.current.scrollIntoView === 'function'
+    ) {
       errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [validationError]);

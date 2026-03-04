@@ -138,8 +138,8 @@ describe('ComparisonPanel — with data', () => {
     render(<ComparisonPanel />);
     // Multiple elements may contain "shear reduction" (metrics bar + chart)
     expect(screen.getAllByText(/shear reduction/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/iso shear/i)).toBeInTheDocument();
-    expect(screen.getByText(/fb shear/i)).toBeInTheDocument();
+    expect(screen.getByText(/isolated shear/i)).toBeInTheDocument();
+    expect(screen.getByText(/fixed-base shear/i)).toBeInTheDocument();
   });
 
   it('renders accordion sections for dashboard charts', () => {
@@ -148,7 +148,7 @@ describe('ComparisonPanel — with data', () => {
     expect(screen.getByText('Capacity Curve')).toBeInTheDocument();
     expect(screen.getByText('Drift Profile')).toBeInTheDocument();
     expect(screen.getByText('Base Shear')).toBeInTheDocument();
-    expect(screen.getByText('Bearing D/C')).toBeInTheDocument();
+    expect(screen.getByText('Bearing Demand/Capacity')).toBeInTheDocument();
     expect(screen.getByText('Hinge Distribution')).toBeInTheDocument();
   });
 
@@ -206,9 +206,9 @@ describe('ComparisonPanel — time-history comparison', () => {
     getState().setResults(run);
     render(<ComparisonPanel />);
     expect(screen.getByText(/shear reduction/i)).toBeInTheDocument();
-    expect(screen.getByText(/iso shear/i)).toBeInTheDocument();
-    expect(screen.getByText(/fb shear/i)).toBeInTheDocument();
-    expect(screen.getByText(/disp reduction/i)).toBeInTheDocument();
+    expect(screen.getByText(/isolated shear/i)).toBeInTheDocument();
+    expect(screen.getByText(/fixed-base shear/i)).toBeInTheDocument();
+    expect(screen.getByText(/displacement reduction/i)).toBeInTheDocument();
   });
 
   it('renders playback controls for time-history comparison', () => {
