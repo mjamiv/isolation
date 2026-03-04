@@ -1,5 +1,43 @@
 # MEMORY
 
+## Session Update (2026-03-04 — Frontend Clarity/Usability Polish)
+- Implemented a full frontend clarity pass focused on content hierarchy, readability, and scanability across layout, toolbar, status, comparison, results, and property views.
+- Core UX updates shipped:
+  - Right panel now auto-switches to `Results` on analysis completion.
+  - Right-panel tabpanel DOM order now matches tab order.
+  - Model Tree opens with `Nodes` and `Elements` expanded by default.
+  - Toolbar actions are visually grouped; status bar units are explicitly labeled.
+  - Comparison labels now use explicit wording (`Isolated`, `Fixed-Base`, `Demand/Capacity`) with consistent toggle styling.
+  - Analysis dialog validation errors now scroll into view and are wired with `aria-describedby`.
+  - Results/Properties tables include clearer units and improved empty-state guidance.
+  - Added typography scale tokens in `frontend/src/index.css` with shared UI text utility classes.
+  - Added sticky results summary header and tuned narrow viewport metric card layout.
+- Quick QA/tuning pass completed:
+  - Increased dark-theme contrast in status/model info and empty-state icon treatments.
+  - Improved narrow-width behavior for comparison metrics and toolbar control shrink behavior.
+
+## Key Decisions (2026-03-04)
+- Prioritized clarity and usability over visual novelty for this iteration.
+- Kept changes additive and low-risk (class-level/styling + light structural UI logic), with no solver or API behavior changes.
+- Used a two-pass implementation flow: priority UX fixes first, then non-priority typography/sticky-header polish.
+
+## Verification (2026-03-04)
+- Frontend lint checks passed after each pass:
+  - `cd frontend && npm run lint` (pass)
+- Targeted lint diagnostics on edited files: no IDE lints reported.
+- Frontend and backend dev servers restarted fresh and confirmed running:
+  - frontend: `http://localhost:5173`
+  - backend: `http://localhost:8000`
+
+## Current State (2026-03-04)
+- Branch: `main` (tracking `origin/main`).
+- Working tree includes frontend clarity/polish updates plus documentation updates for wrap-up.
+- Untracked local artifacts still present: `.mcp.json`, `frontend/test-results/`, `frontend/sh-thd-1772693459`.
+
+## Known Issues / Next Steps (2026-03-04)
+- Existing frontend type-check failures remain in `frontend/src/services/api.ts` and `frontend/src/features/analysis/useRunComparison.ts` (pre-existing to this UI pass).
+- Optional next pass: mobile-only label abbreviations and density tuning for extra-small widths.
+
 ## Completed Work (2026-03-03 — Full Findings Remediation)
 - Implemented end-to-end remediation from multi-agent review findings across backend security, abuse resistance, frontend accessibility/UX, maintainability refactors, and CI security checks.
 - Backend hardening:

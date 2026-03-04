@@ -161,9 +161,12 @@ Phases 1 through 5 are complete. The app provides:
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
 - **Compare overlay modal isolation** — comparison runs clear selected modal mode and suppress mode-shape animation while overlaying fixed/isolated deformed shapes, preventing a third ghost frame from drifting with mismatched scale
 - **Post-analysis display defaults** — completed analyses default to deformed shape on (scale factor 100), force/color-map overlays off; isolation defaults bearing displacement on; pushover defaults base shear arrows on; comparison defaults overlay on
-- **Collapsed control panels** — Model Tree sections and Viewer control sections (Scene, Display, Element Properties, Deformation, Results) now default to collapsed for a cleaner workflow
+- **Model tree defaults** — Model Tree now opens with Nodes and Elements expanded by default so first-load editing is immediately discoverable
 - **Load pattern fix** — pushover load pattern values now match backend expectations (`linear`/`first_mode` instead of `uniform`/`firstMode`)
 - **Empty tab states** — Results and Compare tabs show centered placeholder messages when no analysis/comparison data exists, with guidance on what to do next
+- **Clarity-first right panel UX** — right panel now auto-focuses `Results` after analysis completion, keeps tabpanel DOM order aligned with tab order, and adds clearer empty-state instructions
+- **Content readability polish** — comparison labels use explicit terms (`Isolated`, `Fixed-Base`, `Demand/Capacity`), key results/properties include units, and status/empty-state contrast was tuned for dark theme legibility
+- **Responsive metrics polish** — comparison metric cards adapt to narrow viewports and results summary now stays sticky while scrolling
 - **Local force diagrams** — Backend switched from global `eleResponse("force")` to local `eleResponse("localForce")` for correct force diagram rendering regardless of element orientation
 - **Section property key mangling** — Frontend `keysToSnake` converted property keys like `"A"` → `"_a"` and `"Iz"` → `"_iz"`, causing discretized sub-elements to get default stiffness (A=1, E=1). Backend `_prop()` helper now resolves both original and mangled key formats
 - **Fixity propagation** — Internal nodes from member discretization now inherit the intersection of endpoint boundary conditions instead of being all-free
