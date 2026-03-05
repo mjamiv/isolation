@@ -8,6 +8,16 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 Phases 1 through 5 are complete. The app provides:
 
+### Session Update — 2026-03-05 (Parallel UX/Analysis Implementation)
+- **Separated element response charts** — Time-history element results now render **Shear** and **Moment** in separate charts for readability when moment magnitudes dominate.
+- **Deformed diaphragm rendering** — diaphragm planes now follow active deformed node positions (static, pushover, and time-history playback), using the same displacement/scale conventions as other deformed overlays.
+- **Selection-driven result filtering** — selecting nodes/elements in the 3D viewer now auto-syncs corresponding selectors in Results views.
+- **Model Tree default collapse** — all Model Tree sections now initialize collapsed by default.
+- **Bearing visualization redesign** — removed in-scene bearing assembly rendering from the main structural scene and added a dedicated isometric **Bearing Assembly** window that tracks displacement with global deformation scaling.
+- **Bearing Orbit controls cleanup** — removed non-working magnification buttons from the Bearing Orbits panel while keeping orbit playback behavior intact.
+- **Comparison status clarity** — bottom status bar now reflects comparison lifecycle (`Running Comparison`, `Comparison Complete`, `Comparison Error`) instead of remaining at `Ready`.
+- **Pushover diagnostics hardening** — improved 3D hinge demand extraction and added elastic-only diagnostic messaging to clarify why some pushover runs remain linear.
+
 ### Phase 1 — Model Editor & 3D Viewer
 - **3D structural viewer** with interactive node/element selection, hover highlighting, and support symbols
 - **Model Editor** (left panel) with accordion sections for nodes, elements, sections, materials, and bearings — all with inline editing
@@ -151,7 +161,8 @@ Phases 1 through 5 are complete. The app provides:
 - **Dynamic scene sizing** — grid, floor plane, camera, orbit controls, fog, and shadows all scale dynamically based on model bounding box via `useModelBounds` hook; models from small 2-story frames to 20-story towers and 3-span bridges always fit cleanly
 - **Scene environments** — 4 selectable environment presets (Studio, Outdoor, Dark, Blueprint) with procedural lighting, backgrounds, and ground treatments; no external HDR files
 - **Node visibility** — nodes render with bright gold color and emissive glow, clearly visible against all backgrounds
-- **Bearing orbit overlay** — collapsible plan-view panel showing real-time isolation bearing displacement orbits during time-history playback with amplification presets (1x-50x), prev/next navigation, and capacity circles
+- **Bearing orbit overlay** — collapsible plan-view panel showing real-time isolation bearing displacement orbits during time-history playback with prev/next navigation and capacity circles
+- **Bearing assembly window** — separate isometric overlay window for full bearing assembly displacement visualization (decoupled from the main structural render)
 - **Bearing displacement emphasis controls** — compare/deformed rendering supports a dedicated vertical expansion scale (`0.5x` to `3.0x`), and displacement markers are rendered at the lower concave stage for clearer bearing motion interpretation
 - **Bearing assembly anchoring** — lower and upper bearing assemblies now follow their connected node displacements directly (node I / node J), and relative displacement orbits are plotted at the lower bearing footprint for clearer interpretation
 - **Global bearing hysteresis** — hysteresis loop charts use global node displacements and global element forces (not element-local `basicDisplacement`/`basicForce`), producing correct nonlinear loops for multi-directional excitation
@@ -161,7 +172,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Analysis dialog state** — comparison mode checkbox and lambda factor inputs now properly reset when switching analysis types or reopening the dialog
 - **Compare overlay modal isolation** — comparison runs clear selected modal mode and suppress mode-shape animation while overlaying fixed/isolated deformed shapes, preventing a third ghost frame from drifting with mismatched scale
 - **Post-analysis display defaults** — completed analyses default to deformed shape on (scale factor 100), force/color-map overlays off; isolation defaults bearing displacement on; pushover defaults base shear arrows on; comparison defaults overlay on
-- **Model tree defaults** — Model Tree now opens with Nodes and Elements expanded by default so first-load editing is immediately discoverable
+- **Model tree defaults** — Model Tree now opens collapsed by default for cleaner startup navigation
 - **Load pattern fix** — pushover load pattern values now match backend expectations (`linear`/`first_mode` instead of `uniform`/`firstMode`)
 - **Empty tab states** — Results and Compare tabs show centered placeholder messages when no analysis/comparison data exists, with guidance on what to do next
 - **Clarity-first right panel UX** — right panel now auto-focuses `Results` after analysis completion, keeps tabpanel DOM order aligned with tab order, and adds clearer empty-state instructions
