@@ -1,5 +1,18 @@
 # MEMORY
 
+## Session Update (2026-03-05 — Time-History Blank Panel Fix)
+- Resolved post-run blank windows in time-history results caused by unsafe access to missing/partial `peakValues`.
+- Implemented a two-layer guard:
+  - `frontend/src/services/api.ts` now normalizes `peakValues` even when backend payloads already contain `timeSteps` but omit peak metrics.
+  - `frontend/src/features/results/TimeHistoryResults.tsx` now renders peak summary values with safe numeric fallbacks.
+- Decision:
+  - Kept the fix minimal and targeted to avoid broad changes in the existing API normalization/type-debt area.
+- Verification:
+  - Rebuilt dev servers and confirmed frontend/backend launch cleanly (`:5174` / `:8000`).
+  - Local type-check remains noisy in `api.ts` from pre-existing typed-normalization debt (known issue).
+- Current local artifacts:
+  - Untracked local files remain: `.mcp.json`, `frontend/check-th-run.mjs`, `frontend/test-results/`.
+
 ## Session Update (2026-03-05 — Parallel Orchestrated 8-Item Implementation)
 - Implemented the 8-item coordinated UX/viewer/analysis plan across frontend and backend.
 - Delivered Results improvements:

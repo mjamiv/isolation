@@ -9,6 +9,7 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 Phases 1 through 5 are complete. The app provides:
 
 ### Session Update — 2026-03-05 (Parallel UX/Analysis Implementation)
+- **Time-history blank-panel hardening** — fixed a post-run crash path by normalizing missing/partial `peakValues` in API time-history responses and adding safe metric fallbacks in `TimeHistoryResults`.
 - **Separated element response charts** — Time-history element results now render **Shear** and **Moment** in separate charts for readability when moment magnitudes dominate.
 - **Deformed diaphragm rendering** — diaphragm planes now follow active deformed node positions (static, pushover, and time-history playback), using the same displacement/scale conventions as other deformed overlays.
 - **Selection-driven result filtering** — selecting nodes/elements in the 3D viewer now auto-syncs corresponding selectors in Results views.
