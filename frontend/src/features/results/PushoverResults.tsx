@@ -40,6 +40,12 @@ export function PushoverResults({ data, hingeStates }: PushoverResultsProps) {
         </div>
       </div>
 
+      {data.hingeDiagnostic && (
+        <div className="rounded border border-yellow-700/40 bg-yellow-900/20 p-2 text-[10px] text-yellow-200">
+          {data.hingeDiagnostic}
+        </div>
+      )}
+
       {/* Capacity curve chart */}
       <div>
         <h3 className="mb-1 text-xs font-semibold text-gray-300">Capacity Curve</h3>

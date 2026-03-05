@@ -28,7 +28,6 @@ import { extractPlanDisplacement } from './tfpKinematics';
 const CANVAS_SIZE = 160;
 const PADDING = 16;
 const PLOT_SIZE = CANVAS_SIZE - PADDING * 2;
-const SCALE_PRESETS = [1, 2, 5, 10, 50] as const;
 
 // ── Colors ───────────────────────────────────────────────────────────
 const COLOR_TRACE = '#d4af37';
@@ -106,7 +105,6 @@ function drawBearingPlot(
   data: BearingPlotData,
   currentStep: number,
   plotSize: number,
-  ampFactor: number,
 ) {
   const { orbit, dispCapacity } = data;
   if (orbit.length === 0) return;
@@ -120,14 +118,11 @@ function drawBearingPlot(
   for (const pt of orbit) {
     orbitMax = Math.max(orbitMax, Math.abs(pt.x), Math.abs(pt.y));
   }
-  const effectiveMax = Math.max(orbitMax * ampFactor, 0.01);
+  const effectiveMax = Math.max(orbitMax, 0.01);
   const { plotMax } = computeScale(effectiveMax);
   const scale = plotSize / 2 / plotMax;
 
-  const toCanvas = (x: number, y: number): [number, number] => [
-    cx + x * ampFactor * scale,
-    cy - y * ampFactor * scale,
-  ];
+  const toCanvas = (x: number, y: number): [number, number] => [cx + x * scale, cy - y * scale];
 
   // Capacity circle (clipped to plot area)
   ctx.save();
@@ -267,7 +262,6 @@ function drawBearingPlot(
 
 export function BearingDisplacementView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [ampFactor, setAmpFactor] = useState(1);
   const [collapsed, setCollapsed] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
   const showBearingDisplacement = useDisplayStore((s) => s.showBearingDisplacement);
@@ -320,8 +314,8 @@ export function BearingDisplacementView() {
 
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    drawBearingPlot(ctx, activePlot, currentTimeStep, PLOT_SIZE, ampFactor);
-  }, [activePlot, currentTimeStep, ampFactor]);
+    drawBearingPlot(ctx, activePlot, currentTimeStep, PLOT_SIZE);
+  }, [activePlot, currentTimeStep]);
 
   useEffect(() => {
     draw();
@@ -403,24 +397,6 @@ export function BearingDisplacementView() {
               className="pointer-events-none"
               style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
             />
-          </div>
-
-          {/* Amplification buttons */}
-          <div className="flex items-center justify-center gap-1 px-2 py-1.5">
-            {SCALE_PRESETS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setAmpFactor(s)}
-                className={`px-1.5 py-0 rounded text-[8px] font-medium transition-colors ${
-                  ampFactor === s
-                    ? 'bg-yellow-600 text-white'
-                    : 'bg-gray-800/60 text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                {s}x
-              </button>
-            ))}
           </div>
         </>
       )}

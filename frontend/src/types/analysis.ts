@@ -145,6 +145,7 @@ export interface PushoverResults {
   maxBaseShear: number;
   maxRoofDisplacement: number;
   ductilityRatio: number;
+  hingeDiagnostic?: string | null;
   nodeDisplacements?: Record<number, [number, number, number, number, number, number]>;
   elementForces?: Record<number, number[]>;
   reactions?: Record<number, [number, number, number, number, number, number]>;

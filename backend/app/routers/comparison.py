@@ -85,6 +85,7 @@ def _run_variant_pushover(
             ),
         },
         "hinge_states": results.get("hinge_states", []),
+        "hinge_diagnostic": results.get("hinge_diagnostic"),
         "max_base_shear": results.get("max_base_shear", 0.0),
         "max_roof_displacement": results.get("max_roof_displacement", 0.0),
         "node_displacements": results.get("node_displacements", {}),

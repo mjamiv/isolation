@@ -36,7 +36,7 @@ export function useRunComparison() {
       setResults(result);
       useAnalysisStore.getState().setSelectedModeNumber(null);
       applyPostAnalysisDisplayDefaults({
-        resultType: result.comparisonType,
+        resultType: result.comparisonType ?? 'pushover',
         hasBearings: true,
         showComparisonOverlay: true,
       });

@@ -5,7 +5,6 @@ import { useComparisonStore } from '../../stores/comparisonStore';
 import { NodePoints } from './NodePoints';
 import { MemberLines } from './MemberLines';
 import { SupportSymbols } from './SupportSymbols';
-import { BearingSymbols } from './BearingSymbols';
 import { DiaphragmPlanes } from './DiaphragmPlanes';
 import { ConstraintLinks } from './ConstraintLinks';
 import { NodeLabels, ElementLabels } from './Labels';
@@ -46,7 +45,6 @@ export function StructuralModel3D() {
       {!hideOriginal && <MemberLines />}
       {!hideOriginal && <NodePoints />}
       <SupportSymbols />
-      <BearingSymbols />
       <DiaphragmPlanes />
       <ConstraintLinks />
       <NodeLabels />

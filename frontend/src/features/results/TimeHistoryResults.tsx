@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import type { TimeHistoryResults as THResultsType } from '@/types/analysis';
 import { useAnalysisStore } from '@/stores/analysisStore';
+import { useDisplayStore } from '@/stores/displayStore';
 import { TimeHistoryPlaybackControls } from './TimeHistoryPlaybackControls';
 
 const Plot = lazy(() => import('react-plotly.js'));
@@ -15,6 +16,8 @@ function clamp(value: number, min: number, max: number) {
 
 export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
   const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
+  const selectedNodeIds = useDisplayStore((s) => s.selectedNodeIds);
+  const selectedElementIds = useDisplayStore((s) => s.selectedElementIds);
 
   const nodeIds = useMemo(() => {
     if (data.timeSteps.length === 0) return [];
@@ -52,6 +55,32 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
       setSelectedElement(elementIds[0]!);
     }
   }, [elementIds, selectedElement]);
+
+  useEffect(() => {
+    const firstSelectedNode = selectedNodeIds.values().next().value as number | undefined;
+    if (firstSelectedNode != null && nodeIds.includes(firstSelectedNode)) {
+      setSelectedNode(firstSelectedNode);
+      return;
+    }
+    if (selectedNodeIds.size === 0 && nodeIds.length > 0 && !nodeIds.includes(selectedNode)) {
+      setSelectedNode(nodeIds[0]!);
+    }
+  }, [selectedNodeIds, nodeIds, selectedNode]);
+
+  useEffect(() => {
+    const firstSelectedElement = selectedElementIds.values().next().value as number | undefined;
+    if (firstSelectedElement != null && elementIds.includes(firstSelectedElement)) {
+      setSelectedElement(firstSelectedElement);
+      return;
+    }
+    if (
+      selectedElementIds.size === 0 &&
+      elementIds.length > 0 &&
+      !elementIds.includes(selectedElement)
+    ) {
+      setSelectedElement(elementIds[0]!);
+    }
+  }, [selectedElementIds, elementIds, selectedElement]);
 
   const times = useMemo(() => data.timeSteps.map((s) => s.time), [data.timeSteps]);
   const stepIndex = clamp(currentTimeStep, 0, Math.max(0, data.timeSteps.length - 1));
@@ -430,9 +459,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
       {elementIds.length > 0 && (
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-gray-300">
-              Element Shear/Moment Time History
-            </h3>
+            <h3 className="text-xs font-semibold text-gray-300">Element Force Time History</h3>
             <select
               value={selectedElement}
               onChange={(e) => setSelectedElement(Number(e.target.value))}
@@ -445,62 +472,107 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
               ))}
             </select>
           </div>
-          <div className="h-52 rounded bg-gray-800/50">
-            <Suspense
-              fallback={
-                <div className="flex h-full items-center justify-center text-xs text-gray-500">
-                  Loading chart...
-                </div>
-              }
-            >
-              <Plot
-                data={[
-                  {
-                    x: times,
-                    y: elementTrace.shearI,
-                    type: 'scattergl' as const,
-                    mode: 'lines' as const,
-                    line: { color: '#60a5fa', width: 1.2 },
-                    name: `${elementTrace.shearLabel} (i)`,
-                  },
-                  {
-                    x: times,
-                    y: elementTrace.shearJ,
-                    type: 'scattergl' as const,
-                    mode: 'lines' as const,
-                    line: { color: '#38bdf8', width: 1.1, dash: 'dot' as const },
-                    name: `${elementTrace.shearLabel} (j)`,
-                  },
-                  {
-                    x: times,
-                    y: elementTrace.momentI,
-                    type: 'scattergl' as const,
-                    mode: 'lines' as const,
-                    line: { color: '#f59e0b', width: 1.2 },
-                    name: `${elementTrace.momentLabel} (i)`,
-                  },
-                  {
-                    x: times,
-                    y: elementTrace.momentJ,
-                    type: 'scattergl' as const,
-                    mode: 'lines' as const,
-                    line: { color: '#fb7185', width: 1.1, dash: 'dot' as const },
-                    name: `${elementTrace.momentLabel} (j)`,
-                  },
-                ]}
-                layout={{
-                  margin: { t: 10, r: 10, b: 30, l: 40 },
-                  paper_bgcolor: 'transparent',
-                  plot_bgcolor: 'transparent',
-                  font: { color: '#9ca3af', size: 9 },
-                  xaxis: { title: { text: 'Time (s)', font: { size: 9 } }, gridcolor: '#374151' },
-                  yaxis: { title: { text: 'Response', font: { size: 9 } }, gridcolor: '#374151' },
-                  legend: { orientation: 'h', y: 1.2, font: { size: 9 } },
-                }}
-                config={{ displayModeBar: false, responsive: true }}
-                style={{ width: '100%', height: '100%' }}
-              />
-            </Suspense>
+          <div className="space-y-2">
+            <div>
+              <h4 className="mb-1 text-[10px] font-semibold text-gray-400">Shear</h4>
+              <div className="h-44 rounded bg-gray-800/50">
+                <Suspense
+                  fallback={
+                    <div className="flex h-full items-center justify-center text-xs text-gray-500">
+                      Loading chart...
+                    </div>
+                  }
+                >
+                  <Plot
+                    data={[
+                      {
+                        x: times,
+                        y: elementTrace.shearI,
+                        type: 'scattergl' as const,
+                        mode: 'lines' as const,
+                        line: { color: '#60a5fa', width: 1.2 },
+                        name: `${elementTrace.shearLabel} (i)`,
+                      },
+                      {
+                        x: times,
+                        y: elementTrace.shearJ,
+                        type: 'scattergl' as const,
+                        mode: 'lines' as const,
+                        line: { color: '#38bdf8', width: 1.1, dash: 'dot' as const },
+                        name: `${elementTrace.shearLabel} (j)`,
+                      },
+                    ]}
+                    layout={{
+                      margin: { t: 10, r: 10, b: 30, l: 40 },
+                      paper_bgcolor: 'transparent',
+                      plot_bgcolor: 'transparent',
+                      font: { color: '#9ca3af', size: 9 },
+                      xaxis: {
+                        title: { text: 'Time (s)', font: { size: 9 } },
+                        gridcolor: '#374151',
+                      },
+                      yaxis: {
+                        title: { text: `${elementTrace.shearLabel}`, font: { size: 9 } },
+                        gridcolor: '#374151',
+                      },
+                      legend: { orientation: 'h', y: 1.2, font: { size: 9 } },
+                    }}
+                    config={{ displayModeBar: false, responsive: true }}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </Suspense>
+              </div>
+            </div>
+            <div>
+              <h4 className="mb-1 text-[10px] font-semibold text-gray-400">Moment</h4>
+              <div className="h-44 rounded bg-gray-800/50">
+                <Suspense
+                  fallback={
+                    <div className="flex h-full items-center justify-center text-xs text-gray-500">
+                      Loading chart...
+                    </div>
+                  }
+                >
+                  <Plot
+                    data={[
+                      {
+                        x: times,
+                        y: elementTrace.momentI,
+                        type: 'scattergl' as const,
+                        mode: 'lines' as const,
+                        line: { color: '#f59e0b', width: 1.2 },
+                        name: `${elementTrace.momentLabel} (i)`,
+                      },
+                      {
+                        x: times,
+                        y: elementTrace.momentJ,
+                        type: 'scattergl' as const,
+                        mode: 'lines' as const,
+                        line: { color: '#fb7185', width: 1.1, dash: 'dot' as const },
+                        name: `${elementTrace.momentLabel} (j)`,
+                      },
+                    ]}
+                    layout={{
+                      margin: { t: 10, r: 10, b: 30, l: 40 },
+                      paper_bgcolor: 'transparent',
+                      plot_bgcolor: 'transparent',
+                      font: { color: '#9ca3af', size: 9 },
+                      xaxis: {
+                        title: { text: 'Time (s)', font: { size: 9 } },
+                        gridcolor: '#374151',
+                      },
+                      yaxis: {
+                        title: { text: `${elementTrace.momentLabel}`, font: { size: 9 } },
+                        gridcolor: '#374151',
+                      },
+                      legend: { orientation: 'h', y: 1.2, font: { size: 9 } },
+                    }}
+                    config={{ displayModeBar: false, responsive: true }}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </Suspense>
+              </div>
+            </div>
           </div>
         </div>
       )}

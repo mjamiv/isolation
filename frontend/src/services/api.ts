@@ -307,6 +307,8 @@ function normalizePushoverResults(raw: RawMap): PushoverResults {
     maxBaseShear: raw?.maxBaseShear ?? 0,
     maxRoofDisplacement: raw?.maxRoofDisplacement ?? 0,
     ductilityRatio: raw?.ductilityRatio ?? 0,
+    hingeDiagnostic:
+      typeof raw?.hingeDiagnostic === 'string' ? (raw.hingeDiagnostic as string) : null,
     nodeDisplacements,
     elementForces: raw?.elementForces ?? {},
     reactions,
@@ -342,6 +344,15 @@ function normalizeAnalysisResults(raw: RawMap): AnalysisResults {
     out.results = normalizeTimeHistoryResults(results);
   } else if (type === 'pushover') {
     out.results = normalizePushoverResults(results);
+    if (
+      out.results &&
+      typeof (results.hingeDiagnostic ?? raw.hingeDiagnostic) === 'string' &&
+      'hingeDiagnostic' in out.results
+    ) {
+      (out.results as PushoverResults).hingeDiagnostic = String(
+        results.hingeDiagnostic ?? raw.hingeDiagnostic,
+      );
+    }
     const hingeStates = ((results.hingeStates ?? raw.hingeStates ?? []) as HingeState[]) ?? [];
     if (hingeStates.length > 0) {
       out.hingeStates = hingeStates.map((h) => ({

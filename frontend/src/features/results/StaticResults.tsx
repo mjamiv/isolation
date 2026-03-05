@@ -1,5 +1,6 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import type { StaticResults as StaticResultsType } from '@/types/analysis';
+import { useDisplayStore } from '@/stores/displayStore';
 
 interface StaticResultsProps {
   data: StaticResultsType;
@@ -8,6 +9,7 @@ interface StaticResultsProps {
 const Plot = lazy(() => import('react-plotly.js'));
 
 export function StaticResults({ data }: StaticResultsProps) {
+  const selectedElementIds = useDisplayStore((s) => s.selectedElementIds);
   const displacements = Object.entries(data.nodeDisplacements);
   const reactions = Object.entries(data.reactions);
   const elementEntries = Object.entries(data.elementForces);
@@ -58,6 +60,18 @@ export function StaticResults({ data }: StaticResultsProps) {
       values: raw.map((v) => v ?? 0),
     };
   }, [data.elementForces, selectedElement]);
+
+  useEffect(() => {
+    const firstSelected = selectedElementIds.values().next().value as number | undefined;
+    if (firstSelected != null && data.elementForces[firstSelected]) {
+      setSelectedElement(firstSelected);
+      return;
+    }
+    if (selectedElementIds.size === 0 && !(selectedElement in data.elementForces)) {
+      const fallback = elementEntries[0]?.[0];
+      if (fallback != null) setSelectedElement(Number(fallback));
+    }
+  }, [selectedElementIds, data.elementForces, selectedElement, elementEntries]);
 
   return (
     <div className="space-y-3">

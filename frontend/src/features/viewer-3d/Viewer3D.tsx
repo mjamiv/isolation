@@ -4,6 +4,7 @@ import { OrbitControls, GizmoHelper, GizmoViewport, Grid } from '@react-three/dr
 import * as THREE from 'three';
 import { useDisplayStore } from '../../stores/displayStore';
 import { StructuralModel3D } from './StructuralModel3D';
+import { BearingAssemblyWindow } from './BearingAssemblyWindow';
 import { BearingDisplacementView } from './BearingDisplacementView';
 import { BaseShearSummary } from './BaseShearLabels';
 import { SceneEnvironment } from './SceneEnvironment';
@@ -134,6 +135,7 @@ export function Viewer3D() {
 
       {/* Bearing displacement orbit overlay (plan view) */}
       <BearingDisplacementView />
+      <BearingAssemblyWindow />
 
       {/* Base shear total summary overlay */}
       <BaseShearSummary />

@@ -299,6 +299,12 @@ export function ComparisonPanel() {
         </div>
       </div>
 
+      {(isolated.hingeDiagnostic || fixedBase.hingeDiagnostic) && (
+        <div className="rounded border border-yellow-700/40 bg-yellow-900/20 p-2 text-ui-xs text-yellow-200">
+          {isolated.hingeDiagnostic ?? fixedBase.hingeDiagnostic}
+        </div>
+      )}
+
       {/* 3D Overlay toggle */}
       <div className="px-1">
         <Toggle

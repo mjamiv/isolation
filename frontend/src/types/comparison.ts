@@ -44,6 +44,8 @@ export interface VariantResult {
   timeHistoryResults?: TimeHistoryResults | null;
   /** Plastic hinge states at final step. */
   hingeStates?: HingeState[];
+  /** Additional diagnostic when pushover remains elastic. */
+  hingeDiagnostic?: string | null;
   /** Max base shear achieved. */
   maxBaseShear: number;
   /** Max roof displacement achieved. */

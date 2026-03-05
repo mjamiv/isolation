@@ -1,5 +1,6 @@
 import { useModelStore } from '../../stores/modelStore';
 import { useAnalysisStore } from '../../stores/analysisStore';
+import { useComparisonStore } from '../../stores/comparisonStore';
 
 const STATUS_COLORS: Record<string, string> = {
   idle: 'text-white/30',
@@ -15,6 +16,12 @@ const STATUS_LABELS: Record<string, string> = {
   error: 'Error',
 };
 
+const COMPARISON_STATUS_LABELS: Record<string, string> = {
+  running: 'Running Comparison...',
+  complete: 'Comparison Complete',
+  error: 'Comparison Error',
+};
+
 export function StatusBar() {
   const nodes = useModelStore((state) => state.nodes);
   const elements = useModelStore((state) => state.elements);
@@ -25,6 +32,22 @@ export function StatusBar() {
   const currentTimeStep = useAnalysisStore((state) => state.currentTimeStep);
   const analysisType = useAnalysisStore((state) => state.analysisType);
   const error = useAnalysisStore((state) => state.error);
+  const comparisonStatus = useComparisonStore((state) => state.status);
+  const comparisonError = useComparisonStore((state) => state.error);
+
+  const effectiveStatus =
+    comparisonStatus === 'running' ||
+    comparisonStatus === 'complete' ||
+    comparisonStatus === 'error'
+      ? comparisonStatus
+      : status;
+  const effectiveLabel =
+    comparisonStatus === 'running' ||
+    comparisonStatus === 'complete' ||
+    comparisonStatus === 'error'
+      ? (COMPARISON_STATUS_LABELS[comparisonStatus] ?? 'Comparison')
+      : (STATUS_LABELS[status] ?? 'Unknown');
+  const effectiveError = comparisonStatus === 'error' ? comparisonError : error;
 
   const nodeCount = nodes.size;
   const elementCount = elements.size;
@@ -36,21 +59,21 @@ export function StatusBar() {
         <div className="flex items-center gap-1.5">
           <div
             className={`h-1.5 w-1.5 rounded-full ${
-              status === 'running'
+              effectiveStatus === 'running'
                 ? 'status-pulse bg-yellow-400'
-                : status === 'complete'
+                : effectiveStatus === 'complete'
                   ? 'bg-yellow-400'
-                  : status === 'error'
+                  : effectiveStatus === 'error'
                     ? 'bg-red-400'
                     : 'bg-white/20'
             }`}
           />
-          <span className={`font-medium ${STATUS_COLORS[status] ?? 'text-white/30'}`}>
-            {STATUS_LABELS[status] ?? 'Unknown'}
+          <span className={`font-medium ${STATUS_COLORS[effectiveStatus] ?? 'text-white/30'}`}>
+            {effectiveLabel}
           </span>
         </div>
 
-        {status === 'running' && (
+        {effectiveStatus === 'running' && comparisonStatus !== 'running' && (
           <div className="flex items-center gap-2">
             <div className="h-1 w-24 overflow-hidden rounded-full bg-surface-4">
               <div
@@ -62,11 +85,13 @@ export function StatusBar() {
           </div>
         )}
 
-        {status === 'error' && error && <span className="text-red-400">{error}</span>}
+        {effectiveStatus === 'error' && effectiveError && (
+          <span className="text-red-400">{effectiveError}</span>
+        )}
       </div>
 
       {/* Center: Time step (only for time-history analysis) */}
-      {status === 'complete' && analysisType === 'time_history' && (
+      {effectiveStatus === 'complete' && analysisType === 'time_history' && (
         <div className="font-mono text-white/30">Step {currentTimeStep}</div>
       )}
 

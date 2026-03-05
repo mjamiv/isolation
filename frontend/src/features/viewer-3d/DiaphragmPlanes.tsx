@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { useModelStore } from '@/stores/modelStore';
 import { useDisplayStore } from '@/stores/displayStore';
 import { useModelBounds } from './useModelBounds';
+import { toViewerTranslation, useActiveDisplacements } from './useActiveDisplacements';
 
 /**
  * 2D convex hull via Graham scan on XZ coordinates.
@@ -187,7 +188,15 @@ export function DiaphragmPlanes() {
   const diaphragms = useModelStore((s) => s.diaphragms);
   const nodes = useModelStore((s) => s.nodes);
   const showDiaphragms = useDisplayStore((s) => s.showDiaphragms);
+  const scaleFactor = useDisplayStore((s) => s.scaleFactor);
+  const { nodeDisplacements, zUpData } = useActiveDisplacements();
   const bounds = useModelBounds();
+  const is2DFrame = useMemo(() => {
+    for (const node of nodes.values()) {
+      if (Math.abs(node.z) > 1e-3) return false;
+    }
+    return true;
+  }, [nodes]);
 
   const meshes = useMemo(() => {
     if (!showDiaphragms || diaphragms.size === 0) return [];
@@ -203,7 +212,10 @@ export function DiaphragmPlanes() {
       const positions: { x: number; y: number; z: number }[] = [];
       for (const nid of allNodeIds) {
         const node = nodes.get(nid);
-        if (node) positions.push({ x: node.x, y: node.y, z: node.z });
+        if (!node) continue;
+        const disp = nodeDisplacements?.[nid] ?? nodeDisplacements?.[String(nid)];
+        const [dx, dy, dz] = toViewerTranslation(disp, scaleFactor, is2DFrame, zUpData);
+        positions.push({ x: node.x + dx, y: node.y + dy, z: node.z + dz });
       }
 
       if (positions.length < 2) continue;
@@ -254,7 +266,16 @@ export function DiaphragmPlanes() {
     }
 
     return result;
-  }, [diaphragms, nodes, showDiaphragms, bounds.maxDimension]);
+  }, [
+    diaphragms,
+    nodes,
+    showDiaphragms,
+    bounds.maxDimension,
+    nodeDisplacements,
+    scaleFactor,
+    is2DFrame,
+    zUpData,
+  ]);
 
   if (!showDiaphragms || meshes.length === 0) return null;
 

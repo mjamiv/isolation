@@ -28,7 +28,7 @@ function LeftPanel() {
         </h2>
       </div>
       <div className="flex-1 overflow-y-auto">
-        <ModelEditor defaultOpenSections={['nodes', 'elements']} />
+        <ModelEditor />
         <div className="border-t border-white/[0.06] p-3">
           <ViewerControls />
         </div>

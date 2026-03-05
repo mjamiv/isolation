@@ -1169,6 +1169,7 @@ def run_pushover_analysis(
 
         # Compute hinge states from element forces
         hinge_states = _compute_hinge_states(model_data, element_forces)
+        hinge_diagnostic = _build_pushover_hinge_diagnostic(model_data, hinge_states)
 
         # Deformed shape
         deformed_shape = _compute_deformed_shape(model_data, node_displacements, ndm)
@@ -1186,6 +1187,7 @@ def run_pushover_analysis(
             "element_forces": element_forces,
             "reactions": reactions,
             "deformed_shape": deformed_shape,
+            "hinge_diagnostic": hinge_diagnostic,
             "discretization_map": disc_map,
             "internal_node_coords": {str(k): v for k, v in int_coords.items()},
         }
@@ -1364,6 +1366,64 @@ def _compute_deformed_shape(
     return deformed
 
 
+def _section_yield_moment(model_data: dict, section: dict | None) -> float:
+    """Estimate section yield moment from material/section properties."""
+    if not section:
+        return 1.0
+    props = section.get("properties", {})
+    mat = None
+    mat_id = section.get("material_id")
+    if mat_id is not None:
+        for candidate in model_data.get("materials", []):
+            if candidate.get("id") == mat_id:
+                mat = candidate
+                break
+
+    mat_params = (mat or {}).get("params", {})
+    fy = _prop(mat_params, "Fy", 0.0)
+    e_mod = _prop(mat_params, "E", _get_material_E(model_data, mat_id))
+    if fy <= 0:
+        # Fallback for purely elastic material definitions.
+        fy = e_mod / 200.0 if e_mod > 0 else 1.0
+
+    iz = _prop(props, "Iz", 0.0)
+    iy = _prop(props, "Iy", iz)
+    depth = _prop(props, "d", 0.0)
+    width = _prop(props, "b", _prop(props, "bf", depth))
+
+    sz = iz / max(depth / 2.0, 1.0e-6) if iz > 0 and depth > 0 else 0.0
+    sy = iy / max(width / 2.0, 1.0e-6) if iy > 0 and width > 0 else 0.0
+    section_modulus = max(sz, sy)
+    if section_modulus <= 0:
+        section_modulus = max(iz, iy, 1.0)
+
+    return max(fy * section_modulus, 1.0)
+
+
+def _build_pushover_hinge_diagnostic(model_data: dict, hinge_states: list[dict]) -> str | None:
+    """Provide context when a pushover run shows no yielding."""
+    if not hinge_states:
+        return "No hinge states were computed from element force responses."
+
+    inelastic = [h for h in hinge_states if h.get("performance_level")]
+    if inelastic:
+        return None
+
+    materials = model_data.get("materials", [])
+    has_only_elastic = bool(materials) and all(m.get("type") == "Elastic" for m in materials)
+    if has_only_elastic:
+        return (
+            "All materials are Elastic; this pushover remains linear-elastic with no yielding. "
+            "Use nonlinear steel/fiber materials to produce plastic hinges."
+        )
+
+    peak_dc = max((float(h.get("demand_capacity_ratio", 0.0)) for h in hinge_states), default=0.0)
+    return (
+        "No yielding detected (all hinges below IO threshold). "
+        f"Peak demand/capacity ratio={peak_dc:.2f}."
+    )
+
+
 def _compute_hinge_states(
     model_data: dict,
     element_forces: dict[str, list[float]],
@@ -1389,11 +1449,14 @@ def _compute_hinge_states(
         if not forces:
             continue
 
-        # For beam-column elements, forces are [N_i, V_i, M_i, N_j, V_j, M_j]
-        if len(forces) >= 6:
-            # I-end
+        # Beam-column local force vectors:
+        # 2D: [N_i, V_i, M_i, N_j, V_j, M_j]
+        # 3D: [P_i, Vy_i, Vz_i, T_i, My_i, Mz_i, P_j, Vy_j, Vz_j, T_j, My_j, Mz_j]
+        if len(forces) >= 12:
+            moment_i = max(abs(forces[4]), abs(forces[5]))
+            moment_j = max(abs(forces[10]), abs(forces[11]))
+        elif len(forces) >= 6:
             moment_i = abs(forces[2])
-            # J-end
             moment_j = abs(forces[5])
         elif len(forces) >= 3:
             moment_i = abs(forces[2]) if len(forces) > 2 else 0.0
@@ -1401,20 +1464,8 @@ def _compute_hinge_states(
         else:
             continue
 
-        # Estimate plastic rotation from moment (simplified)
-        # Use section properties to estimate yield moment
         sec = _find_section(model_data, elem.get("section_id", 0))
-        if sec:
-            props = sec.get("properties", {})
-            Iz = _prop(props, "Iz")
-            E = _prop(props, "E", _get_material_E(model_data, sec.get("material_id")))
-            # Approximate yield moment: My = Fy * S ≈ (E/200) * Iz / (d/2)
-            # Use a simplified D/C ratio based on moment capacity
-            depth = _prop(props, "d", 14.0)  # approximate section depth
-            S = Iz / (depth / 2.0) if depth > 0 else Iz
-            My = (E / 200.0) * S  # rough yield moment estimate
-        else:
-            My = 1.0
+        My = _section_yield_moment(model_data, sec)
 
         for end_label, moment in [("I", moment_i), ("J", moment_j)]:
             if moment < 1e-10:
