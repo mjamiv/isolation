@@ -132,6 +132,40 @@ function asNumberArray(value: unknown): number[] {
   return value.filter((entry): entry is number => typeof entry === 'number');
 }
 
+function asFiniteNumber(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeTimeHistoryPeakValues(raw: unknown): TimeHistoryResults['peakValues'] {
+  const peak = asRecord(raw);
+  const maxDrift = asRecord(peak.maxDrift);
+  const maxAcceleration = asRecord(peak.maxAcceleration);
+  const maxBaseShear = asRecord(peak.maxBaseShear);
+  const maxBearingDisp = asRecord(peak.maxBearingDisp);
+
+  return {
+    maxDrift: {
+      value: asFiniteNumber(maxDrift.value),
+      story: asFiniteNumber(maxDrift.story),
+      step: asFiniteNumber(maxDrift.step),
+    },
+    maxAcceleration: {
+      value: asFiniteNumber(maxAcceleration.value),
+      floor: asFiniteNumber(maxAcceleration.floor),
+      step: asFiniteNumber(maxAcceleration.step),
+    },
+    maxBaseShear: {
+      value: asFiniteNumber(maxBaseShear.value),
+      step: asFiniteNumber(maxBaseShear.step),
+    },
+    maxBearingDisp: {
+      value: asFiniteNumber(maxBearingDisp.value),
+      bearingId: asFiniteNumber(maxBearingDisp.bearingId),
+      step: asFiniteNumber(maxBearingDisp.step),
+    },
+  };
+}
+
 function normalizeNodeReactionMaps(raw: RawMap): {
   nodeDisplacements: Record<number, [number, number, number, number, number, number]>;
   reactions: Record<number, [number, number, number, number, number, number]>;
@@ -185,7 +219,11 @@ function normalizeModalResults(raw: RawMap): ModalResults {
 
 function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
   if (Array.isArray(raw.timeSteps)) {
-    return raw as TimeHistoryResults;
+    const normalized = raw as TimeHistoryResults;
+    return {
+      ...normalized,
+      peakValues: normalizeTimeHistoryPeakValues((normalized as unknown as RawMap).peakValues),
+    };
   }
 
   const times = asNumberArray(raw.time);

@@ -222,7 +222,8 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
     return { shearI, shearJ, momentI, momentJ, shearLabel, momentLabel };
   }, [data.timeSteps, selectedElement]);
 
-  const peak = data.peakValues;
+  const peakBearingDisp = data.peakValues?.maxBearingDisp?.value ?? 0;
+  const peakBaseShear = data.peakValues?.maxBaseShear?.value ?? 0;
 
   return (
     <div className="space-y-3">
@@ -239,11 +240,11 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
         </div>
         <div className="rounded bg-gray-800/50 p-2">
           <p className="text-gray-500">Peak Bearing Disp</p>
-          <p className="font-mono text-gray-200">{peak.maxBearingDisp.value.toFixed(4)}</p>
+          <p className="font-mono text-gray-200">{peakBearingDisp.toFixed(4)}</p>
         </div>
         <div className="rounded bg-gray-800/50 p-2">
           <p className="text-gray-500">Peak Base Shear</p>
-          <p className="font-mono text-gray-200">{peak.maxBaseShear.value.toFixed(2)}</p>
+          <p className="font-mono text-gray-200">{peakBaseShear.toFixed(2)}</p>
         </div>
       </div>
 
