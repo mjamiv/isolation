@@ -222,7 +222,7 @@ export function ComparisonPanel() {
     {
       x: isoCurve.map((pt) => pt.roofDisplacement),
       y: isoCurve.map((pt) => pt.baseShear),
-      type: 'scattergl' as const,
+      type: 'scatter' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 2 },
       name: 'Isolated (Nominal)',
@@ -230,7 +230,7 @@ export function ComparisonPanel() {
     {
       x: fbCurve.map((pt) => pt.roofDisplacement),
       y: fbCurve.map((pt) => pt.baseShear),
-      type: 'scattergl' as const,
+      type: 'scatter' as const,
       mode: 'lines' as const,
       line: { color: '#FACC15', width: 2 },
       name: 'Fixed-Base',
@@ -242,7 +242,7 @@ export function ComparisonPanel() {
     capacityTraces.push({
       x: upperCurve.map((pt) => pt.roofDisplacement),
       y: upperCurve.map((pt) => pt.baseShear),
-      type: 'scattergl' as const,
+      type: 'scatter' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 1.5, dash: 'dash' },
       name: `Upper (${lambdaFactors?.max ?? 1.8})`,
@@ -254,7 +254,7 @@ export function ComparisonPanel() {
     capacityTraces.push({
       x: lowerCurve.map((pt) => pt.roofDisplacement),
       y: lowerCurve.map((pt) => pt.baseShear),
-      type: 'scattergl' as const,
+      type: 'scatter' as const,
       mode: 'lines' as const,
       line: { color: '#D4AF37', width: 1.5, dash: 'dot' },
       name: `Lower (${lambdaFactors?.min ?? 0.85})`,

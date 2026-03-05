@@ -91,6 +91,8 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       results,
       status: 'complete',
       progress: 100,
+      currentTimeStep: 0,
+      isPlaying: false,
     }),
 
   setError: (error) =>

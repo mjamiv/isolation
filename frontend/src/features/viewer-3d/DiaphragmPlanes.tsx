@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { useModelStore } from '@/stores/modelStore';
 import { useDisplayStore } from '@/stores/displayStore';
+import { useAnalysisStore } from '@/stores/analysisStore';
 import { useModelBounds } from './useModelBounds';
 import { toViewerTranslation, useActiveDisplacements } from './useActiveDisplacements';
 
@@ -189,6 +190,8 @@ export function DiaphragmPlanes() {
   const nodes = useModelStore((s) => s.nodes);
   const showDiaphragms = useDisplayStore((s) => s.showDiaphragms);
   const scaleFactor = useDisplayStore((s) => s.scaleFactor);
+  const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
+  const hasBearings = useModelStore((s) => s.bearings.size > 0);
   const { nodeDisplacements, zUpData } = useActiveDisplacements();
   const bounds = useModelBounds();
   const is2DFrame = useMemo(() => {
@@ -199,7 +202,7 @@ export function DiaphragmPlanes() {
   }, [nodes]);
 
   const meshes = useMemo(() => {
-    if (!showDiaphragms || diaphragms.size === 0) return [];
+    if (!showDiaphragms || diaphragms.size === 0 || currentTimeStep < 0) return [];
 
     // Panel half-width: ~3% of model extent perpendicular to girder line
     const stripHalfWidth = Math.max(bounds.maxDimension * 0.03, 24);
@@ -214,7 +217,10 @@ export function DiaphragmPlanes() {
         const node = nodes.get(nid);
         if (!node) continue;
         const disp = nodeDisplacements?.[nid] ?? nodeDisplacements?.[String(nid)];
-        const [dx, dy, dz] = toViewerTranslation(disp, scaleFactor, is2DFrame, zUpData);
+        // Keep diaphragm displacement mapping consistent with frame deformation:
+        // bearing models are solved in Z-up across analysis types.
+        const useZUp = zUpData || hasBearings;
+        const [dx, dy, dz] = toViewerTranslation(disp, scaleFactor, is2DFrame, useZUp);
         positions.push({ x: node.x + dx, y: node.y + dy, z: node.z + dz });
       }
 
@@ -275,6 +281,8 @@ export function DiaphragmPlanes() {
     scaleFactor,
     is2DFrame,
     zUpData,
+    hasBearings,
+    currentTimeStep,
   ]);
 
   if (!showDiaphragms || meshes.length === 0) return null;

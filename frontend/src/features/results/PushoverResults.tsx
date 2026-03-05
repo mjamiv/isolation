@@ -62,7 +62,7 @@ export function PushoverResults({ data, hingeStates }: PushoverResultsProps) {
                 {
                   x: roofDisps,
                   y: baseShears,
-                  type: 'scattergl' as const,
+                  type: 'scatter' as const,
                   mode: 'lines' as const,
                   line: { color: '#f59e0b', width: 1.5 },
                   name: 'Capacity Curve',

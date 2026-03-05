@@ -263,8 +263,9 @@ function drawBearingPlot(
 export function BearingDisplacementView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedIdx, setSelectedIdx] = useState(0);
   const showBearingDisplacement = useDisplayStore((s) => s.showBearingDisplacement);
+  const activeBearingId = useDisplayStore((s) => s.activeBearingId);
+  const setActiveBearing = useDisplayStore((s) => s.setActiveBearing);
   const thResults = useActiveTimeHistory();
   const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
   const bearings = useModelStore((s) => s.bearings);
@@ -290,13 +291,21 @@ export function BearingDisplacementView() {
   }, [thResults, bearingIds, bearings]);
 
   const numBearings = bearingPlots.length;
+  const selectedIdx = useMemo(() => {
+    if (numBearings === 0) return 0;
+    if (activeBearingId == null) return 0;
+    const idx = bearingPlots.findIndex((plot) => plot.bearingId === activeBearingId);
+    return idx >= 0 ? idx : 0;
+  }, [bearingPlots, numBearings, activeBearingId]);
 
-  // Clamp selected index when bearing count changes
   useEffect(() => {
-    if (selectedIdx >= numBearings && numBearings > 0) {
-      setSelectedIdx(numBearings - 1);
+    if (numBearings === 0) return;
+    const hasActive =
+      activeBearingId != null && bearingPlots.some((plot) => plot.bearingId === activeBearingId);
+    if (!hasActive) {
+      setActiveBearing(bearingPlots[0]?.bearingId ?? null);
     }
-  }, [numBearings, selectedIdx]);
+  }, [numBearings, activeBearingId, bearingPlots, setActiveBearing]);
 
   const activePlot = numBearings > 0 ? bearingPlots[selectedIdx] : undefined;
 
@@ -364,7 +373,10 @@ export function BearingDisplacementView() {
             >
               <button
                 type="button"
-                onClick={() => setSelectedIdx((i) => (i - 1 + numBearings) % numBearings)}
+                onClick={() => {
+                  const nextIdx = (selectedIdx - 1 + numBearings) % numBearings;
+                  setActiveBearing(bearingPlots[nextIdx]?.bearingId ?? null);
+                }}
                 className="text-[10px] text-gray-400 hover:text-gray-200 px-1"
               >
                 &lt;
@@ -374,7 +386,10 @@ export function BearingDisplacementView() {
               </span>
               <button
                 type="button"
-                onClick={() => setSelectedIdx((i) => (i + 1) % numBearings)}
+                onClick={() => {
+                  const nextIdx = (selectedIdx + 1) % numBearings;
+                  setActiveBearing(bearingPlots[nextIdx]?.bearingId ?? null);
+                }}
                 className="text-[10px] text-gray-400 hover:text-gray-200 px-1"
               >
                 &gt;

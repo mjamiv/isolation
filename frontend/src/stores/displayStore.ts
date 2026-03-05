@@ -47,6 +47,7 @@ interface DisplayState {
   selectedNodeIds: Set<number>;
   selectedElementIds: Set<number>;
   selectedBearingIds: Set<number>;
+  activeBearingId: number | null;
   hoveredElementId: number | null;
   hoveredNodeId: number | null;
   hoveredBearingId: number | null;
@@ -77,6 +78,7 @@ interface DisplayState {
   selectNode: (id: number, multi?: boolean) => void;
   selectElement: (id: number, multi?: boolean) => void;
   selectBearing: (id: number, multi?: boolean) => void;
+  setActiveBearing: (id: number | null) => void;
   clearSelection: () => void;
   setHoveredElement: (id: number | null) => void;
   setHoveredNode: (id: number | null) => void;
@@ -118,6 +120,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   selectedNodeIds: new Set(),
   selectedElementIds: new Set(),
   selectedBearingIds: new Set(),
+  activeBearingId: null,
   hoveredElementId: null,
   hoveredNodeId: null,
   hoveredBearingId: null,
@@ -183,7 +186,18 @@ export const useDisplayStore = create<DisplayState>((set) => ({
       } else {
         selectedBearingIds.add(id);
       }
-      return { selectedBearingIds };
+      const activeBearingId = selectedBearingIds.has(id)
+        ? id
+        : (selectedBearingIds.values().next().value ?? null);
+      return { selectedBearingIds, activeBearingId };
+    }),
+
+  setActiveBearing: (id) =>
+    set((state) => {
+      if (id == null) return { activeBearingId: null };
+      const selectedBearingIds = new Set(state.selectedBearingIds);
+      selectedBearingIds.add(id);
+      return { activeBearingId: id, selectedBearingIds };
     }),
 
   clearSelection: () =>
@@ -191,6 +205,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
       selectedNodeIds: new Set(),
       selectedElementIds: new Set(),
       selectedBearingIds: new Set(),
+      activeBearingId: null,
     }),
 
   setHoveredElement: (id) => set({ hoveredElementId: id }),

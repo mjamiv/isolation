@@ -5,6 +5,7 @@ import type { TimeHistoryResults } from '@/types/analysis';
 
 export function PlaybackDriver() {
   const isPlaying = useAnalysisStore((s) => s.isPlaying);
+  const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
   const playbackSpeed = useAnalysisStore((s) => s.playbackSpeed);
   const loopPlayback = useAnalysisStore((s) => s.loopPlayback);
   const results = useAnalysisStore((s) => s.results);
@@ -79,6 +80,17 @@ export function PlaybackDriver() {
       setIsPlaying(false);
     }
   }, [isPlaying, thResults, totalSteps, dt, setIsPlaying]);
+
+  useEffect(() => {
+    if (!thResults || totalSteps === 0) return;
+    if (currentTimeStep < 0) {
+      setTimeStep(0);
+      return;
+    }
+    if (currentTimeStep >= totalSteps) {
+      setTimeStep(totalSteps - 1);
+    }
+  }, [thResults, totalSteps, currentTimeStep, setTimeStep]);
 
   return null;
 }

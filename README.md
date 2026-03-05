@@ -8,6 +8,15 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 Phases 1 through 5 are complete. The app provides:
 
+### Session Update — 2026-03-05 (Bearing Assembly UX & WebGL Stability)
+- **Bearing Assembly iso viewer overhaul** — replaced second WebGL `Canvas` with a lightweight 2D canvas renderer to eliminate `Context Lost` crashes; added interactive rotate/pan/zoom controls, size presets (S/M/L), expandable Max mode, optional orbit overlay, Xray transparency toggle, and Reset button.
+- **Bearing selection sync** — Assembly and Orbit viewers now share a single `activeBearingId` in `displayStore`; prev/next in either panel updates both.
+- **Bearing vertical-scale fix (Bent Build)** — assembly kinematics now use relative displacement only (`dispJ − dispI`), not absolute node offsets, fixing exaggerated vertical separation in Bent Build models.
+- **WebGL context exhaustion fix** — switched all Plotly charts from `scattergl` to `scatter` (SVG) across TimeHistoryResults, PushoverResults, and ComparisonPanel; removed the second Three.js Canvas from the assembly widget; only the main 3D viewer retains a WebGL context.
+- **Diaphragm deformation sync** — diaphragm planes now use the same z-up displacement convention as the frame (`zUpData || hasBearings`), fixing non-deflecting slabs during time-history playback.
+- **Time-step reset on new results** — `analysisStore.setResults` now resets `currentTimeStep` to 0 and stops playback, preventing out-of-range reads that caused white screens on consecutive runs.
+- **Playback driver bounds guard** — `PlaybackDriver` now clamps `currentTimeStep` to valid range when results change.
+
 ### Session Update — 2026-03-05 (Parallel UX/Analysis Implementation)
 - **Time-history blank-panel hardening** — fixed a post-run crash path by normalizing missing/partial `peakValues` in API time-history responses and adding safe metric fallbacks in `TimeHistoryResults`.
 - **Separated element response charts** — Time-history element results now render **Shear** and **Moment** in separate charts for readability when moment magnitudes dominate.
