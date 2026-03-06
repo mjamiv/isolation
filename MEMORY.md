@@ -1,5 +1,27 @@
 # MEMORY
 
+## Session Update (2026-03-06 — Repo Cleanup & Archival)
+- Archived historical tracked deliverables into `archive/legacy-analysis/`:
+  - moved `engineering_report.html`, `calc_results.json`, `analysis_calculations.md`, `aashto_compliance.md`, `reports/`, and `ibr-study/`
+  - preserved the files in-repo, but removed them from the root so the workspace centers on the app, tests, and active engineering code
+- Deleted ignored planning and cache clutter:
+  - removed `.meta/` old plans/research notes
+  - removed `__pycache__`, `.pytest_cache`, `.DS_Store`, and frontend TypeScript build-info files
+- Updated docs so `README.md` now points historical deliverables at `archive/legacy-analysis/` instead of the repo root.
+
+## Key Files Updated This Session
+- `README.md` — archive path references and project structure cleanup
+- `MEMORY.md` — cleanup/archival record
+
+## Decisions and Rationale
+- Archived tracked study outputs instead of deleting them because they are still useful engineering history, but they are not part of the active app/runtime surface.
+- Deleted `.meta/` outright because it was ignored local planning noise, not product code or durable project documentation.
+- Left `frontend/public/models/` untouched because the app and integration tests still depend on those model files.
+
+## Known Issues
+- The repo still has a long session-history section in `README.md`; structurally correct now, but still heavier than necessary.
+- The frontend Vitest environment still emits a `--localstorage-file` warning during test runs.
+
 ## Session Update (2026-03-06 — API Normalization Hardening & Test Cleanup)
 - Hardened frontend API normalization:
   - Rebuilt `frontend/src/services/api.ts` around explicit narrowing helpers instead of leaking `RawMap`/`unknown` into typed result payloads.
@@ -28,10 +50,6 @@
 - Kept normalization tolerant instead of throwing on malformed payloads because the existing frontend expects safe fallbacks more than hard client-side rejection.
 - Built fresh typed comparison objects rather than mutating post-fetch results so the type boundary is explicit and TypeScript can enforce it.
 - Fixed the `act(...)` warnings in tests rather than changing production components because the actual issue was test timing around lazy rendering, not runtime behavior.
-
-## Known Issues
-- Bearing assembly 2D renderer still uses a fixed isometric projection without perspective correction.
-- The test run still emits a Node warning about `--localstorage-file` having an invalid path; this is separate from the React warning cleanup and remains open.
 
 ## Session Update (2026-03-05 — Bearing Assembly 3D Rendering & Interaction Fixes)
 - Fixed bearing assembly rotation:
@@ -86,20 +104,15 @@
 - Used directional lighting + back-face culling rather than a simple flat fill so rotation produces visible shading changes — critical for a 2D canvas renderer where there's no GPU-side lighting.
 - Used `localScale = 1` instead of `scaleFactor` because the bearing assembly view needs displacements proportional to bearing physical geometry (radius ~12-36 inches), not the 100x amplified deformation scale used by the main structural scene.
 
-## Known Issues
-- `frontend/src/services/api.ts` has pre-existing TypeScript typing debt (~17 errors).
-- Bearing assembly 2D renderer lacks perspective correction (fixed isometric projection).
-- Bearing assembly rotation is still a known area of concern — user has reported it multiple times. The event propagation fix should resolve it but needs live verification.
-
 ## Current State
 - Branch: `main` (tracking `origin/main`).
-- Working tree is clean and synced with `origin/main`.
+- Working tree includes repo-cleanup changes not yet committed.
 - Latest pushed commits:
   - `9481047` — `fix(frontend): harden API normalization and restore UI regressions`
   - `b79ea92` — `test(frontend): flush lazy plot rendering in results tests`
 - Backend on `:8000`, frontend on `:5173`.
 
 ## Next Steps
-- Verify bearing assembly interaction in a live browser session, especially rotate/zoom after the wheel handler cleanup.
+- Commit and push the archive/cleanup pass after a final sanity check of the moved historical files.
+- Verify bearing assembly interaction in a live browser session.
 - Investigate and remove the `--localstorage-file` warning from the frontend Vitest environment.
-- Consider adding a direct regression test around bearing assembly wheel zoom if the canvas interaction becomes easy to exercise in tests.

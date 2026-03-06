@@ -106,12 +106,12 @@ Phases 1 through 5 are complete. The app provides:
 - **Auto-select ground motion** — switching to Time-History analysis auto-selects the first available record, eliminating the manual selection step
 
 ### Engineering Analysis Report
-- **Full seismic analysis report** — self-contained HTML report (`engineering_report.html`) comparing ductile (fixed-base) vs base-isolated performance for a 3-story hospital essential facility
+- **Archived seismic analysis report** — self-contained HTML report now stored under `archive/legacy-analysis/engineering_report.html`, comparing ductile (fixed-base) vs base-isolated performance for a 3-story hospital essential facility
 - **Structure**: St. Claire Memorial Hospital Critical Care Wing — 2-bay, 3-story SMRF with TFP bearings (W14x132 columns, W24x76 beams, W=450 kips)
 - **7 inline SVG diagrams** — structural elevation, TFP bearing cross-section, mode shape comparison, pushover capacity curves, drift profiles, base shear bars, plastic hinge map
 - **AASHTO compliance** — 12 code checks per AASHTO Guide Specs for Seismic Isolation Design (4th Ed.) and ASCE 7-22 Ch.17, all PASS
 - **Key results**: 64% base shear reduction, 93% drift reduction, 0 plastic hinges (vs 15 fixed-base), performance upgraded from Life Safety to Immediate Occupancy
-- **Supporting documents**: `analysis_calculations.md` (984 lines of step-by-step calculations), `aashto_compliance.md` (1,029 lines of detailed code compliance review)
+- **Supporting documents**: archived under `archive/legacy-analysis/` (`analysis_calculations.md`, `aashto_compliance.md`, `reports/`, and the standalone `ibr-study/` payload)
 
 ### Model Import & Session Persistence
 - **Load Model dropdown** — toolbar dropdown with 6 focused presets and an "Import JSON File..." option
@@ -253,12 +253,8 @@ Phases 1 through 5 are complete. The app provides:
 
 ```
 isolation/
-  ibr-study/                 # IBR seismic isolation study outputs
-    models/                  # 3 bridge model JSONs (alt-a, alt-b, alt-c)
-  reports/                   # Final deliverables (HTML + PDF)
-  engineering_report.html    # Self-contained seismic isolation analysis report
-  analysis_calculations.md   # Step-by-step structural engineering calculations
-  aashto_compliance.md       # AASHTO code compliance review (12 checks)
+  archive/
+    legacy-analysis/         # Archived study outputs, reports, and historical deliverables
   frontend/          # React + Three.js client
     public/models/   # Preset model JSONs served by Vite (IBR bridge alternatives)
     src/
@@ -357,6 +353,8 @@ cd frontend && npx tsc --noEmit
 # Regenerate bundled 3-span preset diaphragms from model nodes
 cd frontend && npm run sync:three-span-diaphragms
 ```
+
+Historical one-off study artifacts and reports were intentionally moved under `archive/legacy-analysis/` to keep the main repo focused on the runnable app, tests, and source.
 
 Pre-commit hooks (husky + lint-staged) automatically run ESLint and Prettier on staged `.ts`/`.tsx` files.
 
