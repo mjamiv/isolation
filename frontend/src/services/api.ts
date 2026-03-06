@@ -26,7 +26,12 @@ import type { ComparisonRun, LambdaFactors } from '../types/comparison.ts';
 // Configuration
 // ---------------------------------------------------------------------------
 
-const API_BASE: string = import.meta.env.VITE_API_URL ?? '/api';
+const API_BASE: string = (() => {
+  const envUrl: string | undefined = import.meta.env.VITE_API_URL;
+  if (!envUrl) return '/api';
+  const base = envUrl.replace(/\/+$/, '');
+  return base.endsWith('/api') ? base : `${base}/api`;
+})();
 
 // ---------------------------------------------------------------------------
 // Case-Conversion Helpers

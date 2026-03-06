@@ -59,6 +59,106 @@ const STARTUP_BAY_PARAMS: BayBuildParams = {
 
 const STARTUP_LIVE_LOAD_FACTOR = 0.5;
 
+type GeneratedPresetId =
+  | 'theFrameFixed'
+  | 'theFrameIsolated'
+  | 'longSpanPavilionFixed'
+  | 'longSpanPavilionIsolated';
+
+interface GeneratedPresetSpec {
+  params: BayBuildParams;
+  name: string;
+  description: string;
+  liveLoadFactor: number;
+}
+
+const GENERATED_PRESETS: Record<GeneratedPresetId, GeneratedPresetSpec> = {
+  theFrameFixed: {
+    params: {
+      ...STARTUP_BAY_PARAMS,
+      baseType: 'fixed',
+    },
+    name: 'The Frame: 1x1x1 Steel (Fixed, 50% LL)',
+    description:
+      'Canonical startup frame: 1x1x1 steel bay with rigid diaphragms, fixed base, and 50% live load.',
+    liveLoadFactor: STARTUP_LIVE_LOAD_FACTOR,
+  },
+  theFrameIsolated: {
+    params: {
+      ...STARTUP_BAY_PARAMS,
+      baseType: 'isolated',
+    },
+    name: 'The Frame: 1x1x1 Steel (Isolated, 50% LL)',
+    description:
+      'Canonical startup frame variant: 1x1x1 steel bay on TFP isolation bearings with rigid diaphragms and 50% live load.',
+    liveLoadFactor: STARTUP_LIVE_LOAD_FACTOR,
+  },
+  longSpanPavilionFixed: {
+    params: {
+      baysX: 3,
+      baysZ: 1,
+      bayWidthX: 32,
+      bayWidthZ: 18,
+      stories: 2,
+      storyHeight: 16,
+      material: 'steel',
+      diaphragms: true,
+      baseType: 'fixed',
+    },
+    name: 'Long-Span Pavilion: 3x1x2 Steel (Fixed)',
+    description:
+      'Wide low-rise steel pavilion with long transverse spans for dramatic fixed-base versus isolation comparison studies.',
+    liveLoadFactor: 1,
+  },
+  longSpanPavilionIsolated: {
+    params: {
+      baysX: 3,
+      baysZ: 1,
+      bayWidthX: 32,
+      bayWidthZ: 18,
+      stories: 2,
+      storyHeight: 16,
+      material: 'steel',
+      diaphragms: true,
+      baseType: 'isolated',
+    },
+    name: 'Long-Span Pavilion: 3x1x2 Steel (Isolated)',
+    description:
+      'Wide low-rise steel pavilion on TFP bearings sized to make fixed-base versus isolated response visibly distinct in the 3D viewer.',
+    liveLoadFactor: 1,
+  },
+};
+
+function buildGeneratedPresetModel(presetId: GeneratedPresetId): ModelJSON {
+  const preset = GENERATED_PRESETS[presetId];
+  const model = generateBayFrame(preset.params);
+
+  model.modelInfo = {
+    ...model.modelInfo,
+    name: preset.name,
+    description: preset.description,
+  };
+
+  if (preset.liveLoadFactor !== 1) {
+    model.loads = model.loads.map((load) => ({
+      ...load,
+      fy: load.fy * preset.liveLoadFactor,
+    }));
+  }
+
+  return model;
+}
+
+function createGroundMotionMap(): Map<number, GroundMotionRecord> {
+  return new Map<number, GroundMotionRecord>([
+    [GM_IDS.SERVICEABILITY, generateServiceability()],
+    [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
+    [GM_IDS.HARMONIC, generateHarmonicSweep()],
+    [GM_IDS.EL_CENTRO, generateElCentro()],
+    [GM_IDS.NEAR_FAULT, generateNearFaultPulse()],
+  ]);
+}
+
 // ── Ground motion generators ─────────────────────────────────────────
 
 /** Scale factor converting g to in/s^2 for kip-in units. */
@@ -253,6 +353,7 @@ interface ModelState {
 
   // Model loaders
   loadSampleModel: () => void;
+  loadGeneratedPresetModel: (presetId: GeneratedPresetId) => void;
   loadModelFromJSON: (json: ModelJSON) => void;
   clearModel: () => void;
 }
@@ -506,15 +607,7 @@ export const useModelStore = create<ModelState>((set) => ({
 
     // Generate default ground motions if the JSON has none
     const gmMap: Map<number, GroundMotionRecord> =
-      json.groundMotions.length > 0
-        ? toMap(json.groundMotions)
-        : new Map<number, GroundMotionRecord>([
-            [GM_IDS.SERVICEABILITY, generateServiceability()],
-            [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
-            [GM_IDS.HARMONIC, generateHarmonicSweep()],
-            [GM_IDS.EL_CENTRO, generateElCentro()],
-            [GM_IDS.NEAR_FAULT, generateNearFaultPulse()],
-          ]);
+      json.groundMotions.length > 0 ? toMap(json.groundMotions) : createGroundMotionMap();
 
     set({
       model: {
@@ -550,46 +643,32 @@ export const useModelStore = create<ModelState>((set) => ({
     }),
 
   // ── Sample model loader ──────────────────────────
-  loadSampleModel: () => {
-    const startup = generateBayFrame(STARTUP_BAY_PARAMS);
-    startup.modelInfo = {
-      ...startup.modelInfo,
-      name: 'Bay Build: 1x1x1 Steel (Fixed, 50% LL)',
-      description:
-        'Startup bay-build model: 1x1x1 steel frame with rigid diaphragms, fixed base, and 50% live load.',
-    };
-
-    // Startup scenario uses reduced live-load participation (50% LL).
-    startup.loads = startup.loads.map((load) => ({
-      ...load,
-      fy: load.fy * STARTUP_LIVE_LOAD_FACTOR,
-    }));
+  loadGeneratedPresetModel: (presetId: GeneratedPresetId) => {
+    const generated = buildGeneratedPresetModel(presetId);
     const toMap = <T extends { id: number }>(arr: T[]): Map<number, T> =>
       new Map(arr.map((item) => [item.id, item]));
 
     set({
       model: {
-        name: startup.modelInfo.name,
-        units: startup.modelInfo.units,
-        description: startup.modelInfo.description,
+        name: generated.modelInfo.name,
+        units: generated.modelInfo.units,
+        description: generated.modelInfo.description,
       },
-      nodes: toMap(startup.nodes),
-      elements: toMap(startup.elements),
-      sections: toMap(startup.sections),
-      materials: toMap(startup.materials),
-      bearings: toMap(startup.bearings),
-      diaphragms: startup.diaphragms ? toMap(startup.diaphragms) : new Map(),
-      equalDofConstraints: startup.equalDofConstraints
-        ? toMap(startup.equalDofConstraints)
+      nodes: toMap(generated.nodes),
+      elements: toMap(generated.elements),
+      sections: toMap(generated.sections),
+      materials: toMap(generated.materials),
+      bearings: toMap(generated.bearings),
+      diaphragms: generated.diaphragms ? toMap(generated.diaphragms) : new Map(),
+      equalDofConstraints: generated.equalDofConstraints
+        ? toMap(generated.equalDofConstraints)
         : new Map(),
-      loads: toMap(startup.loads),
-      groundMotions: new Map<number, GroundMotionRecord>([
-        [GM_IDS.SERVICEABILITY, generateServiceability()],
-        [GM_IDS.SUBDUCTION, generateLongDurationSubduction()],
-        [GM_IDS.HARMONIC, generateHarmonicSweep()],
-        [GM_IDS.EL_CENTRO, generateElCentro()],
-        [GM_IDS.NEAR_FAULT, generateNearFaultPulse()],
-      ]),
+      loads: toMap(generated.loads),
+      groundMotions: createGroundMotionMap(),
     });
+  },
+
+  loadSampleModel: () => {
+    useModelStore.getState().loadGeneratedPresetModel('theFrameFixed');
   },
 }));

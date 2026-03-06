@@ -38,6 +38,7 @@ function validateImportedModel(json: unknown): asserts json is ModelJSON {
 
 export function Toolbar() {
   const model = useModelStore((state) => state.model);
+  const loadGeneratedPresetModel = useModelStore((state) => state.loadGeneratedPresetModel);
   const loadModelFromJSON = useModelStore((state) => state.loadModelFromJSON);
   const clearModel = useModelStore((state) => state.clearModel);
   const displayMode = useDisplayStore((state) => state.displayMode);
@@ -74,6 +75,18 @@ export function Toolbar() {
     resetComparison();
 
     try {
+      if (preset.kind === 'startup') {
+        loadGeneratedPresetModel(preset.presetId);
+        const startupName = useModelStore.getState().model?.name ?? preset.label;
+        const restored = restoreFromCache(startupName);
+        if (restored) {
+          addToast('success', `Loaded "${preset.label}" (results restored)`);
+        } else {
+          addToast('success', `Loaded "${preset.label}"`);
+        }
+        return;
+      }
+
       const response = await fetch(preset.url);
       if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
       const json = (await response.json()) as ModelJSON;

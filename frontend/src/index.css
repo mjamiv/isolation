@@ -319,3 +319,311 @@ select {
   pointer-events: none;
   z-index: 0;
 }
+
+/* ─── Viewer HUD Bar ─── */
+.viewer-hud-bar {
+  pointer-events: auto;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(10, 14, 23, 0.82);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.viewer-hud-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.viewer-hud-group + .viewer-hud-group {
+  margin-left: 2px;
+  padding-left: 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.viewer-hud-sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 2px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.viewer-hud-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.viewer-hud-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.90);
+}
+
+.viewer-hud-btn[data-active='true'] {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* ─── Viewer Overlay System ─── */
+.viewer-overlay-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, 0.94) 0%, rgba(10, 14, 23, 0.96) 100%);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(18px);
+  border-radius: 16px;
+}
+
+.viewer-overlay-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(250, 204, 21, 0.08) 0%,
+    transparent 30%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.viewer-overlay-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.viewer-overlay-title {
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.viewer-tool-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.viewer-tool-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.viewer-tool-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.viewer-tool-button[data-active='true'] {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.viewer-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.viewer-chip--muted {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.60);
+}
+
+.viewer-overlay-card--sm {
+  width: 248px;
+}
+
+.viewer-overlay-card--md {
+  width: 320px;
+}
+
+.viewer-overlay-card--lg {
+  width: 420px;
+}
+
+.viewer-overlay-header {
+  min-height: 52px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.viewer-overlay-body {
+  position: relative;
+  z-index: 1;
+  padding: 12px 14px 14px;
+}
+
+.viewer-overlay-section + .viewer-overlay-section {
+  margin-top: 10px;
+}
+
+.viewer-overlay-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.viewer-overlay-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.viewer-overlay-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.viewer-overlay-metric {
+  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* ─── Bearing Assembly Panel ─── */
+.bearing-assembly-panel {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 20;
+  width: 220px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 12, 20, 0.88);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.bearing-assembly-canvas {
+  display: block;
+  width: 100%;
+  height: 160px;
+  cursor: grab;
+}
+
+.bearing-assembly-canvas:active {
+  cursor: grabbing;
+}
+
+.bearing-assembly-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bearing-assembly-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.50);
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.bearing-assembly-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.bearing-assembly-btn[data-active='true'] {
+  background: rgba(255, 255, 255, 0.10);
+  color: #fff;
+}
+
+.bearing-assembly-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.bearing-assembly-count {
+  margin-left: 4px;
+  color: rgba(255, 255, 255, 0.30);
+  font-variant-numeric: tabular-nums;
+}
+
+.bearing-assembly-sep {
+  width: 1px;
+  height: 12px;
+  margin: 0 2px;
+  background: rgba(255, 255, 255, 0.08);
+}

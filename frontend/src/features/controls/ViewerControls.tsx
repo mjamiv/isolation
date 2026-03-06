@@ -9,6 +9,7 @@ import {
 } from '../../stores/displayStore';
 
 const ENVIRONMENT_OPTIONS: { value: EnvironmentPreset; label: string }[] = [
+  { value: 'lab', label: 'Test Lab' },
   { value: 'studio', label: 'Studio' },
   { value: 'outdoor', label: 'Outdoor' },
   { value: 'dark', label: 'Dark' },
@@ -203,7 +204,7 @@ export function ViewerControls() {
   const setShowComparisonOverlay = useDisplayStore((state) => state.setShowComparisonOverlay);
 
   return (
-    <Accordion.Root type="multiple" defaultValue={[]} className="space-y-1">
+    <Accordion.Root type="multiple" defaultValue={['display']} className="space-y-1">
       <ControlSection value="scene" title="Scene">
         <SelectControl
           label="Environment"

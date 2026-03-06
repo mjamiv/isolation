@@ -18,13 +18,16 @@ beforeEach(() => {
   s.setHideUndeformed(false);
   s.setScaleFactor(100);
   s.setShowLabels(false);
-  s.setShowGrid(true);
-  s.setShowAxes(true);
+  s.setShowGrid(false);
+  s.setShowAxes(false);
+  s.setShowDiaphragms(true);
+  s.setShowConstraintLinks(false);
   s.setShowForces(false);
   s.setForceType('none');
   s.setForceScale(1);
   s.setColorMap('none');
   s.setBearingVerticalScale(1);
+  s.resetCamera();
   s.clearSelection();
 });
 
@@ -49,12 +52,12 @@ describe('displayStore — initial defaults', () => {
     expect(getState().showLabels).toBe(false);
   });
 
-  it('initializes with showGrid true', () => {
-    expect(getState().showGrid).toBe(true);
+  it('initializes with showGrid false', () => {
+    expect(getState().showGrid).toBe(false);
   });
 
-  it('initializes with showAxes true', () => {
-    expect(getState().showAxes).toBe(true);
+  it('initializes with showAxes false', () => {
+    expect(getState().showAxes).toBe(false);
   });
 
   it('initializes with forceType none', () => {
@@ -67,6 +70,10 @@ describe('displayStore — initial defaults', () => {
 
   it('initializes with bearingVerticalScale 1', () => {
     expect(getState().bearingVerticalScale).toBe(1);
+  });
+
+  it('initializes with iso camera view', () => {
+    expect(getState().cameraView).toBe('iso');
   });
 
   it('initializes with empty selection sets', () => {
@@ -136,15 +143,15 @@ describe('displayStore — toggles', () => {
   });
 
   it('toggles showGrid correctly', () => {
-    expect(getState().showGrid).toBe(true);
-    getState().setShowGrid(false);
     expect(getState().showGrid).toBe(false);
+    getState().setShowGrid(true);
+    expect(getState().showGrid).toBe(true);
   });
 
   it('toggles showAxes correctly', () => {
-    expect(getState().showAxes).toBe(true);
-    getState().setShowAxes(false);
     expect(getState().showAxes).toBe(false);
+    getState().setShowAxes(true);
+    expect(getState().showAxes).toBe(true);
   });
 
   it('toggles showForces correctly', () => {
@@ -191,6 +198,29 @@ describe('displayStore — setBearingVerticalScale', () => {
 
     getState().setBearingVerticalScale(8);
     expect(getState().bearingVerticalScale).toBe(3);
+  });
+});
+
+describe('displayStore — camera commands', () => {
+  it('updates the active camera view and bumps the command version', () => {
+    const before = getState().cameraCommandVersion;
+    getState().setCameraView('plan');
+    expect(getState().cameraView).toBe('plan');
+    expect(getState().cameraCommandVersion).toBe(before + 1);
+  });
+
+  it('frames the current camera without changing the active view', () => {
+    getState().setCameraView('front');
+    const before = getState().cameraCommandVersion;
+    getState().frameCamera();
+    expect(getState().cameraView).toBe('front');
+    expect(getState().cameraCommandVersion).toBe(before + 1);
+  });
+
+  it('resets the camera back to iso', () => {
+    getState().setCameraView('side');
+    getState().resetCamera();
+    expect(getState().cameraView).toBe('iso');
   });
 });
 

@@ -8,6 +8,20 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 Phases 1 through 5 are complete. The app provides:
 
+### Session Update — 2026-03-06 (UI Cleanup, Diaphragm Fix & Environment Simplification)
+- **Compact viewer HUD** — replaced the large floating HUD card with a slim centered toolbar strip; camera presets, display mode, and layer toggles in one row.
+- **Wireframe default** — the 3D viewer now opens in `wireframe` mode instead of `solid` for a cleaner first impression.
+- **Bearing assembly panel redesign** — replaced the heavy overlay-card with a compact 220px floating panel; canvas-first layout with a minimal bottom bar for bearing navigation, orbit toggle, and reset.
+- **Diaphragm axis fix** — fixed Y/Z axis swap that caused diaphragm slabs to deform on the wrong axis during time-history playback on non-bearing (Bay Build) models; `zUpData` is now derived from `hasBearings` consistently across all components.
+- **Test Lab simplified** — removed the transparent bounding box (walls/ceiling envelope) and floor boundary line from the Test Lab environment; kept lighting, floor, grid, and contact shadows.
+- **Control Room removed** — dropped the Control Room environment preset entirely; environment picker is now 5 options (Test Lab, Studio, Outdoor, Dark, Blueprint).
+- **API base URL fix** — `API_BASE` now correctly appends `/api` when `VITE_API_URL` is set, fixing 404s on `/models`.
+
+### Session Update — 2026-03-06 (Viewer Shell Redesign & Camera HUD)
+- **In-canvas camera HUD** — the viewport includes direct `Fit`, `Iso`, `Plan`, `Front`, and `Side` controls plus quick mode/layer toggles.
+- **Animated camera preset rig** — camera transitions between view presets animate in-scene.
+- **Viewer stage polish** — the center viewport sits on a more intentional backdrop treatment, and the Display controls accordion opens by default.
+
 ### Session Update — 2026-03-06 (Frontend API Hardening & Clean Test Baseline)
 - **Typed API normalization hardening** — `frontend/src/services/api.ts` now normalizes analysis and comparison payloads through explicit narrowing helpers instead of passing `RawMap`/`unknown` through typed result interfaces.
 - **Comparison payload cleanup** — comparison responses are rebuilt as typed objects with normalized nested time-history results and explicit `comparisonType` mapping, rather than mutating loosely cast fetch results.
@@ -47,7 +61,7 @@ Phases 1 through 5 are complete. The app provides:
 - **Property Inspector** (right panel) showing read-only details for selected nodes and elements
 - **3D labels** on nodes and elements, visible on hover, selection, or global toggle
 - **Viewer controls** for display mode, grid, axes, labels, deformation scale, force diagrams, and color maps
-- **Model import** — "Load Model" dropdown with 6 presets (20-Story Tower, 2-Story 2x2, 3-Span Bridge — each fixed/isolated) and JSON file import
+- **Model import** — "Load Model" dropdown with 10 presets, including generated **The Frame** fixed/isolated variants, a new **Long-Span Pavilion** fixed/isolated comparison pair, plus 20-Story Tower, 2-Story 2x2, and 3-Span Bridge fixed/isolated presets, and JSON file import
 - **Startup model** — bay-build generated 1x1x1 steel frame (fixed base, rigid diaphragms, 50% live load) auto-loaded on startup
 
 ### Phase 2 — Load Editing, Analysis Runner & Results
@@ -114,8 +128,8 @@ Phases 1 through 5 are complete. The app provides:
 - **Supporting documents**: archived under `archive/legacy-analysis/` (`analysis_calculations.md`, `aashto_compliance.md`, `reports/`, and the standalone `ibr-study/` payload)
 
 ### Model Import & Session Persistence
-- **Load Model dropdown** — toolbar dropdown with 6 focused presets and an "Import JSON File..." option
-- **Preset models**: 20-Story Tower (Fixed/Isolated), 2-Story 2x2 (Fixed/Isolated), 3-Span Bridge (Fixed/Isolated)
+- **Load Model dropdown** — toolbar dropdown with 10 focused presets, including **The Frame (Fixed/Isolated)**, **Long-Span Pavilion (Fixed/Isolated)**, and an "Import JSON File..." option
+- **Preset models**: The Frame (Fixed/Isolated), Long-Span Pavilion (Fixed/Isolated), 20-Story Tower (Fixed/Isolated), 2-Story 2x2 (Fixed/Isolated), 3-Span Bridge (Fixed/Isolated)
 - **20-story steel tower** — 1-bay 20'x20' moment frame, 3 column tiers (W14x500/370/257), 3 beam tiers (W36x300/W30x211/W24x146), T1=1.41s, fully verified with all 4 analysis types
 - **3-span girder bridge** — 80'-100'-80' continuous steel girder bridge with 6 W36x150 girders at 8'-0" spacing, W24x84 abutment cross-beams, RC pier caps (5'x6' concrete, Ix=1,866,240 in⁴), 2-column W14x257 portal frame piers with 3 sub-elements per column (intermediate nodes at 1/3 and 2/3 height), panel deck diaphragms (`(numGirders - 1) * numSpans * chordsPerSpan`), and 120 psf composite concrete deck dead load. Fixed model has roller abutments (36 nodes, 50 elements). Isolated variant has 24 TFP bearings at all girder support points with upsized pier bearings (R_eff=180", dispCap=30") and RC pier cap beams below the isolation plane (60 nodes, 60 elements)
 - **Auto-generated ground motions** — models imported without ground motion records automatically get 5 synthetic records (Serviceability, Subduction, Harmonic, El Centro, Near-Fault) ordered by intensity, enabling immediate time-history analysis starting from low-amplitude events
@@ -182,7 +196,7 @@ Phases 1 through 5 are complete. The app provides:
 
 ### 3D Viewer Enhancements
 - **Dynamic scene sizing** — grid, floor plane, camera, orbit controls, fog, and shadows all scale dynamically based on model bounding box via `useModelBounds` hook; models from small 2-story frames to 20-story towers and 3-span bridges always fit cleanly
-- **Scene environments** — 4 selectable environment presets (Studio, Outdoor, Dark, Blueprint) with procedural lighting, backgrounds, and ground treatments; no external HDR files
+- **Scene environments** — 6 selectable environment presets with procedural lighting, backgrounds, and ground treatments: Test Lab, Control Room, Studio, Outdoor, Dark, and Blueprint
 - **Node visibility** — nodes render with bright gold color and emissive glow, clearly visible against all backgrounds
 - **Bearing orbit overlay** — collapsible plan-view panel showing real-time isolation bearing displacement orbits during time-history playback with prev/next navigation and capacity circles
 - **Bearing assembly window** — separate isometric overlay window for full bearing assembly displacement visualization (decoupled from the main structural render)

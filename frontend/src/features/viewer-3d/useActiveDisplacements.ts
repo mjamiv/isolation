@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useComparisonStore } from '@/stores/comparisonStore';
+import { useModelStore } from '@/stores/modelStore';
 import type { PushoverResults, StaticResults, TimeHistoryResults } from '@/types/analysis';
 
 export type NodeDisplacementMap = Record<number | string, number[]>;
@@ -56,11 +57,8 @@ export function useActiveDisplacements(): ActiveDisplacements {
     return null;
   }, [results, currentTimeStep, comparisonType, comparisonIsolated]);
 
-  const zUpData = useMemo(() => {
-    if (comparisonType === 'time_history' && comparisonIsolated?.timeHistoryResults) return true;
-    if (results?.type === 'time_history') return true;
-    return false;
-  }, [comparisonType, comparisonIsolated, results]);
+  const hasBearings = useModelStore((s) => s.bearings.size > 0);
+  const zUpData = hasBearings;
 
   return { nodeDisplacements, zUpData };
 }

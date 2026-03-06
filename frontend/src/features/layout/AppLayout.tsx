@@ -122,15 +122,15 @@ export function AppLayout() {
       <div className="hidden flex-1 overflow-hidden md:block">
         <PanelGroup direction="horizontal" autoSaveId="isovis-layout">
           {/* Left panel: Model tree & controls */}
-          <Panel defaultSize={20} minSize={15} maxSize={35}>
+          <Panel defaultSize={20} minSize={15} maxSize={35} id="left-panel" order={1}>
             <LeftPanel />
           </Panel>
 
           <ResizeHandle />
 
           {/* Center panel: 3D Viewer */}
-          <Panel defaultSize={60} minSize={30}>
-            <div className="h-full w-full bg-surface-0">
+          <Panel id="viewer-panel" order={2} defaultSize={60} minSize={30}>
+            <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.08),transparent_28%),linear-gradient(180deg,#09111f_0%,#050914_100%)]">
               <Viewer3D />
             </div>
           </Panel>
@@ -138,7 +138,7 @@ export function AppLayout() {
           <ResizeHandle />
 
           {/* Right panel: Properties / Results / Comparison */}
-          <Panel defaultSize={20} minSize={15} maxSize={35}>
+          <Panel defaultSize={20} minSize={15} maxSize={35} id="right-panel" order={3}>
             <RightPanel />
           </Panel>
         </PanelGroup>
@@ -148,7 +148,7 @@ export function AppLayout() {
           <LeftPanel />
         </div>
         <div className="min-h-0 flex-1 border-b border-white/[0.06]">
-          <div className="h-full w-full bg-surface-0">
+          <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.08),transparent_28%),linear-gradient(180deg,#09111f_0%,#050914_100%)]">
             <Viewer3D />
           </div>
         </div>

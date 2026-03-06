@@ -5,7 +5,8 @@ import { create } from 'zustand';
 export type DisplayMode = 'wireframe' | 'extruded' | 'solid';
 export type ForceType = 'moment' | 'shear' | 'axial' | 'none';
 export type ColorMapType = 'none' | 'demandCapacity' | 'displacement' | 'stress';
-export type EnvironmentPreset = 'studio' | 'outdoor' | 'dark' | 'blueprint';
+export type EnvironmentPreset = 'studio' | 'outdoor' | 'dark' | 'blueprint' | 'lab';
+export type CameraViewPreset = 'iso' | 'plan' | 'front' | 'side';
 
 const MIN_BEARING_VERTICAL_SCALE = 0.5;
 const MAX_BEARING_VERTICAL_SCALE = 3;
@@ -43,6 +44,10 @@ interface DisplayState {
   // Comparison overlay
   showComparisonOverlay: boolean;
 
+  // Camera
+  cameraView: CameraViewPreset;
+  cameraCommandVersion: number;
+
   // Selection
   selectedNodeIds: Set<number>;
   selectedElementIds: Set<number>;
@@ -73,6 +78,9 @@ interface DisplayState {
   setShowBearingDisplacement: (show: boolean) => void;
   setBearingVerticalScale: (scale: number) => void;
   setShowComparisonOverlay: (show: boolean) => void;
+  setCameraView: (view: CameraViewPreset) => void;
+  frameCamera: () => void;
+  resetCamera: () => void;
 
   // Selection actions
   selectNode: (id: number, multi?: boolean) => void;
@@ -89,7 +97,7 @@ interface DisplayState {
 
 export const useDisplayStore = create<DisplayState>((set) => ({
   // Default scene state
-  environment: 'studio',
+  environment: 'lab',
 
   // Default display state
   displayMode: 'wireframe',
@@ -97,13 +105,13 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   hideUndeformed: false,
   scaleFactor: 100,
   showLabels: false,
-  showGrid: true,
-  showAxes: true,
+  showGrid: false,
+  showAxes: false,
   showMassLabels: false,
   showStiffnessLabels: false,
   showBaseShearLabels: false,
   showDiaphragms: true,
-  showConstraintLinks: true,
+  showConstraintLinks: false,
   showForces: false,
   forceType: 'none',
   forceScale: 1,
@@ -115,6 +123,10 @@ export const useDisplayStore = create<DisplayState>((set) => ({
 
   // Default comparison state
   showComparisonOverlay: false,
+
+  // Default camera state
+  cameraView: 'iso',
+  cameraCommandVersion: 0,
 
   // Default selection state
   selectedNodeIds: new Set(),
@@ -154,6 +166,20 @@ export const useDisplayStore = create<DisplayState>((set) => ({
       ),
     }),
   setShowComparisonOverlay: (show) => set({ showComparisonOverlay: show }),
+  setCameraView: (view) =>
+    set((state) => ({
+      cameraView: view,
+      cameraCommandVersion: state.cameraCommandVersion + 1,
+    })),
+  frameCamera: () =>
+    set((state) => ({
+      cameraCommandVersion: state.cameraCommandVersion + 1,
+    })),
+  resetCamera: () =>
+    set((state) => ({
+      cameraView: 'iso',
+      cameraCommandVersion: state.cameraCommandVersion + 1,
+    })),
 
   // ── Selection actions ────────────────────────────
   selectNode: (id, multi = false) =>

@@ -9,6 +9,10 @@ import { computeTfpStageOffsets } from './tfpKinematics';
 import { extractOrbitPoints } from './tfpKinematics';
 import { toViewerTranslation, useActiveDisplacements } from './useActiveDisplacements';
 
+// ---------------------------------------------------------------------------
+// Drawing
+// ---------------------------------------------------------------------------
+
 interface AssemblyDrawParams {
   relDx: number;
   relDy: number;
@@ -19,7 +23,6 @@ interface AssemblyDrawParams {
   radius: number;
   gap: number;
   plateThickness: number;
-  transparent: boolean;
   viewZoom: number;
   viewPanX: number;
   viewPanY: number;
@@ -39,7 +42,6 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     radius,
     gap,
     plateThickness,
-    transparent,
     viewZoom,
     viewPanX,
     viewPanY,
@@ -54,19 +56,17 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
   if (!ctx) return;
 
   const dpr = window.devicePixelRatio || 1;
-  const cssW = canvas.clientWidth || 248;
-  const cssH = canvas.clientHeight || 180;
+  const cssW = canvas.clientWidth || 220;
+  const cssH = canvas.clientHeight || 160;
   canvas.width = Math.floor(cssW * dpr);
   canvas.height = Math.floor(cssH * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
 
-  const yaw = viewYaw;
-  const pitch = viewPitch;
-  const cosY = Math.cos(yaw);
-  const sinY = Math.sin(yaw);
-  const cosP = Math.cos(pitch);
-  const sinP = Math.sin(pitch);
+  const cosY = Math.cos(viewYaw);
+  const sinY = Math.sin(viewYaw);
+  const cosP = Math.cos(viewPitch);
+  const sinP = Math.sin(viewPitch);
   let orbitExtent = 0;
   for (const p of fullOrbitPoints) {
     orbitExtent = Math.max(orbitExtent, Math.abs(p[0]), Math.abs(p[2]));
@@ -79,9 +79,7 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
   );
   const scale = (Math.min(cssW, cssH) / (viewExtent * 1.15)) * viewZoom;
   const cx = cssW * 0.5 + viewPanX;
-  const cy = cssH * 0.62 + viewPanY;
-  const shellOpacity = transparent ? 0.5 : 1;
-  const coreOpacity = transparent ? 0.65 : 1;
+  const cy = cssH * 0.58 + viewPanY;
 
   const project = (x: number, y: number, z: number) => {
     const xr = x * cosY - z * sinY;
@@ -91,18 +89,16 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     return { x: cx + xr * scale, y: cy - yr * scale, depth };
   };
 
-  const PLATE_SEGS = 32;
-
-  // Light direction in world space (top-right-front)
+  const SEGS = 28;
   const lightDir = { x: 0.35, y: 0.65, z: -0.67 };
   const lightLen = Math.sqrt(lightDir.x ** 2 + lightDir.y ** 2 + lightDir.z ** 2);
   lightDir.x /= lightLen;
   lightDir.y /= lightLen;
   lightDir.z /= lightLen;
 
-  const shadeFace = (baseColor: string, nDotL: number): string => {
-    const m = baseColor.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
-    if (!m) return baseColor;
+  const shade = (base: string, nDotL: number): string => {
+    const m = base.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if (!m) return base;
     const br = 0.45 + 0.55 * Math.max(0, nDotL);
     const rc = Math.min(255, Math.round(parseInt(m[1]!, 16) * br));
     const gc = Math.min(255, Math.round(parseInt(m[2]!, 16) * br));
@@ -110,100 +106,74 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     return `rgb(${rc},${gc},${bc})`;
   };
 
-  const drawPlate = (
-    x: number,
-    y: number,
-    z: number,
-    r: number,
-    h: number,
-    fill: string,
-    alpha: number,
-  ) => {
-    ctx.globalAlpha = Math.min(alpha, 0.95);
-
+  const drawPlate = (x: number, y: number, z: number, r: number, h: number, fill: string) => {
+    ctx.globalAlpha = 0.92;
     const topY = y + h * 0.5;
     const botY = y - h * 0.5;
-
     const topPts: { x: number; y: number; depth: number }[] = [];
     const botPts: { x: number; y: number; depth: number }[] = [];
-    for (let i = 0; i < PLATE_SEGS; i++) {
-      const angle = (i / PLATE_SEGS) * Math.PI * 2;
+    for (let i = 0; i < SEGS; i++) {
+      const angle = (i / SEGS) * Math.PI * 2;
       const px = x + Math.cos(angle) * r;
       const pz = z + Math.sin(angle) * r;
       topPts.push(project(px, topY, pz));
       botPts.push(project(px, botY, pz));
     }
 
-    // Determine face visibility using cross product of projected edges
     const topCenter = project(x, topY, z);
     const botCenter = project(x, botY, z);
     const topFacesCamera = topCenter.depth > botCenter.depth;
 
-    // Draw back face first (the one further from the camera)
     const backPts = topFacesCamera ? botPts : topPts;
     const backNdotL = topFacesCamera ? -lightDir.y : lightDir.y;
     ctx.beginPath();
     ctx.moveTo(backPts[0]!.x, backPts[0]!.y);
-    for (let i = 1; i < PLATE_SEGS; i++) ctx.lineTo(backPts[i]!.x, backPts[i]!.y);
+    for (let i = 1; i < SEGS; i++) ctx.lineTo(backPts[i]!.x, backPts[i]!.y);
     ctx.closePath();
-    ctx.fillStyle = shadeFace(fill, backNdotL * 0.5);
+    ctx.fillStyle = shade(fill, backNdotL * 0.5);
     ctx.fill();
 
-    // Side quads — only draw those facing the camera
-    for (let i = 0; i < PLATE_SEGS; i++) {
-      const next = (i + 1) % PLATE_SEGS;
-      const midAngle = ((i + 0.5) / PLATE_SEGS) * Math.PI * 2;
+    for (let i = 0; i < SEGS; i++) {
+      const next = (i + 1) % SEGS;
+      const midAngle = ((i + 0.5) / SEGS) * Math.PI * 2;
       const nx = Math.cos(midAngle);
       const nz = Math.sin(midAngle);
       const nDotL = nx * lightDir.x + nz * lightDir.z;
-      // Determine if this quad faces the camera via 2D cross product
       const ex = topPts[next]!.x - topPts[i]!.x;
       const ey = topPts[next]!.y - topPts[i]!.y;
       const fx = botPts[i]!.x - topPts[i]!.x;
       const fy = botPts[i]!.y - topPts[i]!.y;
-      const cross = ex * fy - ey * fx;
-      if (cross >= 0) continue; // back-facing quad, skip
+      if (ex * fy - ey * fx >= 0) continue;
       ctx.beginPath();
       ctx.moveTo(topPts[i]!.x, topPts[i]!.y);
       ctx.lineTo(topPts[next]!.x, topPts[next]!.y);
       ctx.lineTo(botPts[next]!.x, botPts[next]!.y);
       ctx.lineTo(botPts[i]!.x, botPts[i]!.y);
       ctx.closePath();
-      ctx.fillStyle = shadeFace(fill, nDotL * 0.85);
+      ctx.fillStyle = shade(fill, nDotL * 0.85);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
     }
 
-    // Draw front face (the one closer to the camera)
     const frontPts = topFacesCamera ? topPts : botPts;
     const frontNdotL = topFacesCamera ? lightDir.y : -lightDir.y;
     ctx.beginPath();
     ctx.moveTo(frontPts[0]!.x, frontPts[0]!.y);
-    for (let i = 1; i < PLATE_SEGS; i++) ctx.lineTo(frontPts[i]!.x, frontPts[i]!.y);
+    for (let i = 1; i < SEGS; i++) ctx.lineTo(frontPts[i]!.x, frontPts[i]!.y);
     ctx.closePath();
-    ctx.fillStyle = shadeFace(fill, frontNdotL);
+    ctx.fillStyle = shade(fill, frontNdotL);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
   };
 
-  const gridY = -radius * 1.5;
-
   // Background
-  const bg = ctx.createLinearGradient(0, 0, 0, cssH);
-  bg.addColorStop(0, 'rgba(15,23,42,0.85)');
-  bg.addColorStop(1, 'rgba(2,6,23,0.95)');
-  ctx.fillStyle = bg;
+  ctx.fillStyle = 'rgba(8,12,20,0.92)';
   ctx.fillRect(0, 0, cssW, cssH);
 
-  // Grid plane
-  ctx.strokeStyle = 'rgba(59,130,246,0.20)';
-  ctx.lineWidth = 0.8;
-  const gridStep = Math.max(radius * 0.35, 6);
-  const gridHalf = radius * 3.6;
+  // Subtle grid
+  const gridY = -radius * 1.5;
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  const gridStep = Math.max(radius * 0.4, 6);
+  const gridHalf = radius * 3;
   for (let g = -gridHalf; g <= gridHalf; g += gridStep) {
     const a = project(-gridHalf, gridY, g);
     const b = project(gridHalf, gridY, g);
@@ -219,9 +189,10 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     ctx.stroke();
   }
 
+  // Orbit trace
   if (showOrbit && fullOrbitPoints.length > 1) {
-    ctx.strokeStyle = 'rgba(254,243,199,0.28)';
-    ctx.lineWidth = 1.1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 0.8;
     ctx.beginPath();
     fullOrbitPoints.forEach((p, i) => {
       const q = project(p[0], p[1], p[2]);
@@ -231,8 +202,8 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     ctx.stroke();
   }
   if (showOrbit && orbitPoints.length > 1) {
-    ctx.strokeStyle = 'rgba(212,175,55,0.92)';
-    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = 'rgba(34,211,238,0.80)';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
     orbitPoints.forEach((p, i) => {
       const q = project(p[0], p[1], p[2]);
@@ -243,88 +214,56 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     const last = orbitPoints[orbitPoints.length - 1]!;
     const cur = project(last[0], last[1], last[2]);
     ctx.beginPath();
-    ctx.arc(cur.x, cur.y, 3.8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(250,204,21,0.34)';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cur.x, cur.y, 2, 0, Math.PI * 2);
-    ctx.fillStyle = '#facc15';
+    ctx.arc(cur.x, cur.y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#22d3ee';
     ctx.fill();
   }
 
-  // Assembly pieces — depth-sorted so rotated views render correctly
-  const pieces: {
-    x: number;
-    y: number;
-    z: number;
-    r: number;
-    h: number;
-    fill: string;
-    alpha: number;
-  }[] = [
+  // Assembly plates — depth-sorted
+  const pieces: { x: number; y: number; z: number; r: number; h: number; fill: string }[] = [
     {
       x: 0,
       y: -plateThickness * 1.8,
       z: 0,
       r: radius * 0.96,
       h: plateThickness * 2.2,
-      fill: '#7c8596',
-      alpha: shellOpacity,
+      fill: '#6b7280',
     },
-    { x: 0, y: 0, z: 0, r: radius, h: plateThickness, fill: '#d2dae6', alpha: shellOpacity },
+    { x: 0, y: 0, z: 0, r: radius, h: plateThickness, fill: '#c8d0dc' },
     {
       x: 0,
       y: plateThickness * 0.85,
       z: 0,
       r: radius * 0.55,
       h: plateThickness * 0.9,
-      fill: '#a8b3c3',
-      alpha: coreOpacity,
+      fill: '#9ca3af',
     },
-    {
-      x: s1x,
-      y: gap * 0.35,
-      z: s1z,
-      r: radius * 0.22,
-      h: plateThickness * 1.1,
-      fill: '#dbe2eb',
-      alpha: coreOpacity,
-    },
-    {
-      x: s2x,
-      y: gap * 0.56,
-      z: s2z,
-      r: radius * 0.32,
-      h: plateThickness * 1.05,
-      fill: '#edf2f7',
-      alpha: coreOpacity,
-    },
-    {
-      x: relDx,
-      y: gap + relDy,
-      z: relDz,
-      r: radius,
-      h: plateThickness,
-      fill: '#d2dae6',
-      alpha: shellOpacity,
-    },
+    { x: s1x, y: gap * 0.35, z: s1z, r: radius * 0.22, h: plateThickness * 1.1, fill: '#d1d5db' },
+    { x: s2x, y: gap * 0.56, z: s2z, r: radius * 0.32, h: plateThickness * 1.05, fill: '#e5e7eb' },
+    { x: relDx, y: gap + relDy, z: relDz, r: radius, h: plateThickness, fill: '#c8d0dc' },
     {
       x: relDx,
       y: gap + relDy - plateThickness * 0.85,
       z: relDz,
       r: radius * 0.55,
       h: plateThickness * 0.9,
-      fill: '#a8b3c3',
-      alpha: coreOpacity,
+      fill: '#9ca3af',
     },
   ];
   pieces.sort((a, b) => project(a.x, a.y, a.z).depth - project(b.x, b.y, b.z).depth);
-  for (const p of pieces) {
-    drawPlate(p.x, p.y, p.z, p.r, p.h, p.fill, p.alpha);
-  }
+  for (const p of pieces) drawPlate(p.x, p.y, p.z, p.r, p.h, p.fill);
 
   ctx.globalAlpha = 1;
+
+  // Displacement readout — bottom-left of canvas
+  ctx.font = '10px ui-monospace, monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.40)';
+  ctx.fillText(`dX ${relDx.toFixed(2)}  dZ ${relDz.toFixed(2)}`, 6, cssH - 6);
 }
+
+// ---------------------------------------------------------------------------
+// Hooks
+// ---------------------------------------------------------------------------
 
 function useActiveTimeHistory(): TimeHistoryResults | null {
   const results = useAnalysisStore((s) => s.results);
@@ -339,6 +278,10 @@ function useActiveTimeHistory(): TimeHistoryResults | null {
   }
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function BearingAssemblyWindow() {
   const bearings = useModelStore((s) => s.bearings);
@@ -355,12 +298,8 @@ export function BearingAssemblyWindow() {
     () => Array.from(bearings.values()).sort((a, b) => a.id - b.id),
     [bearings],
   );
-  const [collapsed, setCollapsed] = useState(false);
-  const [transparent, setTransparent] = useState(false);
+
   const [showOrbit, setShowOrbit] = useState(true);
-  const [dragMode, setDragMode] = useState<'rotate' | 'pan'>('rotate');
-  const [expanded, setExpanded] = useState(false);
-  const [sizePreset, setSizePreset] = useState<'sm' | 'md' | 'lg'>('sm');
   const [viewZoom, setViewZoom] = useState(1);
   const [viewPan, setViewPan] = useState({ x: 0, y: 0 });
   const [viewYaw, setViewYaw] = useState(-Math.PI / 4);
@@ -378,9 +317,7 @@ export function BearingAssemblyWindow() {
   useEffect(() => {
     if (bearingList.length === 0) return;
     const hasActive = activeBearingId != null && bearingList.some((b) => b.id === activeBearingId);
-    if (!hasActive) {
-      setActiveBearing(bearingList[0]?.id ?? null);
-    }
+    if (!hasActive) setActiveBearing(bearingList[0]?.id ?? null);
   }, [bearingList, activeBearingId, setActiveBearing]);
 
   const bearing = bearingList[selectedIdx] ?? null;
@@ -398,10 +335,6 @@ export function BearingAssemblyWindow() {
   const gap = Math.max(4, Math.min(16, radius * 0.5 * bearingVerticalScale));
   const orbitY = -plateThickness * 0.72;
 
-  // Use unit scaleFactor (1) for bearing-local displacements so the assembly
-  // view stays proportional to the bearing's physical geometry (radius, gap).
-  // The orbit and plate offsets use raw displacements in inches, not the
-  // global deformation amplification factor.
   const localScale = 1;
   const fullOrbitPoints = useMemo(() => {
     if (!thResults || !bearing) return [] as [number, number, number][];
@@ -435,8 +368,6 @@ export function BearingAssemblyWindow() {
     zUpData,
   );
 
-  // Use relative displacement only at unit scale so plate offsets match
-  // the bearing's physical geometry (radius ≈ 12-36 inches).
   const relDx = dispJ[0] - dispI[0];
   const relDy = dispJ[1] - dispI[1];
   const relDz = dispJ[2] - dispI[2];
@@ -455,7 +386,6 @@ export function BearingAssemblyWindow() {
       radius,
       gap,
       plateThickness,
-      transparent,
       viewZoom,
       viewPanX: viewPan.x,
       viewPanY: viewPan.y,
@@ -473,7 +403,6 @@ export function BearingAssemblyWindow() {
     radius,
     gap,
     plateThickness,
-    transparent,
     viewZoom,
     viewPan.x,
     viewPan.y,
@@ -507,8 +436,7 @@ export function BearingAssemblyWindow() {
     const dx = e.clientX - dragRef.current.x;
     const dy = e.clientY - dragRef.current.y;
     dragRef.current = { active: true, x: e.clientX, y: e.clientY };
-    const effectiveMode = e.shiftKey ? 'pan' : dragMode;
-    if (effectiveMode === 'pan') {
+    if (e.shiftKey) {
       setViewPan((p) => ({ x: p.x + dx, y: p.y + dy }));
     } else {
       setViewYaw((y) => y + dx * 0.012);
@@ -523,177 +451,71 @@ export function BearingAssemblyWindow() {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
   };
-  const panelMetrics =
-    expanded || sizePreset === 'lg'
-      ? { width: 420, canvasHeight: 300 }
-      : sizePreset === 'md'
-        ? { width: 320, canvasHeight: 230 }
-        : { width: 250, canvasHeight: 180 };
+
+  const prevBearing = () => {
+    const nextIdx = (selectedIdx - 1 + bearingList.length) % bearingList.length;
+    setActiveBearing(bearingList[nextIdx]?.id ?? null);
+  };
+  const nextBearing = () => {
+    const nextIdx = (selectedIdx + 1) % bearingList.length;
+    setActiveBearing(bearingList[nextIdx]?.id ?? null);
+  };
+  const resetView = () => {
+    setViewZoom(1);
+    setViewPan({ x: 0, y: 0 });
+    setViewYaw(-Math.PI / 4);
+    setViewPitch(0.62);
+  };
 
   return (
     <div
-      className="absolute bottom-3 left-3 z-10 overflow-hidden rounded-lg"
-      style={{
-        width: panelMetrics.width,
-        backgroundColor: 'rgba(31, 41, 55, 0.92)',
-        border: '1px solid rgba(212, 175, 55, 0.35)',
-      }}
+      className="bearing-assembly-panel"
       onPointerDown={(e) => e.stopPropagation()}
       onPointerMove={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >
-      <div
-        className="flex cursor-pointer items-center justify-between px-2 py-1 select-none"
-        style={{ borderBottom: collapsed ? 'none' : '1px solid rgba(255,255,255,0.08)' }}
-        onClick={() => setCollapsed((c) => !c)}
-      >
-        <span className="text-[9px] font-semibold uppercase tracking-wide text-gray-300">
-          Bearing Assembly
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpanded((v) => !v);
-            }}
-            className="rounded px-1 text-[9px] text-gray-300 hover:bg-white/10"
-            title={expanded ? 'Collapse panel' : 'Expand panel'}
-          >
-            {expanded ? 'Min' : 'Max'}
-          </button>
-          <span className="text-[10px] text-gray-500">{collapsed ? '\u25B2' : '\u25BC'}</span>
-        </div>
-      </div>
-      {!collapsed && (
-        <>
-          {bearingList.length > 1 && (
-            <div
-              className="flex items-center justify-center gap-2 py-1"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  const nextIdx = (selectedIdx - 1 + bearingList.length) % bearingList.length;
-                  setActiveBearing(bearingList[nextIdx]?.id ?? null);
-                }}
-                className="px-1 text-[10px] text-gray-400 hover:text-gray-200"
-              >
-                &lt;
-              </button>
-              <span className="min-w-[90px] text-center font-mono text-[9px] text-gray-300">
-                Bearing {bearing.id} ({selectedIdx + 1}/{bearingList.length})
+      {/* Canvas — the main content */}
+      <canvas
+        ref={canvasRef}
+        className="bearing-assembly-canvas"
+        style={{ touchAction: 'none' }}
+        onWheel={handleWheel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      />
+
+      {/* Compact bottom bar */}
+      <div className="bearing-assembly-bar">
+        {bearingList.length > 1 && (
+          <>
+            <button className="bearing-assembly-btn" onClick={prevBearing}>
+              ‹
+            </button>
+            <span className="bearing-assembly-label">
+              {bearing.label ?? `Brg ${bearing.id}`}
+              <span className="bearing-assembly-count">
+                {selectedIdx + 1}/{bearingList.length}
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const nextIdx = (selectedIdx + 1) % bearingList.length;
-                  setActiveBearing(bearingList[nextIdx]?.id ?? null);
-                }}
-                className="px-1 text-[10px] text-gray-400 hover:text-gray-200"
-              >
-                &gt;
-              </button>
-            </div>
-          )}
-          <div
-            className="flex items-center justify-between gap-2 px-2 py-1"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setDragMode('rotate')}
-                className={`rounded px-1 text-[8px] ${dragMode === 'rotate' ? 'bg-yellow-500/25 text-yellow-300' : 'text-gray-300 hover:bg-white/10'}`}
-              >
-                Rotate
-              </button>
-              <button
-                type="button"
-                onClick={() => setDragMode('pan')}
-                className={`rounded px-1 text-[8px] ${dragMode === 'pan' ? 'bg-yellow-500/25 text-yellow-300' : 'text-gray-300 hover:bg-white/10'}`}
-              >
-                Pan
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewZoom(1);
-                  setViewPan({ x: 0, y: 0 });
-                  setViewYaw(-Math.PI / 4);
-                  setViewPitch(0.62);
-                }}
-                className="rounded px-1 text-[8px] text-gray-300 hover:bg-white/10"
-              >
-                Reset
-              </button>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setSizePreset('sm')}
-                className={`rounded px-1 text-[8px] ${sizePreset === 'sm' ? 'bg-yellow-500/25 text-yellow-300' : 'text-gray-300 hover:bg-white/10'}`}
-              >
-                S
-              </button>
-              <button
-                type="button"
-                onClick={() => setSizePreset('md')}
-                className={`rounded px-1 text-[8px] ${sizePreset === 'md' ? 'bg-yellow-500/25 text-yellow-300' : 'text-gray-300 hover:bg-white/10'}`}
-              >
-                M
-              </button>
-              <button
-                type="button"
-                onClick={() => setSizePreset('lg')}
-                className={`rounded px-1 text-[8px] ${sizePreset === 'lg' ? 'bg-yellow-500/25 text-yellow-300' : 'text-gray-300 hover:bg-white/10'}`}
-              >
-                L
-              </button>
-              <label className="ml-1 flex cursor-pointer items-center gap-1 text-[8px] text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={showOrbit}
-                  onChange={(e) => setShowOrbit(e.target.checked)}
-                  className="h-2.5 w-2.5 accent-yellow-500"
-                />
-                Orbit
-              </label>
-              <label className="ml-1 flex cursor-pointer items-center gap-1 text-[8px] text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={transparent}
-                  onChange={(e) => setTransparent(e.target.checked)}
-                  className="h-2.5 w-2.5 accent-yellow-500"
-                />
-                Xray
-              </label>
-            </div>
-          </div>
-          <div className="px-1 pt-1">
-            <div
-              className="w-full rounded bg-slate-900/30"
-              style={{ height: panelMetrics.canvasHeight }}
-            >
-              <canvas
-                ref={canvasRef}
-                className="h-full w-full cursor-grab rounded active:cursor-grabbing"
-                style={{ touchAction: 'none' }}
-                onWheel={handleWheel}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
-              />
-            </div>
-          </div>
-          <div className="px-2 py-1 text-[8px] text-gray-400">
-            Step {currentTimeStep} | dX {relDx.toFixed(3)} dY {relDy.toFixed(3)} dZ{' '}
-            {relDz.toFixed(3)}
-          </div>
-        </>
-      )}
+            </span>
+            <button className="bearing-assembly-btn" onClick={nextBearing}>
+              ›
+            </button>
+            <span className="bearing-assembly-sep" />
+          </>
+        )}
+        <button
+          className="bearing-assembly-btn"
+          data-active={showOrbit}
+          onClick={() => setShowOrbit((v) => !v)}
+        >
+          Orbit
+        </button>
+        <button className="bearing-assembly-btn" onClick={resetView}>
+          Reset
+        </button>
+      </div>
     </div>
   );
 }

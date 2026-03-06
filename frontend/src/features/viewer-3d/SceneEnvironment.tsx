@@ -1,7 +1,7 @@
 /**
  * SceneEnvironment.tsx
  *
- * Provides 4 selectable environment presets for the 3D structural viewer.
+ * Provides 6 selectable environment presets for the 3D structural viewer.
  * Each preset defines background, lighting, ground treatment, and atmosphere
  * to present the gold/yellow structural model at industry-standard visual quality.
  *
@@ -9,10 +9,11 @@
  * to the loaded model's bounding box via the `bounds` prop from useModelBounds.
  *
  * Presets:
- *   - Studio:    Clean product-photography lighting, gradient backdrop, reflective floor
- *   - Outdoor:   Natural sky, soft shadows, sunlit ground plane
- *   - Dark:      Dramatic rim lighting, near-black backdrop, floating model
- *   - Blueprint: Navy-blue technical grid, even lighting, engineering aesthetic
+ *   - Test Lab:      Overhead fixtures, concrete floor, subtle grid
+ *   - Studio:        Clean product-photography lighting, gradient backdrop, reflective floor
+ *   - Outdoor:       Natural sky, soft shadows, sunlit ground plane
+ *   - Dark:          Dramatic rim lighting, near-black backdrop, floating model
+ *   - Blueprint:     Navy-blue technical grid, even lighting, engineering aesthetic
  *
  * All environments are procedural — no external HDR files are loaded.
  * Compatible with frameloop="demand" via useThree().invalidate().
@@ -121,6 +122,113 @@ function SceneFog({ color, near, far }: { color: string; near: number; far: numb
   }, [scene, color, near, far, invalidate]);
 
   return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEST LAB ENVIRONMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+// Clean industrial lab: overhead fixtures, concrete-tone floor, subtle grid.
+// No enclosure geometry — keeps focus on the structural model.
+
+function TestLabEnvironment({ bounds }: EnvironmentSubProps) {
+  const [cx, , cz] = bounds.center;
+  const s = bounds.shadowExtent;
+  const gs = bounds.gridSize;
+  const floorY = bounds.min[1] - 2;
+  const ceilingY = Math.max(bounds.max[1] + bounds.maxDimension * 0.35, floorY + 220);
+  const planeSize = gs * 1.3;
+
+  return (
+    <>
+      <SceneBackground topColor="#dce3e8" bottomColor="#7f8a93" />
+      <SceneFog color="#aeb8bf" near={bounds.fogFar * 0.3} far={bounds.fogFar * 1.1} />
+
+      <hemisphereLight args={['#f5f8fb', '#616d75', 0.55]} />
+      <ambientLight intensity={0.4} color="#f3f4f6" />
+
+      <directionalLight
+        position={[cx + s * 0.12, ceilingY, cz + s * 0.08]}
+        intensity={2.15}
+        color="#fffef7"
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-camera-far={s * 3}
+        shadow-camera-near={10}
+        shadow-camera-left={-s}
+        shadow-camera-right={s}
+        shadow-camera-top={s}
+        shadow-camera-bottom={-s}
+        shadow-bias={-0.001}
+      />
+      <directionalLight
+        position={[cx - s * 0.22, ceilingY * 0.72, cz - s * 0.16]}
+        intensity={0.75}
+        color="#d7eefc"
+      />
+
+      <Environment resolution={64} frames={1}>
+        {[-0.42, -0.14, 0.14, 0.42].map((offset) => (
+          <Lightformer
+            key={offset}
+            form="rect"
+            intensity={3}
+            position={[cx + gs * offset, ceilingY - 16, cz - gs * 0.1]}
+            rotation-x={Math.PI / 2}
+            scale={[gs * 0.22, 10, 1]}
+            color="#fffdf5"
+          />
+        ))}
+        <Lightformer
+          form="rect"
+          intensity={1.1}
+          position={[cx - gs * 0.42, ceilingY * 0.72, cz + gs * 0.22]}
+          rotation-y={Math.PI / 2}
+          scale={[gs * 0.28, ceilingY * 0.18, 1]}
+          color="#d8ecff"
+        />
+        <Lightformer
+          form="rect"
+          intensity={1.2}
+          position={[cx + gs * 0.42, ceilingY * 0.72, cz + gs * 0.18]}
+          rotation-y={-Math.PI / 2}
+          scale={[gs * 0.28, ceilingY * 0.18, 1]}
+          color="#ffe3a3"
+        />
+      </Environment>
+
+      <ContactShadows
+        position={[cx, floorY + 0.5, cz]}
+        opacity={0.45}
+        scale={gs * 1.4}
+        blur={2.6}
+        far={s * 1.5}
+        resolution={512}
+        color="#262b31"
+        frames={1}
+      />
+
+      <mesh rotation-x={-Math.PI / 2} position={[cx, floorY, cz]} receiveShadow>
+        <planeGeometry args={[planeSize, planeSize]} />
+        <meshStandardMaterial color="#6f7a83" roughness={0.76} metalness={0.12} />
+      </mesh>
+
+      <Grid
+        args={[gs * 1.12, gs * 1.12]}
+        cellSize={bounds.cellSize}
+        cellThickness={0.55}
+        cellColor="#56626c"
+        sectionSize={bounds.sectionSize}
+        sectionThickness={1.25}
+        sectionColor="#d0a11e"
+        fadeDistance={gs * 1.25}
+        fadeStrength={1.3}
+        followCamera={false}
+        position={[cx, floorY + 0.12, cz]}
+        side={THREE.DoubleSide}
+      />
+    </>
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -559,6 +667,8 @@ export function SceneEnvironment({ environment, bounds }: SceneEnvironmentProps)
   useInvalidateOnChange(environment);
 
   switch (environment) {
+    case 'lab':
+      return <TestLabEnvironment bounds={bounds} />;
     case 'studio':
       return <StudioEnvironment bounds={bounds} />;
     case 'outdoor':

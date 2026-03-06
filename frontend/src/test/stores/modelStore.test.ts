@@ -122,6 +122,36 @@ describe('modelStore — loadSampleModel', () => {
   });
 });
 
+describe('modelStore — loadGeneratedPresetModel', () => {
+  it('loads the isolated The Frame preset with bearings and ground nodes', () => {
+    getState().loadGeneratedPresetModel('theFrameIsolated');
+    const state = getState();
+    const nodes = Array.from(state.nodes.values());
+
+    expect(state.model?.name).toContain('The Frame');
+    expect(state.model?.name).toContain('Isolated');
+    expect(state.bearings.size).toBe(4);
+    expect(nodes.some((node) => node.label?.startsWith('Ground'))).toBe(true);
+  });
+
+  it('loads the long-span pavilion pair with a larger plan footprint', () => {
+    getState().loadGeneratedPresetModel('longSpanPavilionFixed');
+    const fixedState = getState();
+
+    expect(fixedState.model?.name).toContain('Long-Span Pavilion');
+    expect(fixedState.bearings.size).toBe(0);
+    expect(fixedState.nodes.size).toBeGreaterThan(20);
+
+    getState().loadGeneratedPresetModel('longSpanPavilionIsolated');
+    const isolatedState = getState();
+
+    expect(isolatedState.model?.name).toContain('Long-Span Pavilion');
+    expect(isolatedState.model?.name).toContain('Isolated');
+    expect(isolatedState.bearings.size).toBeGreaterThan(0);
+    expect(isolatedState.nodes.size).toBeGreaterThan(fixedState.nodes.size);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Node CRUD
 // ---------------------------------------------------------------------------

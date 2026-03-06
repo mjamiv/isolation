@@ -248,15 +248,13 @@ export function BaseShearSummary() {
   const count = arrowData.length;
 
   return (
-    <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2">
-      <div className="rounded-lg bg-gray-900/90 px-4 py-2 text-center shadow-xl ring-1 ring-red-500/30 backdrop-blur-sm">
-        <div className="text-[10px] font-medium uppercase tracking-widest text-gray-400">
-          Total Base Shear
-        </div>
-        <div className="text-lg font-bold tabular-nums text-red-400">
+    <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2">
+      <div className="viewer-overlay-card px-4 py-3 text-center">
+        <div className="viewer-overlay-kicker">Global Demand</div>
+        <div className="mt-1 text-lg font-bold tabular-nums text-red-400">
           V = {formatShear(totalShear)} {forceUnit}
         </div>
-        <div className="text-[10px] text-gray-500">
+        <div className="mt-1 text-[11px] text-white/52">
           {count} column{count !== 1 ? 's' : ''}
         </div>
       </div>

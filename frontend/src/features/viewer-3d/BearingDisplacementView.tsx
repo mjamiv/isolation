@@ -333,88 +333,89 @@ export function BearingDisplacementView() {
   if (!showBearingDisplacement) return null;
   if (numBearings === 0 || !thResults) return null;
 
-  const panelWidth = 192;
-
   return (
-    <div
-      className="absolute bottom-3 right-3 z-10 rounded-lg overflow-hidden"
-      style={{
-        width: panelWidth,
-        backgroundColor: 'rgba(17, 17, 17, 0.92)',
-        border: '1px solid rgba(212, 175, 55, 0.35)',
-      }}
-    >
-      {/* Header — always visible */}
-      <div
-        className="flex items-center justify-between px-2 py-1 cursor-pointer select-none"
-        style={{ borderBottom: collapsed ? 'none' : '1px solid rgba(255,255,255,0.08)' }}
-        onClick={() => setCollapsed((c) => !c)}
-      >
-        <span className="text-[9px] font-semibold text-gray-300 tracking-wide uppercase">
-          Bearing Orbits
-        </span>
-        <div className="flex items-center gap-1.5">
-          {!collapsed && thResults && (
-            <span className="text-[8px] text-yellow-400 font-mono">
-              t={(currentTimeStep * thResults.dt).toFixed(2)}s
-            </span>
-          )}
-          <span className="text-[10px] text-gray-500">{collapsed ? '\u25B2' : '\u25BC'}</span>
-        </div>
-      </div>
-
-      {!collapsed && (
-        <>
-          {/* Bearing selector */}
-          {numBearings > 1 && (
-            <div
-              className="flex items-center justify-center gap-2 py-1"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  const nextIdx = (selectedIdx - 1 + numBearings) % numBearings;
-                  setActiveBearing(bearingPlots[nextIdx]?.bearingId ?? null);
-                }}
-                className="text-[10px] text-gray-400 hover:text-gray-200 px-1"
-              >
-                &lt;
-              </button>
-              <span className="text-[9px] text-gray-300 font-mono min-w-[80px] text-center">
-                {activePlot?.label ?? ''} ({selectedIdx + 1}/{numBearings})
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const nextIdx = (selectedIdx + 1) % numBearings;
-                  setActiveBearing(bearingPlots[nextIdx]?.bearingId ?? null);
-                }}
-                className="text-[10px] text-gray-400 hover:text-gray-200 px-1"
-              >
-                &gt;
-              </button>
-            </div>
-          )}
-          {numBearings === 1 && (
-            <div
-              className="flex items-center justify-center py-1"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              <span className="text-[9px] text-gray-300 font-mono">{activePlot?.label ?? ''}</span>
-            </div>
-          )}
-
-          {/* Canvas */}
-          <div className="flex justify-center px-2 pt-1">
-            <canvas
-              ref={canvasRef}
-              className="pointer-events-none"
-              style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
-            />
+    <div className="absolute bottom-4 right-4 z-20">
+      <div className="viewer-overlay-card viewer-overlay-card--sm">
+        {/* Header — always visible */}
+        <div className="viewer-overlay-header">
+          <div>
+            <div className="viewer-overlay-kicker">Isolation Response</div>
+            <div className="viewer-overlay-title">Bearing Orbit</div>
           </div>
-        </>
-      )}
+          <div className="viewer-overlay-stack">
+            <div className="viewer-chip viewer-chip--muted">
+              t={(currentTimeStep * thResults.dt).toFixed(2)}s
+            </div>
+            <button
+              type="button"
+              className="viewer-tool-button"
+              onClick={() => setCollapsed((c) => !c)}
+            >
+              {collapsed ? 'Open' : 'Hide'}
+            </button>
+          </div>
+        </div>
+
+        {!collapsed && (
+          <div className="viewer-overlay-body">
+            <div className="viewer-overlay-toolbar">
+              <div className="viewer-overlay-stack">
+                {numBearings > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextIdx = (selectedIdx - 1 + numBearings) % numBearings;
+                        setActiveBearing(bearingPlots[nextIdx]?.bearingId ?? null);
+                      }}
+                      className="viewer-tool-button"
+                    >
+                      Prev
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextIdx = (selectedIdx + 1) % numBearings;
+                        setActiveBearing(bearingPlots[nextIdx]?.bearingId ?? null);
+                      }}
+                      className="viewer-tool-button"
+                    >
+                      Next
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="viewer-chip">
+                {selectedIdx + 1}/{numBearings}
+              </div>
+            </div>
+
+            <div className="viewer-overlay-section">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-white/88">{activePlot?.label ?? ''}</div>
+                <div className="font-mono text-[11px] text-white/52">
+                  Cap {activePlot?.dispCapacity.toFixed(1)} in
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950/55">
+                <div className="flex justify-center px-3 py-3">
+                  <canvas
+                    ref={canvasRef}
+                    className="pointer-events-none"
+                    style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="viewer-overlay-footer">
+              <span>Plan orbit relative to lower bearing node</span>
+              <span className="viewer-overlay-metric">dt {thResults.dt.toFixed(3)} s</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { Suspense, useEffect, useMemo } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
 import * as THREE from 'three';
 import { useDisplayStore } from '../../stores/displayStore';
@@ -9,34 +9,93 @@ import { BearingDisplacementView } from './BearingDisplacementView';
 import { BaseShearSummary } from './BaseShearLabels';
 import { SceneEnvironment } from './SceneEnvironment';
 import { useModelBounds } from './useModelBounds';
+import { ViewerHud } from './ViewerHud';
+import type { CameraViewPreset } from '../../stores/displayStore';
 
-// ── Camera framing ──────────────────────────────────────────────────────
-// Adjusts camera position, far plane, and orbit target whenever the loaded
-// model changes. Runs once per model load — not on every frame.
+type CameraControls = { target: THREE.Vector3; update: () => void };
 
-function CameraFraming() {
+function getCameraPresetPosition(
+  view: CameraViewPreset,
+  bounds: ReturnType<typeof useModelBounds>,
+) {
+  const [cx, cy, cz] = bounds.center;
+  const dist = Math.max(bounds.maxDimension * 1.6, 180);
+
+  switch (view) {
+    case 'plan':
+      return {
+        position: new THREE.Vector3(cx, cy + dist * 1.15, cz + 0.01),
+        up: new THREE.Vector3(0, 0, 1),
+      };
+    case 'front':
+      return {
+        position: new THREE.Vector3(cx, cy + dist * 0.18, cz + dist * 1.1),
+        up: new THREE.Vector3(0, 1, 0),
+      };
+    case 'side':
+      return {
+        position: new THREE.Vector3(cx + dist * 1.1, cy + dist * 0.18, cz),
+        up: new THREE.Vector3(0, 1, 0),
+      };
+    case 'iso':
+    default:
+      return {
+        position: new THREE.Vector3(cx + dist * 0.82, cy + dist * 0.52, cz + dist * 0.82),
+        up: new THREE.Vector3(0, 1, 0),
+      };
+  }
+}
+
+function CameraRig() {
   const bounds = useModelBounds();
+  const cameraView = useDisplayStore((state) => state.cameraView);
+  const cameraCommandVersion = useDisplayStore((state) => state.cameraCommandVersion);
   const { camera, invalidate } = useThree();
-  const controlsRef = useThree((state) => state.controls);
+  const controlsRef = useThree((state) => state.controls) as unknown as CameraControls | undefined;
+  const targetPositionRef = useRef(new THREE.Vector3());
+  const targetUpRef = useRef(new THREE.Vector3(0, 1, 0));
+  const targetLookAtRef = useRef(new THREE.Vector3(...bounds.center));
+  const animatingRef = useRef(false);
 
   useEffect(() => {
-    const [cx, cy, cz] = bounds.center;
+    const target = new THREE.Vector3(...bounds.center);
+    const preset = getCameraPresetPosition(cameraView, bounds);
 
-    // Position camera at ~1.8x the max dimension away, looking at center
-    const dist = bounds.maxDimension * 1.8;
-    camera.position.set(cx + dist * 0.7, cy + dist * 0.5, cz + dist * 0.7);
+    targetPositionRef.current.copy(preset.position);
+    targetUpRef.current.copy(preset.up);
+    targetLookAtRef.current.copy(target);
     camera.far = bounds.cameraFar;
     camera.updateProjectionMatrix();
+    animatingRef.current = true;
+    invalidate();
+  }, [bounds, camera, cameraView, cameraCommandVersion, invalidate]);
 
-    // Update orbit target to model center
-    if (controlsRef && 'target' in controlsRef) {
-      const ctrl = controlsRef as unknown as { target: THREE.Vector3; update: () => void };
-      ctrl.target.set(cx, cy, cz);
-      ctrl.update();
+  useFrame(() => {
+    const controls = controlsRef;
+    if (!controls || !animatingRef.current) return;
+
+    camera.position.lerp(targetPositionRef.current, 0.16);
+    camera.up.lerp(targetUpRef.current, 0.2).normalize();
+    controls.target.lerp(targetLookAtRef.current, 0.18);
+    camera.lookAt(controls.target);
+    controls.update();
+
+    const positionSettled = camera.position.distanceTo(targetPositionRef.current) < 0.5;
+    const targetSettled = controls.target.distanceTo(targetLookAtRef.current) < 0.5;
+    const upSettled = camera.up.distanceTo(targetUpRef.current) < 0.01;
+
+    if (positionSettled && targetSettled && upSettled) {
+      camera.position.copy(targetPositionRef.current);
+      camera.up.copy(targetUpRef.current);
+      controls.target.copy(targetLookAtRef.current);
+      camera.lookAt(controls.target);
+      controls.update();
+      animatingRef.current = false;
+      return;
     }
 
     invalidate();
-  }, [bounds, camera, controlsRef, invalidate]);
+  });
 
   return null;
 }
@@ -60,7 +119,7 @@ function SceneContent() {
       <SceneEnvironment environment={environment} bounds={bounds} />
 
       {/* Auto-frame camera to model extents on load */}
-      <CameraFraming />
+      <CameraRig />
 
       {/* Camera controls — dynamic limits based on model size */}
       <OrbitControls
@@ -69,6 +128,7 @@ function SceneContent() {
         dampingFactor={0.1}
         minDistance={Math.max(bounds.maxDimension * 0.1, 20)}
         maxDistance={bounds.orbitMaxDistance}
+        screenSpacePanning
         target={new THREE.Vector3(...bounds.center)}
       />
 
@@ -132,6 +192,8 @@ export function Viewer3D() {
           <SceneContent />
         </Suspense>
       </Canvas>
+
+      <ViewerHud />
 
       {/* Bearing displacement orbit overlay (plan view) */}
       <BearingDisplacementView />
