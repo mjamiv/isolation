@@ -97,7 +97,7 @@ describe('ResultsPanel — modal results', () => {
 // ---------------------------------------------------------------------------
 
 describe('ResultsPanel — pushover results', () => {
-  it('renders PushoverResults for pushover analysis type', () => {
+  it('renders PushoverResults for pushover analysis type', async () => {
     const pushoverData: PushoverResults = {
       capacityCurve: [
         { baseShear: 0, roofDisplacement: 0 },
@@ -120,12 +120,13 @@ describe('ResultsPanel — pushover results', () => {
     getState().setAnalysisType('pushover');
 
     render(<ResultsPanel />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('Pushover Analysis')).toBeInTheDocument();
     expect(screen.getByText('Max Base Shear:')).toBeInTheDocument();
     expect(screen.getByText('Capacity Curve')).toBeInTheDocument();
   });
 
-  it('renders pushover with hinge states', () => {
+  it('renders pushover with hinge states', async () => {
     const hingeStates: HingeState[] = [
       {
         elementId: 1,
@@ -157,10 +158,11 @@ describe('ResultsPanel — pushover results', () => {
     getState().setAnalysisType('pushover');
 
     render(<ResultsPanel />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('Plastic Hinge States')).toBeInTheDocument();
   });
 
-  it('shows wall time when available', () => {
+  it('shows wall time when available', async () => {
     const mockResults: AnalysisResults = {
       analysisId: 'test-005',
       modelId: 'model-001',
@@ -179,6 +181,7 @@ describe('ResultsPanel — pushover results', () => {
     getState().setAnalysisType('pushover');
 
     render(<ResultsPanel />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('2.56s')).toBeInTheDocument();
   });
 });

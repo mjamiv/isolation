@@ -65,20 +65,23 @@ function makeHingeStates(): HingeState[] {
 // ---------------------------------------------------------------------------
 
 describe('PushoverResults — summary stats', () => {
-  it('renders max base shear', () => {
+  it('renders max base shear', async () => {
     render(<PushoverResults data={makePushoverData()} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('Max Base Shear:')).toBeInTheDocument();
     expect(screen.getByText('120.00 kip')).toBeInTheDocument();
   });
 
-  it('renders max roof displacement', () => {
+  it('renders max roof displacement', async () => {
     render(<PushoverResults data={makePushoverData()} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('Max Roof Disp:')).toBeInTheDocument();
     expect(screen.getByText('10.0000 in')).toBeInTheDocument();
   });
 
-  it('renders ductility ratio', () => {
+  it('renders ductility ratio', async () => {
     render(<PushoverResults data={makePushoverData()} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('Ductility Ratio:')).toBeInTheDocument();
     expect(screen.getByText('4.50')).toBeInTheDocument();
   });
@@ -89,8 +92,9 @@ describe('PushoverResults — summary stats', () => {
 // ---------------------------------------------------------------------------
 
 describe('PushoverResults — capacity curve', () => {
-  it('renders chart heading', () => {
+  it('renders chart heading', async () => {
     render(<PushoverResults data={makePushoverData()} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('Capacity Curve')).toBeInTheDocument();
   });
 
@@ -99,9 +103,10 @@ describe('PushoverResults — capacity curve', () => {
     expect(screen.getByTestId('plotly-chart')).toBeInTheDocument();
   });
 
-  it('handles empty capacity curve gracefully', () => {
+  it('handles empty capacity curve gracefully', async () => {
     const data = makePushoverData({ capacityCurve: [] });
     render(<PushoverResults data={data} />);
+    await screen.findByTestId('plotly-chart');
     // Should still render without errors
     expect(screen.getByText('Capacity Curve')).toBeInTheDocument();
     expect(screen.getByTestId('plotly-chart')).toBeInTheDocument();
@@ -113,44 +118,50 @@ describe('PushoverResults — capacity curve', () => {
 // ---------------------------------------------------------------------------
 
 describe('PushoverResults — hinge states', () => {
-  it('renders hinge state table when hingeStates provided', () => {
+  it('renders hinge state table when hingeStates provided', async () => {
     const hingeStates = makeHingeStates();
     render(<PushoverResults data={makePushoverData()} hingeStates={hingeStates} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('Plastic Hinge States')).toBeInTheDocument();
   });
 
-  it('renders correct number of hinge rows', () => {
+  it('renders correct number of hinge rows', async () => {
     const hingeStates = makeHingeStates();
     render(<PushoverResults data={makePushoverData()} hingeStates={hingeStates} />);
+    await screen.findByTestId('plotly-chart');
     // 3 hinges = 3 body rows, plus header row = 4 <tr> elements
     const rows = screen.getAllByRole('row');
     // header + 3 data rows
     expect(rows).toHaveLength(4);
   });
 
-  it('renders element IDs in hinge table', () => {
+  it('renders element IDs in hinge table', async () => {
     const hingeStates = makeHingeStates();
     render(<PushoverResults data={makePushoverData()} hingeStates={hingeStates} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 
-  it('renders performance levels with correct text', () => {
+  it('renders performance levels with correct text', async () => {
     const hingeStates = makeHingeStates();
     render(<PushoverResults data={makePushoverData()} hingeStates={hingeStates} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.getByText('IO')).toBeInTheDocument();
     expect(screen.getByText('LS')).toBeInTheDocument();
     expect(screen.getByText('CP')).toBeInTheDocument();
   });
 
-  it('does not render hinge table when no hingeStates', () => {
+  it('does not render hinge table when no hingeStates', async () => {
     render(<PushoverResults data={makePushoverData()} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.queryByText('Plastic Hinge States')).not.toBeInTheDocument();
   });
 
-  it('does not render hinge table when hingeStates is empty', () => {
+  it('does not render hinge table when hingeStates is empty', async () => {
     render(<PushoverResults data={makePushoverData()} hingeStates={[]} />);
+    await screen.findByTestId('plotly-chart');
     expect(screen.queryByText('Plastic Hinge States')).not.toBeInTheDocument();
   });
 });
