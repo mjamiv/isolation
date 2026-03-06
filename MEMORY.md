@@ -1,5 +1,24 @@
 # MEMORY
 
+## Session Update (2026-03-05 — Bearing Assembly 3D Rendering & Interaction Fixes)
+- Fixed bearing assembly rotation:
+  - Root cause: pointer events on the assembly canvas were bubbling up to the parent Three.js `<Canvas>`, causing the main scene to rotate instead of the bearing view.
+  - Added `e.stopPropagation()` to all pointer handlers (down/move/up) on the canvas and the panel container div.
+- Rewrote `drawPlate` for proper 3D rendering:
+  - Directional lighting with a fixed light direction (top-right-front).
+  - `shadeFace()` applies brightness modulation based on face normal dot product with light.
+  - Back-face culling using 2D cross-product of projected quad edges — back-facing side quads are skipped.
+  - Front/back face distinction — face closer to camera drawn last (on top) with brighter shading.
+  - Depth-sorted plate draw order: all 7 assembly pieces are sorted by `project().depth` before rendering.
+  - Increased segment count from 24 to 32 for smoother cylinder outlines.
+- Fixed displacement scale normalization:
+  - Changed `scaleFactor` to `localScale = 1` for bearing-local displacements.
+  - Orbit points and plate offsets now use raw displacements (inches) instead of global deformation amplification.
+  - Removed unused `scaleFactor` import from displayStore.
+- Added load case presets to AnalysisDialog:
+  - `DIRECTION_PRESETS` array with 11 preset options (X only, Y only, Z only, X+Z combos, X+Y+Z combos).
+  - Dropdown in time-history section populates directionScales state.
+
 ## Session Update (2026-03-05 — Bearing Assembly UX & WebGL Stability)
 - Overhauled Bearing Assembly iso viewer:
   - Replaced second WebGL `Canvas` with 2D canvas renderer to fix `Context Lost` crashes.
@@ -26,33 +45,26 @@
   - `PlaybackDriver` clamps `currentTimeStep` to valid range when results change.
 
 ## Key Files Updated This Session
-- `frontend/src/features/viewer-3d/BearingAssemblyWindow.tsx` — full rewrite from WebGL to 2D canvas + UX controls
-- `frontend/src/features/viewer-3d/BearingDisplacementView.tsx` — bearing sync via `activeBearingId`
-- `frontend/src/features/viewer-3d/DiaphragmPlanes.tsx` — z-up + timestep deformation fix
-- `frontend/src/features/viewer-3d/PlaybackDriver.tsx` — bounds guard on time step
-- `frontend/src/stores/displayStore.ts` — `activeBearingId` + `setActiveBearing` added
-- `frontend/src/stores/analysisStore.ts` — `setResults` now resets time step
-- `frontend/src/features/results/TimeHistoryResults.tsx` — `scattergl` → `scatter`
-- `frontend/src/features/results/PushoverResults.tsx` — `scattergl` → `scatter`
-- `frontend/src/features/comparison/ComparisonPanel.tsx` — `scattergl` → `scatter`
+- `frontend/src/features/viewer-3d/BearingAssemblyWindow.tsx` — rotation fix, 3D rendering overhaul, displacement scale normalization
+- `frontend/src/features/analysis/AnalysisDialog.tsx` — load case presets dropdown
 
 ## Decisions and Rationale
-- Chose 2D canvas over Three.js Canvas for bearing assembly to avoid WebGL context limits; the isometric projection + plate drawing gives adequate visual quality without GPU context overhead.
-- Switched Plotly from `scattergl` to `scatter` because each `scattergl` trace allocates a WebGL context; combined with the main Three.js scene this exceeded browser limits (typically 16 contexts).
-- Used a single shared `activeBearingId` instead of per-widget local index state to guarantee sync; the ID-driven approach is immune to bearing list ordering differences between widgets.
-- Kept bearing orbit as an opt-in toggle in the assembly view since the 2D isometric projection can distort plan-view orbit shapes.
+- Used `stopPropagation()` on all pointer events because the bearing assembly panel sits atop the main Three.js Canvas; without it, drag events reach `OrbitControls` and rotate the wrong scene.
+- Used directional lighting + back-face culling rather than a simple flat fill so rotation produces visible shading changes — critical for a 2D canvas renderer where there's no GPU-side lighting.
+- Used `localScale = 1` instead of `scaleFactor` because the bearing assembly view needs displacements proportional to bearing physical geometry (radius ~12-36 inches), not the 100x amplified deformation scale used by the main structural scene.
 
 ## Known Issues
-- `frontend/src/services/api.ts` has pre-existing TypeScript typing debt (`npm run type-check` reports ~17 errors).
-- Bearing assembly 2D renderer uses fixed isometric projection angles; no perspective correction.
+- `frontend/src/services/api.ts` has pre-existing TypeScript typing debt (~17 errors).
+- Bearing assembly 2D renderer lacks perspective correction (fixed isometric projection).
+- Bearing assembly rotation is still a known area of concern — user has reported it multiple times. The event propagation fix should resolve it but needs live verification.
 
 ## Current State
 - Branch: `main` (tracking `origin/main`).
-- Working tree has 9 modified files ready for commit.
-- Backend running on `:8000`, frontend on `:5174`.
+- 4 modified files to commit: `BearingAssemblyWindow.tsx`, `AnalysisDialog.tsx`, `package.json`, `package-lock.json`.
+- Backend on `:8000`, frontend on `:5173`.
 
 ## Next Steps
-- Clean up `frontend/src/services/api.ts` type debt so `npm run type-check` is green.
-- Consider adding a mini axis gizmo to the bearing assembly 2D canvas for orientation reference.
-- Run full frontend test suite to verify no regressions from `scatter` switch.
-- Decide whether local artifacts (`.mcp.json`, `frontend/test-results/`, `sh-thd-*`) should be git-ignored or cleaned.
+- Verify bearing rotation works correctly in live browser testing.
+- Clean up `frontend/src/services/api.ts` type debt.
+- Consider adding axis gizmo to bearing assembly view for orientation reference.
+- Add `frontend/.playwright-browsers/` and `frontend/test-results/` to `.gitignore`.

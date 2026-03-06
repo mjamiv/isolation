@@ -48,6 +48,8 @@ htmlcov/
 .pytest_cache/
 .coverage
 .nyc_output/
+**/test-results/
+**/.playwright-browsers/
 
 # Logs
 *.log

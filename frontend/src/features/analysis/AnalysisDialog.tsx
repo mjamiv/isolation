@@ -18,6 +18,25 @@ const ANALYSIS_TYPES: { value: AnalysisType; label: string }[] = [
   { value: 'pushover', label: 'Pushover' },
 ];
 
+interface DirectionPreset {
+  label: string;
+  scales: Record<1 | 2 | 3, number>;
+}
+
+const DIRECTION_PRESETS: DirectionPreset[] = [
+  { label: 'X only (100%)', scales: { 1: 100, 2: 0, 3: 0 } },
+  { label: 'Y only (100%)', scales: { 1: 0, 2: 100, 3: 0 } },
+  { label: 'Z only (100%)', scales: { 1: 0, 2: 0, 3: 100 } },
+  { label: 'X+Z (100/100)', scales: { 1: 100, 2: 0, 3: 100 } },
+  { label: 'X+Z (100/30)', scales: { 1: 100, 2: 0, 3: 30 } },
+  { label: 'X+Z (30/100)', scales: { 1: 30, 2: 0, 3: 100 } },
+  { label: 'X+Y+Z (100/0/30)', scales: { 1: 100, 2: 0, 3: 30 } },
+  { label: 'X+Y+Z (30/0/100)', scales: { 1: 30, 2: 0, 3: 100 } },
+  { label: 'X+Y+Z (100/100/100)', scales: { 1: 100, 2: 100, 3: 100 } },
+  { label: 'X+Y+Z (100/30/30)', scales: { 1: 100, 2: 30, 3: 30 } },
+  { label: 'X+Y+Z (30/30/100)', scales: { 1: 30, 2: 30, 3: 100 } },
+];
+
 export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const [analysisType, setAnalysisType] = useState<AnalysisType>('static');
   const [numModes, setNumModes] = useState('3');
@@ -253,6 +272,25 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   <label className="text-[11px] font-medium text-white/40">
                     Excitation Directions
                   </label>
+                  <div className="mt-1 mb-2">
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const preset = DIRECTION_PRESETS[Number(e.target.value)];
+                        if (preset) setDirectionScales({ ...preset.scales });
+                      }}
+                      className={inputClass}
+                    >
+                      <option value="" disabled>
+                        Load case presets...
+                      </option>
+                      {DIRECTION_PRESETS.map((p, i) => (
+                        <option key={i} value={i}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="mt-1 flex gap-3">
                     {([1, 2, 3] as const).map((dir) => {
                       const label = dir === 1 ? 'X' : dir === 2 ? 'Y' : 'Z';

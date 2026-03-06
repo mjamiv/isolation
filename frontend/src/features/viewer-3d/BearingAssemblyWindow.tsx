@@ -91,6 +91,25 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     return { x: cx + xr * scale, y: cy - yr * scale, depth };
   };
 
+  const PLATE_SEGS = 32;
+
+  // Light direction in world space (top-right-front)
+  const lightDir = { x: 0.35, y: 0.65, z: -0.67 };
+  const lightLen = Math.sqrt(lightDir.x ** 2 + lightDir.y ** 2 + lightDir.z ** 2);
+  lightDir.x /= lightLen;
+  lightDir.y /= lightLen;
+  lightDir.z /= lightLen;
+
+  const shadeFace = (baseColor: string, nDotL: number): string => {
+    const m = baseColor.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if (!m) return baseColor;
+    const br = 0.45 + 0.55 * Math.max(0, nDotL);
+    const rc = Math.min(255, Math.round(parseInt(m[1]!, 16) * br));
+    const gc = Math.min(255, Math.round(parseInt(m[2]!, 16) * br));
+    const bc = Math.min(255, Math.round(parseInt(m[3]!, 16) * br));
+    return `rgb(${rc},${gc},${bc})`;
+  };
+
   const drawPlate = (
     x: number,
     y: number,
@@ -99,30 +118,75 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     h: number,
     fill: string,
     alpha: number,
-    sideShade = 'rgba(30,41,59,0.28)',
   ) => {
-    const top = project(x, y + h * 0.5, z);
-    const bot = project(x, y - h * 0.5, z);
-    const rx = Math.max(2, r * scale);
-    const ry = Math.max(1.5, rx * 0.32);
-    const sideTop = top.y;
-    const sideBot = bot.y;
-
     ctx.globalAlpha = Math.min(alpha, 0.95);
-    ctx.fillStyle = sideShade;
-    ctx.fillRect(top.x - rx, Math.min(sideTop, sideBot), rx * 2, Math.abs(sideBot - sideTop));
 
+    const topY = y + h * 0.5;
+    const botY = y - h * 0.5;
+
+    const topPts: { x: number; y: number; depth: number }[] = [];
+    const botPts: { x: number; y: number; depth: number }[] = [];
+    for (let i = 0; i < PLATE_SEGS; i++) {
+      const angle = (i / PLATE_SEGS) * Math.PI * 2;
+      const px = x + Math.cos(angle) * r;
+      const pz = z + Math.sin(angle) * r;
+      topPts.push(project(px, topY, pz));
+      botPts.push(project(px, botY, pz));
+    }
+
+    // Determine face visibility using cross product of projected edges
+    const topCenter = project(x, topY, z);
+    const botCenter = project(x, botY, z);
+    const topFacesCamera = topCenter.depth > botCenter.depth;
+
+    // Draw back face first (the one further from the camera)
+    const backPts = topFacesCamera ? botPts : topPts;
+    const backNdotL = topFacesCamera ? -lightDir.y : lightDir.y;
     ctx.beginPath();
-    ctx.ellipse(bot.x, bot.y, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(15,23,42,0.42)';
+    ctx.moveTo(backPts[0]!.x, backPts[0]!.y);
+    for (let i = 1; i < PLATE_SEGS; i++) ctx.lineTo(backPts[i]!.x, backPts[i]!.y);
+    ctx.closePath();
+    ctx.fillStyle = shadeFace(fill, backNdotL * 0.5);
     ctx.fill();
 
+    // Side quads — only draw those facing the camera
+    for (let i = 0; i < PLATE_SEGS; i++) {
+      const next = (i + 1) % PLATE_SEGS;
+      const midAngle = ((i + 0.5) / PLATE_SEGS) * Math.PI * 2;
+      const nx = Math.cos(midAngle);
+      const nz = Math.sin(midAngle);
+      const nDotL = nx * lightDir.x + nz * lightDir.z;
+      // Determine if this quad faces the camera via 2D cross product
+      const ex = topPts[next]!.x - topPts[i]!.x;
+      const ey = topPts[next]!.y - topPts[i]!.y;
+      const fx = botPts[i]!.x - topPts[i]!.x;
+      const fy = botPts[i]!.y - topPts[i]!.y;
+      const cross = ex * fy - ey * fx;
+      if (cross >= 0) continue; // back-facing quad, skip
+      ctx.beginPath();
+      ctx.moveTo(topPts[i]!.x, topPts[i]!.y);
+      ctx.lineTo(topPts[next]!.x, topPts[next]!.y);
+      ctx.lineTo(botPts[next]!.x, botPts[next]!.y);
+      ctx.lineTo(botPts[i]!.x, botPts[i]!.y);
+      ctx.closePath();
+      ctx.fillStyle = shadeFace(fill, nDotL * 0.85);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+
+    // Draw front face (the one closer to the camera)
+    const frontPts = topFacesCamera ? topPts : botPts;
+    const frontNdotL = topFacesCamera ? lightDir.y : -lightDir.y;
     ctx.beginPath();
-    ctx.ellipse(top.x, top.y, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fillStyle = fill;
+    ctx.moveTo(frontPts[0]!.x, frontPts[0]!.y);
+    for (let i = 1; i < PLATE_SEGS; i++) ctx.lineTo(frontPts[i]!.x, frontPts[i]!.y);
+    ctx.closePath();
+    ctx.fillStyle = shadeFace(fill, frontNdotL);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
-    ctx.lineWidth = 0.9;
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 0.8;
     ctx.stroke();
   };
 
@@ -188,38 +252,76 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     ctx.fill();
   }
 
-  // Assembly pieces
-  drawPlate(
-    0,
-    -plateThickness * 1.8,
-    0,
-    radius * 0.96,
-    plateThickness * 2.2,
-    '#7c8596',
-    shellOpacity,
-  );
-  drawPlate(0, 0, 0, radius, plateThickness, '#d2dae6', shellOpacity);
-  drawPlate(
-    0,
-    plateThickness * 0.85,
-    0,
-    radius * 0.55,
-    plateThickness * 0.9,
-    '#a8b3c3',
-    coreOpacity,
-  );
-  drawPlate(s1x, gap * 0.35, s1z, radius * 0.22, plateThickness * 1.1, '#dbe2eb', coreOpacity);
-  drawPlate(s2x, gap * 0.56, s2z, radius * 0.32, plateThickness * 1.05, '#edf2f7', coreOpacity);
-  drawPlate(relDx, gap + relDy, relDz, radius, plateThickness, '#d2dae6', shellOpacity);
-  drawPlate(
-    relDx,
-    gap + relDy - plateThickness * 0.85,
-    relDz,
-    radius * 0.55,
-    plateThickness * 0.9,
-    '#a8b3c3',
-    coreOpacity,
-  );
+  // Assembly pieces — depth-sorted so rotated views render correctly
+  const pieces: {
+    x: number;
+    y: number;
+    z: number;
+    r: number;
+    h: number;
+    fill: string;
+    alpha: number;
+  }[] = [
+    {
+      x: 0,
+      y: -plateThickness * 1.8,
+      z: 0,
+      r: radius * 0.96,
+      h: plateThickness * 2.2,
+      fill: '#7c8596',
+      alpha: shellOpacity,
+    },
+    { x: 0, y: 0, z: 0, r: radius, h: plateThickness, fill: '#d2dae6', alpha: shellOpacity },
+    {
+      x: 0,
+      y: plateThickness * 0.85,
+      z: 0,
+      r: radius * 0.55,
+      h: plateThickness * 0.9,
+      fill: '#a8b3c3',
+      alpha: coreOpacity,
+    },
+    {
+      x: s1x,
+      y: gap * 0.35,
+      z: s1z,
+      r: radius * 0.22,
+      h: plateThickness * 1.1,
+      fill: '#dbe2eb',
+      alpha: coreOpacity,
+    },
+    {
+      x: s2x,
+      y: gap * 0.56,
+      z: s2z,
+      r: radius * 0.32,
+      h: plateThickness * 1.05,
+      fill: '#edf2f7',
+      alpha: coreOpacity,
+    },
+    {
+      x: relDx,
+      y: gap + relDy,
+      z: relDz,
+      r: radius,
+      h: plateThickness,
+      fill: '#d2dae6',
+      alpha: shellOpacity,
+    },
+    {
+      x: relDx,
+      y: gap + relDy - plateThickness * 0.85,
+      z: relDz,
+      r: radius * 0.55,
+      h: plateThickness * 0.9,
+      fill: '#a8b3c3',
+      alpha: coreOpacity,
+    },
+  ];
+  pieces.sort((a, b) => project(a.x, a.y, a.z).depth - project(b.x, b.y, b.z).depth);
+  for (const p of pieces) {
+    drawPlate(p.x, p.y, p.z, p.r, p.h, p.fill, p.alpha);
+  }
 
   ctx.globalAlpha = 1;
 }
@@ -243,7 +345,6 @@ export function BearingAssemblyWindow() {
   const nodes = useModelStore((s) => s.nodes);
   const activeBearingId = useDisplayStore((s) => s.activeBearingId);
   const setActiveBearing = useDisplayStore((s) => s.setActiveBearing);
-  const scaleFactor = useDisplayStore((s) => s.scaleFactor);
   const bearingVerticalScale = useDisplayStore((s) => s.bearingVerticalScale);
   const showBearingDisplacement = useDisplayStore((s) => s.showBearingDisplacement);
   const currentTimeStep = useAnalysisStore((s) => s.currentTimeStep);
@@ -296,12 +397,18 @@ export function BearingAssemblyWindow() {
   const plateThickness = Math.min(Math.max(radius * 0.14, 1.2), 4.0);
   const gap = Math.max(4, Math.min(16, radius * 0.5 * bearingVerticalScale));
   const orbitY = -plateThickness * 0.72;
+
+  // Use unit scaleFactor (1) for bearing-local displacements so the assembly
+  // view stays proportional to the bearing's physical geometry (radius, gap).
+  // The orbit and plate offsets use raw displacements in inches, not the
+  // global deformation amplification factor.
+  const localScale = 1;
   const fullOrbitPoints = useMemo(() => {
     if (!thResults || !bearing) return [] as [number, number, number][];
     return extractOrbitPoints(thResults.timeSteps, bearing.nodeI, bearing.nodeJ, 240).map(
-      ([x, z]) => [x * scaleFactor, orbitY, z * scaleFactor] as [number, number, number],
+      ([x, z]) => [x * localScale, orbitY, z * localScale] as [number, number, number],
     );
-  }, [thResults, bearing, scaleFactor, orbitY]);
+  }, [thResults, bearing, orbitY]);
   const orbitPoints = useMemo(() => {
     if (fullOrbitPoints.length === 0) return [] as [number, number, number][];
     const clampedStep = Math.min(currentTimeStep, fullOrbitPoints.length - 1);
@@ -315,7 +422,7 @@ export function BearingAssemblyWindow() {
     bearing
       ? (nodeDisplacements?.[bearing.nodeI] ?? nodeDisplacements?.[String(bearing.nodeI)])
       : undefined,
-    scaleFactor,
+    localScale,
     is2DFrame,
     zUpData,
   );
@@ -323,13 +430,13 @@ export function BearingAssemblyWindow() {
     bearing
       ? (nodeDisplacements?.[bearing.nodeJ] ?? nodeDisplacements?.[String(bearing.nodeJ)])
       : undefined,
-    scaleFactor,
+    localScale,
     is2DFrame,
     zUpData,
   );
 
-  // Use relative displacement only, not undeformed node offsets, so all model generators
-  // produce consistent local bearing kinematics.
+  // Use relative displacement only at unit scale so plate offsets match
+  // the bearing's physical geometry (radius ≈ 12-36 inches).
   const relDx = dispJ[0] - dispI[0];
   const relDy = dispJ[1] - dispI[1];
   const relDz = dispJ[2] - dispI[2];
@@ -379,20 +486,35 @@ export function BearingAssemblyWindow() {
     nodeJ,
   ]);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const wheelHandler = (e: WheelEvent) => {
+      e.preventDefault();
+      const next = e.deltaY < 0 ? viewZoom * 1.12 : viewZoom / 1.12;
+      setViewZoom(Math.min(5, Math.max(0.3, next)));
+    };
+    canvas.addEventListener('wheel', wheelHandler, { passive: false });
+    return () => canvas.removeEventListener('wheel', wheelHandler);
+  }, [viewZoom]);
+
   if (!showBearingDisplacement || !bearing || !nodeI || !nodeJ) return null;
 
   const handleWheel = (e: ReactWheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const next = e.deltaY < 0 ? viewZoom * 1.08 : viewZoom / 1.08;
-    setViewZoom(Math.min(3, Math.max(0.6, next)));
+    e.stopPropagation();
+    const next = e.deltaY < 0 ? viewZoom * 1.12 : viewZoom / 1.12;
+    setViewZoom(Math.min(5, Math.max(0.3, next)));
   };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    e.stopPropagation();
     dragRef.current = { active: true, x: e.clientX, y: e.clientY };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    e.stopPropagation();
     if (!dragRef.current.active) return;
     const dx = e.clientX - dragRef.current.x;
     const dy = e.clientY - dragRef.current.y;
@@ -401,12 +523,13 @@ export function BearingAssemblyWindow() {
     if (effectiveMode === 'pan') {
       setViewPan((p) => ({ x: p.x + dx, y: p.y + dy }));
     } else {
-      setViewYaw((y) => y + dx * 0.008);
-      setViewPitch((p) => Math.min(1.25, Math.max(0.15, p + dy * 0.006)));
+      setViewYaw((y) => y + dx * 0.012);
+      setViewPitch((p) => Math.min(1.35, Math.max(0.1, p + dy * 0.01)));
     }
   };
 
   const handlePointerUp = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    e.stopPropagation();
     dragRef.current.active = false;
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -427,6 +550,9 @@ export function BearingAssemblyWindow() {
         backgroundColor: 'rgba(31, 41, 55, 0.92)',
         border: '1px solid rgba(212, 175, 55, 0.35)',
       }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
     >
       <div
         className="flex cursor-pointer items-center justify-between px-2 py-1 select-none"
@@ -565,6 +691,7 @@ export function BearingAssemblyWindow() {
               <canvas
                 ref={canvasRef}
                 className="h-full w-full cursor-grab rounded active:cursor-grabbing"
+                style={{ touchAction: 'none' }}
                 onWheel={handleWheel}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}

@@ -8,6 +8,12 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 Phases 1 through 5 are complete. The app provides:
 
+### Session Update — 2026-03-05 (Bearing Assembly 3D Rendering & Interaction Fixes)
+- **Bearing assembly rotation fix** — pointer events on the assembly canvas now call `stopPropagation()` so drags rotate the bearing view instead of the main 3D scene behind it; panel container also blocks propagation.
+- **Proper 3D plate rendering** — `drawPlate` rewritten with directional lighting, back-face culling (2D cross-product test), and front/back face shading so rotation is visually obvious; depth-sorted plate draw order ensures correct occlusion from any angle.
+- **Displacement scale normalization** — bearing assembly view now uses raw (unit-scale) displacements instead of the global deformation amplification factor, keeping orbit and plate offsets proportional to the bearing's physical geometry.
+- **Load case presets** — time-history analysis dialog now includes a dropdown of preset excitation load cases (X only, Y only, X+Z 100/30, etc.) for quick multi-direction configuration.
+
 ### Session Update — 2026-03-05 (Bearing Assembly UX & WebGL Stability)
 - **Bearing Assembly iso viewer overhaul** — replaced second WebGL `Canvas` with a lightweight 2D canvas renderer to eliminate `Context Lost` crashes; added interactive rotate/pan/zoom controls, size presets (S/M/L), expandable Max mode, optional orbit overlay, Xray transparency toggle, and Reset button.
 - **Bearing selection sync** — Assembly and Orbit viewers now share a single `activeBearingId` in `displayStore`; prev/next in either panel updates both.
