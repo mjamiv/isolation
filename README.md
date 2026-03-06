@@ -8,6 +8,9 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 Phases 1 through 5 are complete. The app provides:
 
+### Session Update — 2026-03-06 (3D Viewer Corner Fix)
+- **Dark corner fix** — removed the CSS radial/linear gradient background from the viewer wrapper and disabled WebGL canvas alpha transparency; the Three.js scene background now fills the entire viewport cleanly with no dark bleed-through in corners.
+
 ### Session Update — 2026-03-06 (UI Cleanup, Diaphragm Fix & Environment Simplification)
 - **Compact viewer HUD** — replaced the large floating HUD card with a slim centered toolbar strip; camera presets, display mode, and layer toggles in one row.
 - **Wireframe default** — the 3D viewer now opens in `wireframe` mode instead of `solid` for a cleaner first impression.

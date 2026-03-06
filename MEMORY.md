@@ -1,43 +1,34 @@
 # MEMORY
 
-## Session Update (2026-03-06 — UI Cleanup, Diaphragm Fix & Environment Simplification)
-- Replaced the large HUD card overlay with a compact centered toolbar strip (ViewerHud.tsx)
-- Changed default display mode from `solid` to `wireframe` in displayStore
-- Fixed API base URL: `API_BASE` now appends `/api` when `VITE_API_URL` is set, fixing 404s on `/models`
-- Simplified Test Lab environment: removed `LabEnvelope` (transparent bounding box walls/ceiling) and `FloorBoundary` line loop
-- Removed Control Room environment entirely: deleted `ControlRoomEnvironment`, `ControlRoomPanels`, and `controlRoom` from the `EnvironmentPreset` type
-- Fixed diaphragm displacement axis bug: `zUpData` in `useActiveDisplacements` was returning `true` for all time-history results regardless of bearings; now derived from `hasBearings` to match `DeformedShape`
-- Redesigned Bearing Assembly panel: replaced the heavy overlay-card with a compact 220px panel — canvas-first layout, minimal bottom bar, removed S/M/L/Expand/Collapse/Rotate/Pan/X-Ray controls
+## Session Update (2026-03-06 — 3D Viewer Corner Fix)
+- Removed dark corner artifact in 3D viewer: stripped CSS radial/linear gradient from the viewer wrapper div in AppLayout.tsx and set WebGL canvas `alpha: false` so the Three.js scene background fills the entire viewport
 
 ## Key Files Updated This Session
-- `frontend/src/features/viewer-3d/ViewerHud.tsx` — rewritten as compact toolbar strip
-- `frontend/src/features/viewer-3d/BearingAssemblyWindow.tsx` — redesigned as minimal panel
-- `frontend/src/features/viewer-3d/SceneEnvironment.tsx` — removed LabEnvelope, FloorBoundary, ControlRoom
-- `frontend/src/features/viewer-3d/useActiveDisplacements.ts` — fixed zUpData to use hasBearings
-- `frontend/src/features/viewer-3d/DiaphragmPlanes.tsx` — removed redundant hasBearings logic
-- `frontend/src/features/controls/ViewerControls.tsx` — dropped controlRoom from environment options
-- `frontend/src/stores/displayStore.ts` — wireframe default, removed controlRoom from type
-- `frontend/src/services/api.ts` — API_BASE auto-appends /api
-- `frontend/src/index.css` — new HUD bar and bearing assembly panel styles
-- `frontend/src/test/stores/displayStore.test.ts` — updated for wireframe default
+- `frontend/src/features/layout/AppLayout.tsx` — removed dark gradient background from viewer wrapper (desktop + mobile)
+- `frontend/src/features/viewer-3d/Viewer3D.tsx` — changed canvas `alpha: true` to `alpha: false`
 
 ## Decisions and Rationale
-- Changed zUpData to derive from hasBearings (model store) instead of analysis type because only bearing models use Z-up coordinates; non-bearing Bay Build models keep Y-up
-- Removed Control Room because it added visual complexity without functional value at this stage
-- Kept Test Lab lighting and floor intact; only removed the enclosure geometry that was obscuring the model
-- Bearing Assembly panel: removed all chrome that duplicated orbit controls or required mode-switching; drag-rotate and shift-drag-pan are discoverable without buttons
-
-## Verification
-- `cd frontend && npm run type-check` — passed
-- `cd frontend && npx vitest run` — 68 tests passed (displayStore 37, modelStore 29, diaphragmGeometry 2)
-- Frontend dev server on `http://127.0.0.1:5174` — HMR picked up all changes
-- Backend on `http://127.0.0.1:8001` — relaunched with `isovis-x86` conda env for OpenSeesPy compatibility
-- Manual browser testing confirmed: analysis runs, diaphragms deform correctly, bearing assembly renders
+- The CSS gradient (`#09111f` → `#050914`) behind the canvas was bleeding through corners because the WebGL context had alpha enabled; the scene already manages its own background via SceneEnvironment, so neither the CSS gradient nor alpha transparency was needed
 
 ## Current State
 - Branch: `main` (tracking `origin/main`)
 - 5 environment presets: Test Lab, Studio, Outdoor, Dark, Blueprint
-- Backend must be launched with `conda activate isovis-x86` (OpenSeesPy is x86_64-only)
+
+## ⚠ Backend Launch (CRITICAL — read every session)
+The backend **must** be started with the `isovis-x86` conda environment — NOT the local `.venv`.
+OpenSeesPy ships an x86_64-only `.so`; the conda env runs Python under Rosetta on Apple Silicon.
+
+**IMPORTANT**: The `.venv` in `backend/` sets `VIRTUAL_ENV` which overrides conda's PATH.
+You must `unset VIRTUAL_ENV` and put the conda Python first on PATH explicitly.
+
+```bash
+cd backend
+unset VIRTUAL_ENV
+export PATH="/Users/mjamiv/miniforge3/envs/isovis-x86/bin:$PATH"
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Do NOT use `source .venv/bin/activate` or plain `conda activate isovis-x86` (the .venv VIRTUAL_ENV will still shadow it). Always verify with `which python` — it must show `/Users/mjamiv/miniforge3/envs/isovis-x86/bin/python`.
 
 ## Accumulated Context from Prior Sessions
 - Phases 1-5 complete (model editor, analysis runner, TFP bearings, pushover, time-history comparison)

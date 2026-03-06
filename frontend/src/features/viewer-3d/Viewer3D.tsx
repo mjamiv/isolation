@@ -174,7 +174,7 @@ export function Viewer3D() {
         shadows
         gl={{
           antialias: true,
-          alpha: true,
+          alpha: false,
           powerPreference: 'high-performance',
         }}
         camera={{

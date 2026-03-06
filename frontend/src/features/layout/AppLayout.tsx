@@ -130,7 +130,7 @@ export function AppLayout() {
 
           {/* Center panel: 3D Viewer */}
           <Panel id="viewer-panel" order={2} defaultSize={60} minSize={30}>
-            <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.08),transparent_28%),linear-gradient(180deg,#09111f_0%,#050914_100%)]">
+            <div className="h-full w-full">
               <Viewer3D />
             </div>
           </Panel>
@@ -148,7 +148,7 @@ export function AppLayout() {
           <LeftPanel />
         </div>
         <div className="min-h-0 flex-1 border-b border-white/[0.06]">
-          <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.08),transparent_28%),linear-gradient(180deg,#09111f_0%,#050914_100%)]">
+          <div className="h-full w-full">
             <Viewer3D />
           </div>
         </div>
