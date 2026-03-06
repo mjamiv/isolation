@@ -8,6 +8,13 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 Phases 1 through 5 are complete. The app provides:
 
+### Session Update — 2026-03-06 (Frontend API Hardening & Clean Test Baseline)
+- **Typed API normalization hardening** — `frontend/src/services/api.ts` now normalizes analysis and comparison payloads through explicit narrowing helpers instead of passing `RawMap`/`unknown` through typed result interfaces.
+- **Comparison payload cleanup** — comparison responses are rebuilt as typed objects with normalized nested time-history results and explicit `comparisonType` mapping, rather than mutating loosely cast fetch results.
+- **Accessibility/test stability fix** — Ground Motion and Load Case Presets selects in the analysis dialog now have unique accessible labels, and the auto-select test now targets the intended labeled control.
+- **Bearing zoom regression fix** — bearing assembly zoom now runs through a single wheel handler, eliminating duplicate scroll processing.
+- **Clean frontend verification baseline** — frontend type-check passes again, API normalization tests were expanded, and the prior React `act(...)` warnings in pushover/results tests were removed by awaiting lazy chart rendering in tests.
+
 ### Session Update — 2026-03-05 (Bearing Assembly 3D Rendering & Interaction Fixes)
 - **Bearing assembly rotation fix** — pointer events on the assembly canvas now call `stopPropagation()` so drags rotate the bearing view instead of the main 3D scene behind it; panel container also blocks propagation.
 - **Proper 3D plate rendering** — `drawPlate` rewritten with directional lighting, back-face culling (2D cross-product test), and front/back face shading so rotation is visually obvious; depth-sorted plate draw order ensures correct occlusion from any angle.

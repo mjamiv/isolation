@@ -1,5 +1,38 @@
 # MEMORY
 
+## Session Update (2026-03-06 — API Normalization Hardening & Test Cleanup)
+- Hardened frontend API normalization:
+  - Rebuilt `frontend/src/services/api.ts` around explicit narrowing helpers instead of leaking `RawMap`/`unknown` into typed result payloads.
+  - Added typed normalizers for `elementForces`, `discretizationMap`, `internalNodeCoords`, `capacityCurve`, `modeShapes`, `timeSteps`, bearing responses, hinge states, and comparison variants.
+  - Removed the unsafe fallback that force-cast unknown analysis result payloads into `AnalysisResults['results']`.
+  - Normalized `comparisonType` explicitly and rebuilt comparison responses as fresh typed objects rather than mutating loosely cast fetch results.
+- Fixed adjacent frontend regressions:
+  - Removed duplicate wheel zoom handling in `frontend/src/features/viewer-3d/BearingAssemblyWindow.tsx`; zoom now runs through a single React handler with propagation control.
+  - Added accessible labels to the Ground Motion and Load Case Presets selects in `frontend/src/features/analysis/AnalysisDialog.tsx`.
+  - Updated `frontend/src/test/features/AnalysisDialog-autoselect.test.tsx` to query the intended labeled control.
+- Expanded API boundary test coverage:
+  - `frontend/src/test/services/api.test.ts` now covers static, modal, time-history (legacy and materialized), pushover, malformed payload fallback, and comparison normalization flows.
+- Cleaned up lingering React test warnings:
+  - `frontend/src/test/features/PushoverResults.test.tsx` and `frontend/src/test/features/ResultsPanel.test.tsx` now await lazy Plotly resolution so suspended work completes inside the test flow.
+  - The prior `act(...)` warnings from those tests are gone.
+
+## Key Files Updated This Session
+- `frontend/src/services/api.ts` — typed normalization helpers, analysis/comparison normalization hardening
+- `frontend/src/test/services/api.test.ts` — normalization coverage expansion
+- `frontend/src/features/viewer-3d/BearingAssemblyWindow.tsx` — removed duplicate wheel listener
+- `frontend/src/features/analysis/AnalysisDialog.tsx` — labeled selects for accessibility and test stability
+- `frontend/src/test/features/PushoverResults.test.tsx` — await lazy chart render
+- `frontend/src/test/features/ResultsPanel.test.tsx` — await lazy chart render
+
+## Decisions and Rationale
+- Kept normalization tolerant instead of throwing on malformed payloads because the existing frontend expects safe fallbacks more than hard client-side rejection.
+- Built fresh typed comparison objects rather than mutating post-fetch results so the type boundary is explicit and TypeScript can enforce it.
+- Fixed the `act(...)` warnings in tests rather than changing production components because the actual issue was test timing around lazy rendering, not runtime behavior.
+
+## Known Issues
+- Bearing assembly 2D renderer still uses a fixed isometric projection without perspective correction.
+- The test run still emits a Node warning about `--localstorage-file` having an invalid path; this is separate from the React warning cleanup and remains open.
+
 ## Session Update (2026-03-05 — Bearing Assembly 3D Rendering & Interaction Fixes)
 - Fixed bearing assembly rotation:
   - Root cause: pointer events on the assembly canvas were bubbling up to the parent Three.js `<Canvas>`, causing the main scene to rotate instead of the bearing view.
@@ -60,11 +93,13 @@
 
 ## Current State
 - Branch: `main` (tracking `origin/main`).
-- 4 modified files to commit: `BearingAssemblyWindow.tsx`, `AnalysisDialog.tsx`, `package.json`, `package-lock.json`.
+- Working tree is clean and synced with `origin/main`.
+- Latest pushed commits:
+  - `9481047` — `fix(frontend): harden API normalization and restore UI regressions`
+  - `b79ea92` — `test(frontend): flush lazy plot rendering in results tests`
 - Backend on `:8000`, frontend on `:5173`.
 
 ## Next Steps
-- Verify bearing rotation works correctly in live browser testing.
-- Clean up `frontend/src/services/api.ts` type debt.
-- Consider adding axis gizmo to bearing assembly view for orientation reference.
-- Add `frontend/.playwright-browsers/` and `frontend/test-results/` to `.gitignore`.
+- Verify bearing assembly interaction in a live browser session, especially rotate/zoom after the wheel handler cleanup.
+- Investigate and remove the `--localstorage-file` warning from the frontend Vitest environment.
+- Consider adding a direct regression test around bearing assembly wheel zoom if the canvas interaction becomes easy to exercise in tests.
