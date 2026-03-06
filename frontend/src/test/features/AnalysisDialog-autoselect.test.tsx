@@ -41,7 +41,7 @@ describe('AnalysisDialog — auto-select ground motion', () => {
     fireEvent.click(screen.getByText('Time-History'));
 
     // The GM select should have a value (not the empty "Select..." option)
-    const select = screen.getByRole('combobox') as HTMLSelectElement;
+    const select = screen.getByLabelText('Ground Motion') as HTMLSelectElement;
     expect(select.value).toBe('1');
   });
 
@@ -71,6 +71,8 @@ describe('AnalysisDialog — auto-select ground motion', () => {
     render(<AnalysisDialog open={true} onOpenChange={vi.fn()} />);
     fireEvent.click(screen.getByText('Time-History'));
 
-    expect(screen.getByText('Time-history analysis requires at least one ground motion.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Time-history analysis requires at least one ground motion.'),
+    ).toBeInTheDocument();
   });
 });

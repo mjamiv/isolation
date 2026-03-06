@@ -254,8 +254,15 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             {analysisType === 'time_history' && (
               <>
                 <div>
-                  <label className="text-[11px] font-medium text-white/40">Ground Motion</label>
+                  <label
+                    htmlFor="analysis-ground-motion"
+                    className="text-[11px] font-medium text-white/40"
+                  >
+                    Ground Motion
+                  </label>
                   <select
+                    id="analysis-ground-motion"
+                    aria-label="Ground Motion"
                     value={selectedGmId}
                     onChange={(e) => setSelectedGmId(e.target.value)}
                     className={inputClass}
@@ -274,6 +281,8 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   </label>
                   <div className="mt-1 mb-2">
                     <select
+                      id="analysis-load-case-preset"
+                      aria-label="Load Case Presets"
                       value=""
                       onChange={(e) => {
                         const preset = DIRECTION_PRESETS[Number(e.target.value)];

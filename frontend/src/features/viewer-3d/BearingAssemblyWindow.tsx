@@ -486,18 +486,6 @@ export function BearingAssemblyWindow() {
     nodeJ,
   ]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const wheelHandler = (e: WheelEvent) => {
-      e.preventDefault();
-      const next = e.deltaY < 0 ? viewZoom * 1.12 : viewZoom / 1.12;
-      setViewZoom(Math.min(5, Math.max(0.3, next)));
-    };
-    canvas.addEventListener('wheel', wheelHandler, { passive: false });
-    return () => canvas.removeEventListener('wheel', wheelHandler);
-  }, [viewZoom]);
-
   if (!showBearingDisplacement || !bearing || !nodeI || !nodeJ) return null;
 
   const handleWheel = (e: ReactWheelEvent<HTMLCanvasElement>) => {

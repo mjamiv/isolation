@@ -10,6 +10,7 @@
  */
 
 import type {
+  AnalysisType,
   AnalysisParams,
   AnalysisResults,
   TimeHistoryResults,
@@ -136,6 +137,137 @@ function asFiniteNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
+function asString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function toTuple2(values: number[] | undefined): [number, number] {
+  const src = values ?? [];
+  return [src[0] ?? 0, src[1] ?? 0];
+}
+
+function toTuple3(values: number[] | undefined): [number, number, number] {
+  const src = values ?? [];
+  return [src[0] ?? 0, src[1] ?? 0, src[2] ?? 0];
+}
+
+function normalizeAnalysisType(value: unknown): AnalysisType | null {
+  return value === 'static' || value === 'modal' || value === 'time_history' || value === 'pushover'
+    ? value
+    : null;
+}
+
+function normalizeComparisonType(value: unknown): ComparisonRun['comparisonType'] | undefined {
+  if (value === 'pushover' || value === 'time_history') return value;
+  if (value === 'timeHistory') return 'time_history';
+  return undefined;
+}
+
+function normalizeElementForces(value: unknown): Record<number, number[]> {
+  const out: Record<number, number[]> = {};
+  for (const [id, forces] of Object.entries(asRecord(value))) {
+    out[Number(id)] = asNumberArray(forces);
+  }
+  return out;
+}
+
+function normalizeDiscretizationMap(value: unknown): StaticResults['discretizationMap'] {
+  const out: NonNullable<StaticResults['discretizationMap']> = {};
+  for (const [id, entry] of Object.entries(asRecord(value))) {
+    const raw = asRecord(entry);
+    out[Number(id)] = {
+      nodeChain: asNumberArray(raw.nodeChain),
+      subElementIds: asNumberArray(raw.subElementIds),
+    };
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function normalizeInternalNodeCoords(value: unknown): StaticResults['internalNodeCoords'] {
+  const out: NonNullable<StaticResults['internalNodeCoords']> = {};
+  for (const [id, coords] of Object.entries(asRecord(value))) {
+    out[Number(id)] = asNumberArray(coords);
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function normalizeModeShapes(value: unknown): ModalResults['modeShapes'] {
+  const out: ModalResults['modeShapes'] = {};
+  for (const [mode, rawNodes] of Object.entries(asRecord(value))) {
+    const nodeShapes: Record<number, [number, number, number]> = {};
+    for (const [nodeId, coords] of Object.entries(asRecord(rawNodes))) {
+      nodeShapes[Number(nodeId)] = toTuple3(asNumberArray(coords));
+    }
+    out[Number(mode)] = nodeShapes;
+  }
+  return out;
+}
+
+function normalizeCapacityCurve(value: unknown): PushoverResults['capacityCurve'] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry) => {
+    const raw = asRecord(entry);
+    return {
+      baseShear: asFiniteNumber(raw.baseShear),
+      roofDisplacement: asFiniteNumber(raw.roofDisplacement),
+    };
+  });
+}
+
+function normalizeHingeStates(value: unknown): HingeState[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry) => {
+    const raw = asRecord(entry);
+    return {
+      elementId: asFiniteNumber(raw.elementId),
+      end: String(raw.end).toLowerCase() === 'j' ? 'j' : 'i',
+      rotation: asFiniteNumber(raw.rotation),
+      moment: asFiniteNumber(raw.moment),
+      performanceLevel: (raw.performanceLevel ?? 'elastic') as HingeState['performanceLevel'],
+      demandCapacityRatio: asFiniteNumber(raw.demandCapacityRatio),
+    };
+  });
+}
+
+function normalizeBearingResponse(
+  value: unknown,
+): TimeHistoryResults['timeSteps'][number]['bearingResponses'][number] {
+  const raw = asRecord(value);
+  return {
+    displacement: toTuple2(asNumberArray(raw.displacement)),
+    force: toTuple2(asNumberArray(raw.force)),
+    axialForce: asFiniteNumber(raw.axialForce),
+    globalForce: toTuple3(asNumberArray(raw.globalForce)),
+    nodeI: asFiniteNumber(raw.nodeI),
+    nodeJ: asFiniteNumber(raw.nodeJ),
+  };
+}
+
+function normalizeTimeSteps(value: unknown): TimeHistoryResults['timeSteps'] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry, index) => {
+    const raw = asRecord(entry);
+    const nodeDisplacements: TimeHistoryResults['timeSteps'][number]['nodeDisplacements'] = {};
+    const elementForces = normalizeElementForces(raw.elementForces);
+    const bearingResponses: TimeHistoryResults['timeSteps'][number]['bearingResponses'] = {};
+
+    for (const [nodeId, disp] of Object.entries(asRecord(raw.nodeDisplacements))) {
+      nodeDisplacements[Number(nodeId)] = padTo6(asNumberArray(disp));
+    }
+    for (const [bearingId, resp] of Object.entries(asRecord(raw.bearingResponses))) {
+      bearingResponses[Number(bearingId)] = normalizeBearingResponse(resp);
+    }
+
+    return {
+      step: asFiniteNumber(raw.step, index),
+      time: asFiniteNumber(raw.time),
+      nodeDisplacements,
+      elementForces,
+      bearingResponses,
+    };
+  });
+}
+
 function normalizeTimeHistoryPeakValues(raw: unknown): TimeHistoryResults['peakValues'] {
   const peak = asRecord(raw);
   const maxDrift = asRecord(peak.maxDrift);
@@ -188,17 +320,17 @@ function normalizeStaticResults(raw: RawMap): StaticResults {
 
   return {
     nodeDisplacements,
-    elementForces: raw?.elementForces ?? {},
+    elementForces: normalizeElementForces(raw.elementForces),
     reactions,
-    discretizationMap: raw?.discretizationMap,
-    internalNodeCoords: raw?.internalNodeCoords,
+    discretizationMap: normalizeDiscretizationMap(raw.discretizationMap),
+    internalNodeCoords: normalizeInternalNodeCoords(raw.internalNodeCoords),
   };
 }
 
 function normalizeModalResults(raw: RawMap): ModalResults {
   const periods = asNumberArray(raw.periods);
   const frequencies = asNumberArray(raw.frequencies);
-  const modeShapes = asRecord(raw.modeShapes);
+  const modeShapes = normalizeModeShapes(raw.modeShapes);
   const mp = asRecord(raw.massParticipation);
   const mpx = asNumberArray(mp.X ?? mp.x);
   const mpy = asNumberArray(mp.Y ?? mp.y);
@@ -219,10 +351,13 @@ function normalizeModalResults(raw: RawMap): ModalResults {
 
 function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
   if (Array.isArray(raw.timeSteps)) {
-    const normalized = raw as TimeHistoryResults;
     return {
-      ...normalized,
-      peakValues: normalizeTimeHistoryPeakValues((normalized as unknown as RawMap).peakValues),
+      timeSteps: normalizeTimeSteps(raw.timeSteps),
+      dt: asFiniteNumber(raw.dt),
+      totalTime: asFiniteNumber(raw.totalTime),
+      peakValues: normalizeTimeHistoryPeakValues(raw.peakValues),
+      discretizationMap: normalizeDiscretizationMap(raw.discretizationMap),
+      internalNodeCoords: normalizeInternalNodeCoords(raw.internalNodeCoords),
     };
   }
 
@@ -332,8 +467,8 @@ function normalizeTimeHistoryResults(raw: RawMap): TimeHistoryResults {
       maxBaseShear: { value: maxBaseShear, step: maxBaseShearStep },
       maxBearingDisp: { value: maxBearingDisp, bearingId: maxBearingId, step: maxBearingStep },
     },
-    discretizationMap: raw?.discretizationMap,
-    internalNodeCoords: raw?.internalNodeCoords,
+    discretizationMap: normalizeDiscretizationMap(raw.discretizationMap),
+    internalNodeCoords: normalizeInternalNodeCoords(raw.internalNodeCoords),
   };
 }
 
@@ -341,26 +476,27 @@ function normalizePushoverResults(raw: RawMap): PushoverResults {
   const { nodeDisplacements, reactions } = normalizeNodeReactionMaps(raw);
 
   return {
-    capacityCurve: raw?.capacityCurve ?? [],
-    maxBaseShear: raw?.maxBaseShear ?? 0,
-    maxRoofDisplacement: raw?.maxRoofDisplacement ?? 0,
-    ductilityRatio: raw?.ductilityRatio ?? 0,
+    capacityCurve: normalizeCapacityCurve(raw.capacityCurve),
+    maxBaseShear: asFiniteNumber(raw.maxBaseShear),
+    maxRoofDisplacement: asFiniteNumber(raw.maxRoofDisplacement),
+    ductilityRatio: asFiniteNumber(raw.ductilityRatio),
     hingeDiagnostic:
       typeof raw?.hingeDiagnostic === 'string' ? (raw.hingeDiagnostic as string) : null,
     nodeDisplacements,
-    elementForces: raw?.elementForces ?? {},
+    elementForces: normalizeElementForces(raw.elementForces),
     reactions,
-    discretizationMap: raw?.discretizationMap,
-    internalNodeCoords: raw?.internalNodeCoords,
+    discretizationMap: normalizeDiscretizationMap(raw.discretizationMap),
+    internalNodeCoords: normalizeInternalNodeCoords(raw.internalNodeCoords),
   };
 }
 
 function normalizeAnalysisResults(raw: RawMap): AnalysisResults {
-  const type = (raw.type ?? 'static') as AnalysisResults['type'];
+  const normalizedType = normalizeAnalysisType(raw.type);
+  const type = normalizedType ?? 'static';
   const status = normalizeStatus(String(raw.status ?? 'running'));
   const out: AnalysisResults = {
-    analysisId: String(raw.analysisId ?? ''),
-    modelId: String(raw.modelId ?? ''),
+    analysisId: asString(raw.analysisId),
+    modelId: asString(raw.modelId),
     type,
     status,
     progress: typeof raw.progress === 'number' ? raw.progress : status === 'complete' ? 1 : 0,
@@ -374,36 +510,82 @@ function normalizeAnalysisResults(raw: RawMap): AnalysisResults {
     return out;
   }
 
-  if (type === 'static') {
+  if (normalizedType === 'static') {
     out.results = normalizeStaticResults(results);
-  } else if (type === 'modal') {
+  } else if (normalizedType === 'modal') {
     out.results = normalizeModalResults(results);
-  } else if (type === 'time_history') {
+  } else if (normalizedType === 'time_history') {
     out.results = normalizeTimeHistoryResults(results);
-  } else if (type === 'pushover') {
+  } else if (normalizedType === 'pushover') {
     out.results = normalizePushoverResults(results);
     if (
       out.results &&
       typeof (results.hingeDiagnostic ?? raw.hingeDiagnostic) === 'string' &&
       'hingeDiagnostic' in out.results
     ) {
-      (out.results as PushoverResults).hingeDiagnostic = String(
-        results.hingeDiagnostic ?? raw.hingeDiagnostic,
-      );
+      out.results.hingeDiagnostic = String(results.hingeDiagnostic ?? raw.hingeDiagnostic);
     }
-    const hingeStates = ((results.hingeStates ?? raw.hingeStates ?? []) as HingeState[]) ?? [];
+    const hingeStates = normalizeHingeStates(results.hingeStates ?? raw.hingeStates);
     if (hingeStates.length > 0) {
-      out.hingeStates = hingeStates.map((h) => ({
-        ...h,
-        end: (String(h.end).toLowerCase() === 'j' ? 'j' : 'i') as 'i' | 'j',
-        performanceLevel: (h.performanceLevel ?? 'elastic') as HingeState['performanceLevel'],
-      }));
+      out.hingeStates = hingeStates;
     }
-  } else {
-    out.results = results as AnalysisResults['results'];
   }
 
   return out;
+}
+
+function normalizeVariantResult(value: unknown): ComparisonRun['isolated'] {
+  const raw = asRecord(value);
+  if (Object.keys(raw).length === 0) return null;
+
+  const timeHistoryResultsRaw = asRecord(raw.timeHistoryResults);
+  const pushoverResultsRaw = asRecord(raw.pushoverResults);
+
+  return {
+    pushoverResults:
+      Object.keys(pushoverResultsRaw).length > 0
+        ? normalizePushoverResults(pushoverResultsRaw)
+        : null,
+    timeHistoryResults:
+      Object.keys(timeHistoryResultsRaw).length > 0
+        ? normalizeTimeHistoryResults(timeHistoryResultsRaw)
+        : null,
+    hingeStates: normalizeHingeStates(raw.hingeStates),
+    hingeDiagnostic: typeof raw.hingeDiagnostic === 'string' ? raw.hingeDiagnostic : null,
+    maxBaseShear: asFiniteNumber(raw.maxBaseShear),
+    maxRoofDisplacement: asFiniteNumber(raw.maxRoofDisplacement),
+  };
+}
+
+function applyVariantBaseShearOverride(
+  variant: ComparisonRun['isolated'],
+): ComparisonRun['isolated'] {
+  if (!variant?.timeHistoryResults) return variant;
+  if (variant.maxBaseShear > 0) {
+    variant.timeHistoryResults.peakValues.maxBaseShear.value = variant.maxBaseShear;
+  }
+  return variant;
+}
+
+function normalizeComparisonRun(raw: RawMap): ComparisonRun {
+  return {
+    comparisonId: asString(raw.comparisonId),
+    modelId: asString(raw.modelId),
+    status: normalizeStatus(asString(raw.status)),
+    comparisonType: normalizeComparisonType(raw.comparisonType),
+    isolated: applyVariantBaseShearOverride(normalizeVariantResult(raw.isolated)),
+    isolatedUpper: applyVariantBaseShearOverride(normalizeVariantResult(raw.isolatedUpper)),
+    isolatedLower: applyVariantBaseShearOverride(normalizeVariantResult(raw.isolatedLower)),
+    fixedBase: applyVariantBaseShearOverride(normalizeVariantResult(raw.fixedBase)),
+    lambdaFactors:
+      Object.keys(asRecord(raw.lambdaFactors)).length > 0
+        ? {
+            min: asFiniteNumber(asRecord(raw.lambdaFactors).min),
+            max: asFiniteNumber(asRecord(raw.lambdaFactors).max),
+          }
+        : null,
+    error: typeof raw.error === 'string' ? raw.error : undefined,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -462,7 +644,7 @@ export async function runAnalysis(
  */
 export async function getResults(analysisId: string): Promise<AnalysisResults> {
   const response = await fetch(`${API_BASE}/results/${analysisId}`);
-  const raw = await handleResponse<RawMap>(response);
+  const raw = asRecord(await handleResponse<unknown>(response));
   return normalizeAnalysisResults(raw);
 }
 
@@ -506,34 +688,6 @@ export async function runComparison(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(keysToSnake(body)),
   });
-  const run = await handleResponse<ComparisonRun>(response);
-
-  // Normalize time-history results in each variant if present.
-  // keysToCamel converts "time_history" → "timeHistory", so check the raw camelCase value.
-  const rawType = (run as RawMap).comparisonType as string | undefined;
-  if (rawType === 'timeHistory' || rawType === 'time_history') {
-    (run as RawMap).comparisonType = 'time_history';
-    for (const variant of [run.isolated, run.fixedBase] as (RawMap | null)[]) {
-      if (variant?.timeHistoryResults) {
-        variant.timeHistoryResults = normalizeTimeHistoryResults(
-          variant.timeHistoryResults as RawMap,
-        );
-        // The backend computes peak base shear from node reactions (correct
-        // net shear).  The frontend normalization sums bearing forces which
-        // can be inaccurate (absolute sum inflates multi-bearing models, and
-        // zero for fixed-base with no bearings).  Always prefer the backend
-        // reaction-based value when available.
-        const th = variant.timeHistoryResults as TimeHistoryResults;
-        if (
-          th.peakValues?.maxBaseShear != null &&
-          typeof variant.maxBaseShear === 'number' &&
-          variant.maxBaseShear > 0
-        ) {
-          th.peakValues.maxBaseShear.value = variant.maxBaseShear as number;
-        }
-      }
-    }
-  }
-
-  return run;
+  const raw = asRecord(await handleResponse<unknown>(response));
+  return normalizeComparisonRun(raw);
 }
