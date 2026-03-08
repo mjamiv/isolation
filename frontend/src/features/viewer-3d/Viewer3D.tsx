@@ -109,9 +109,12 @@ function SceneContent() {
   const bounds = useModelBounds();
 
   const [cx, , cz] = bounds.center;
+  const floorY = bounds.min[1] - 2;
 
-  // Memoize grid position to avoid re-creating the array each render
-  const gridPosition = useMemo((): [number, number, number] => [cx, 0, cz], [cx, cz]);
+  const gridPosition = useMemo(
+    (): [number, number, number] => [cx, floorY + 0.12, cz],
+    [cx, floorY, cz],
+  );
 
   return (
     <>

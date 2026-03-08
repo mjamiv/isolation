@@ -120,28 +120,211 @@ export function normalFromPerpDirection(perpDirection?: number): DiaphragmPoint 
   }
 }
 
+/**
+ * Builds a triangulated surface from all diaphragm node positions using
+ * ear-clipping on the concave boundary. Handles both convex grids and
+ * concave arc/ring segments without generating a straight-chord fill.
+ */
 export function buildHullSurfaceData(positions: DiaphragmPoint[]): DiaphragmMeshData | null {
   if (positions.length < 3) return null;
 
-  const hullIndices = convexHull2D(positions.map((point) => ({ x: point.x, z: point.z })));
-  if (hullIndices.length < 3) return null;
+  const xzPoints = positions.map((p) => ({ x: p.x, z: p.z }));
+  const boundary = concaveBoundary2D(xzPoints);
+  if (boundary.length < 3) return null;
 
-  const outline = hullIndices.map((index) => positions[index]!);
-  const center = average(outline);
-  const vertices = [center, ...outline];
-  const indices: number[] = [];
+  const outline = boundary.map((i) => positions[i]!);
+  const interiorIndices = positions.map((_, i) => i).filter((i) => !boundary.includes(i));
 
-  for (let i = 1; i <= outline.length; i++) {
-    const next = i === outline.length ? 1 : i + 1;
-    indices.push(0, i, next);
-  }
+  const allVertices = [...positions];
+  const indices = triangulateFan(allVertices, boundary, interiorIndices);
 
   return {
-    vertices,
+    vertices: allVertices,
     indices,
     outline,
     isCollinear: false,
   };
+}
+
+/**
+ * Computes the concave boundary of a 2D point set in XZ by finding the
+ * perimeter nodes (those on the edge of the point cloud) and sorting them
+ * in angular order. Interior nodes are excluded from the boundary.
+ */
+function concaveBoundary2D(points: { x: number; z: number }[]): number[] {
+  if (points.length < 3) return points.map((_, i) => i);
+
+  const center = {
+    x: points.reduce((s, p) => s + p.x, 0) / points.length,
+    z: points.reduce((s, p) => s + p.z, 0) / points.length,
+  };
+
+  const withAngle = points.map((p, i) => ({
+    index: i,
+    angle: Math.atan2(p.x - center.x, p.z - center.z),
+    dist: Math.hypot(p.x - center.x, p.z - center.z),
+  }));
+
+  const N_BINS = 120;
+  const binStep = (2 * Math.PI) / N_BINS;
+  const bins = new Map<number, (typeof withAngle)[0]>();
+
+  for (const entry of withAngle) {
+    const bin = Math.floor((entry.angle + Math.PI) / binStep);
+    const existing = bins.get(bin);
+    if (!existing || entry.dist > existing.dist) {
+      bins.set(bin, entry);
+    }
+  }
+
+  const boundary = [...bins.values()].sort((a, b) => a.angle - b.angle).map((e) => e.index);
+
+  if (boundary.length < 3) {
+    return convexHull2D(points);
+  }
+
+  return boundary;
+}
+
+/**
+ * Triangulates a polygon boundary plus interior points using a simple
+ * fan from the centroid plus Delaunay-like subdivision for interior nodes.
+ */
+function triangulateFan(
+  vertices: DiaphragmPoint[],
+  boundary: number[],
+  interiorIndices: number[],
+): number[] {
+  const center = average(vertices);
+  const cIdx = vertices.length;
+  vertices.push(center);
+
+  const indices: number[] = [];
+
+  if (interiorIndices.length === 0) {
+    for (let i = 0; i < boundary.length; i++) {
+      const next = (i + 1) % boundary.length;
+      indices.push(cIdx, boundary[i]!, boundary[next]!);
+    }
+    return indices;
+  }
+
+  const allBoundaryAndInterior = [...boundary, ...interiorIndices];
+  const pts2d = allBoundaryAndInterior.map((i) => ({
+    idx: i,
+    x: vertices[i]!.x,
+    z: vertices[i]!.z,
+  }));
+
+  const tris = bowyerWatson(pts2d);
+  for (const tri of tris) {
+    indices.push(tri[0], tri[1], tri[2]);
+  }
+
+  return indices;
+}
+
+/**
+ * Simple Bowyer-Watson Delaunay triangulation on 2D XZ points.
+ * Returns triangle index triples referencing the original vertex array.
+ */
+function bowyerWatson(points: { idx: number; x: number; z: number }[]): [number, number, number][] {
+  if (points.length < 3) return [];
+
+  let minX = Infinity,
+    maxX = -Infinity,
+    minZ = Infinity,
+    maxZ = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.z < minZ) minZ = p.z;
+    if (p.z > maxZ) maxZ = p.z;
+  }
+
+  const dx = maxX - minX || 1;
+  const dz = maxZ - minZ || 1;
+  const superMargin = Math.max(dx, dz) * 10;
+
+  const superA = { idx: -1, x: minX - superMargin, z: minZ - superMargin };
+  const superB = { idx: -2, x: maxX + superMargin, z: minZ - superMargin };
+  const superC = { idx: -3, x: (minX + maxX) / 2, z: maxZ + superMargin };
+
+  const allPts = [superA, superB, superC, ...points];
+
+  type Tri = [number, number, number]; // indices into allPts
+  let triangles: Tri[] = [[0, 1, 2]];
+
+  for (let pi = 3; pi < allPts.length; pi++) {
+    const p = allPts[pi]!;
+    const bad: Tri[] = [];
+    const good: Tri[] = [];
+
+    for (const tri of triangles) {
+      if (inCircumcircle(allPts, tri, p)) {
+        bad.push(tri);
+      } else {
+        good.push(tri);
+      }
+    }
+
+    const edges: [number, number][] = [];
+    for (const tri of bad) {
+      const triEdges: [number, number][] = [
+        [tri[0], tri[1]],
+        [tri[1], tri[2]],
+        [tri[2], tri[0]],
+      ];
+      for (const edge of triEdges) {
+        const shared = bad.some((other) => other !== tri && hasEdge(other, edge[0], edge[1]));
+        if (!shared) edges.push(edge);
+      }
+    }
+
+    triangles = good;
+    for (const edge of edges) {
+      triangles.push([edge[0], edge[1], pi]);
+    }
+  }
+
+  return triangles
+    .filter((tri) => tri.every((i) => allPts[i]!.idx >= 0))
+    .map((tri) => [allPts[tri[0]]!.idx, allPts[tri[1]]!.idx, allPts[tri[2]]!.idx]);
+}
+
+function inCircumcircle(
+  pts: { x: number; z: number }[],
+  tri: [number, number, number],
+  p: { x: number; z: number },
+): boolean {
+  const a = pts[tri[0]]!;
+  const b = pts[tri[1]]!;
+  const c = pts[tri[2]]!;
+
+  const ax = a.x - p.x,
+    az = a.z - p.z;
+  const bx = b.x - p.x,
+    bz = b.z - p.z;
+  const cx = c.x - p.x,
+    cz = c.z - p.z;
+
+  const det =
+    (ax * ax + az * az) * (bx * cz - cx * bz) -
+    (bx * bx + bz * bz) * (ax * cz - cx * az) +
+    (cx * cx + cz * cz) * (ax * bz - bx * az);
+
+  return det > 0;
+}
+
+function hasEdge(tri: [number, number, number], a: number, b: number): boolean {
+  return (
+    (tri[0] === a && tri[1] === b) ||
+    (tri[1] === a && tri[0] === b) ||
+    (tri[1] === a && tri[2] === b) ||
+    (tri[2] === a && tri[1] === b) ||
+    (tri[2] === a && tri[0] === b) ||
+    (tri[0] === a && tri[2] === b)
+  );
 }
 
 /**

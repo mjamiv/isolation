@@ -199,9 +199,9 @@ function TestLabEnvironment({ bounds }: EnvironmentSubProps) {
 
       <ContactShadows
         position={[cx, floorY + 0.5, cz]}
-        opacity={0.45}
+        opacity={0.35}
         scale={gs * 1.4}
-        blur={2.6}
+        blur={1.8}
         far={s * 1.5}
         resolution={512}
         color="#262b31"
@@ -212,21 +212,6 @@ function TestLabEnvironment({ bounds }: EnvironmentSubProps) {
         <planeGeometry args={[planeSize, planeSize]} />
         <meshStandardMaterial color="#6f7a83" roughness={0.76} metalness={0.12} />
       </mesh>
-
-      <Grid
-        args={[gs * 1.12, gs * 1.12]}
-        cellSize={bounds.cellSize}
-        cellThickness={0.55}
-        cellColor="#56626c"
-        sectionSize={bounds.sectionSize}
-        sectionThickness={1.25}
-        sectionColor="#d0a11e"
-        fadeDistance={gs * 1.25}
-        fadeStrength={1.3}
-        followCamera={false}
-        position={[cx, floorY + 0.12, cz]}
-        side={THREE.DoubleSide}
-      />
     </>
   );
 }

@@ -44,12 +44,24 @@ class WebGLRenderingContextStub {
   getShaderPrecisionFormat() {
     return { rangeMin: 127, rangeMax: 127, precision: 23 };
   }
-  createBuffer() { return {}; }
-  createFramebuffer() { return {}; }
-  createProgram() { return {}; }
-  createRenderbuffer() { return {}; }
-  createShader() { return {}; }
-  createTexture() { return {}; }
+  createBuffer() {
+    return {};
+  }
+  createFramebuffer() {
+    return {};
+  }
+  createProgram() {
+    return {};
+  }
+  createRenderbuffer() {
+    return {};
+  }
+  createShader() {
+    return {};
+  }
+  createTexture() {
+    return {};
+  }
   bindBuffer() {}
   bindFramebuffer() {}
   bindRenderbuffer() {}
@@ -80,13 +92,27 @@ class WebGLRenderingContextStub {
   framebufferTexture2D() {}
   frontFace() {}
   generateMipmap() {}
-  getAttribLocation() { return 0; }
-  getProgramParameter() { return true; }
-  getProgramInfoLog() { return ''; }
-  getShaderParameter() { return true; }
-  getShaderInfoLog() { return ''; }
-  getUniformLocation() { return {}; }
-  isContextLost() { return false; }
+  getAttribLocation() {
+    return 0;
+  }
+  getProgramParameter() {
+    return true;
+  }
+  getProgramInfoLog() {
+    return '';
+  }
+  getShaderParameter() {
+    return true;
+  }
+  getShaderInfoLog() {
+    return '';
+  }
+  getUniformLocation() {
+    return {};
+  }
+  isContextLost() {
+    return false;
+  }
   lineWidth() {}
   linkProgram() {}
   pixelStorei() {}
@@ -113,7 +139,9 @@ class WebGLRenderingContextStub {
   vertexAttribPointer() {}
   viewport() {}
   attachShader() {}
-  checkFramebufferStatus() { return 0x8cd5; /* FRAMEBUFFER_COMPLETE */ }
+  checkFramebufferStatus() {
+    return 0x8cd5; /* FRAMEBUFFER_COMPLETE */
+  }
   activeTexture() {}
   cullFace() {}
   blendEquationSeparate() {}
@@ -122,7 +150,9 @@ class WebGLRenderingContextStub {
   stencilMaskSeparate() {}
   stencilOpSeparate() {}
   disableVertexAttribArray() {}
-  getSupportedExtensions() { return []; }
+  getSupportedExtensions() {
+    return [];
+  }
 }
 
 // Patch HTMLCanvasElement to return our stub WebGL context
@@ -132,6 +162,7 @@ HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, cont
   }
   // Return a basic 2d context stub for canvas-based tests
   if (contextId === '2d') {
+    const gradient = { addColorStop: vi.fn() };
     return {
       fillRect: vi.fn(),
       clearRect: vi.fn(),
@@ -153,10 +184,13 @@ HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, cont
       rotate: vi.fn(),
       arc: vi.fn(),
       fill: vi.fn(),
+      createLinearGradient: vi.fn(() => gradient),
+      createRadialGradient: vi.fn(() => gradient),
       measureText: vi.fn(() => ({ width: 0 })),
       transform: vi.fn(),
       rect: vi.fn(),
       clip: vi.fn(),
+      setLineDash: vi.fn(),
       canvas: this,
     } as unknown as RenderingContext;
   }

@@ -8,6 +8,17 @@ IsoVis provides an interactive 3D environment for modeling, simulating, and anal
 
 Phases 1 through 5 are complete. The app provides:
 
+### Session Update — 2026-03-07 (Landmark Model Presets, Viewer Cleanup, Diaphragm Fix)
+- **Apple Park preset** — a 40-degree wedge segment of Apple's ring HQ in Cupertino, modeled with 162 nodes, 276 elements, and 27 EPS Triple Friction Pendulum bearings (52" displacement capacity). Based on real building specs: 1,532 ft outer diameter, 180 ft ring width, 692 isolators total.
+- **LA City Hall preset** — the 32-story, 460 ft tall 1928 steel frame with its 1998-2001 seismic retrofit. Three setback segments (podium/midrise/tower), 291 nodes, 513 elements, and 27 bearings approximating the 416 HDR isolators. Time-history analysis verified.
+- **Viewer base cleanup** — removed the redundant gold-accented grid from the Test Lab floor, tightened contact shadow blur/opacity, and fixed the user-toggled grid to sit at the actual floor plane instead of Y=0.
+- **Concave diaphragm rendering** — replaced the convex hull triangulation with Delaunay (Bowyer-Watson), so curved structures like Apple Park render diaphragm slabs that follow the arc instead of cutting straight across with a chord.
+
+### Session Update — 2026-03-06 (Bearing Assembly Inspection Panel)
+- **Interactive bearing inspection panel** — rebuilt the bearing assembly overlay into a larger inspection tool with `S/M/L` sizes, collapse/open behavior, `Iso/Front/Plan` view presets, and preserved drag/Shift-drag/scroll exploration controls.
+- **Piece labels and legend** — the assembly view now shows numbered callouts and a hover-linked legend that names each rendered part (foundation plate, concave plates, articulated cores, and stage sliders) instead of forcing the user to infer the geometry.
+- **Real stage metrics** — the panel now surfaces stage travel bars, plan/vertical displacement readouts, bearing geometry data, and current stage engagement directly from the existing TFP stage-offset math.
+
 ### Session Update — 2026-03-06 (3D Viewer Corner Fix)
 - **Dark corner fix** — removed the CSS radial/linear gradient background from the viewer wrapper and disabled WebGL canvas alpha transparency; the Three.js scene background now fills the entire viewport cleanly with no dark bleed-through in corners.
 

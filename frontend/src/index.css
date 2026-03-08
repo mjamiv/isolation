@@ -550,19 +550,66 @@ select {
   bottom: 10px;
   left: 10px;
   z-index: 20;
-  width: 220px;
-  border-radius: 8px;
+  max-height: calc(100vh - 108px);
+  overflow: auto;
+}
+
+.bearing-assembly-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bearing-assembly-subtitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.bearing-assembly-subtitle-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.bearing-assembly-toolbar,
+.bearing-assembly-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bearing-assembly-control-row {
+  margin-bottom: 10px;
+}
+
+.bearing-assembly-canvas-shell {
+  position: relative;
+}
+
+.bearing-assembly-canvas-frame {
+  position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(8, 12, 20, 0.88);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.10), transparent 32%),
+    linear-gradient(180deg, rgba(7, 11, 18, 0.88), rgba(2, 6, 23, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .bearing-assembly-canvas {
   display: block;
   width: 100%;
-  height: 160px;
+  height: 100%;
   cursor: grab;
 }
 
@@ -570,60 +617,265 @@ select {
   cursor: grabbing;
 }
 
-.bearing-assembly-bar {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 5px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+.bearing-assembly-label-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-.bearing-assembly-btn {
+.bearing-assembly-callout {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.78);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.bearing-assembly-callout[data-active='true'] {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(15, 23, 42, 0.9);
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.bearing-assembly-callout-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 22px;
-  padding: 0 6px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.50);
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  color: rgba(2, 6, 23, 0.92);
   font-size: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 100ms ease, color 100ms ease;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.bearing-assembly-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.bearing-assembly-btn[data-active='true'] {
-  background: rgba(255, 255, 255, 0.10);
-  color: #fff;
-}
-
-.bearing-assembly-label {
-  font-size: 10px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.60);
-  white-space: nowrap;
+.bearing-assembly-callout-label {
+  max-width: 124px;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
+  white-space: nowrap;
+}
+
+.bearing-assembly-canvas-hint {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  background: rgba(2, 6, 23, 0.62);
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  line-height: 1.25;
+  backdrop-filter: blur(10px);
+}
+
+.bearing-assembly-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bearing-assembly-stat-card {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.bearing-assembly-stat-card strong {
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bearing-assembly-stat-label {
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bearing-assembly-section-title {
+  margin-bottom: 9px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bearing-assembly-stage-list {
+  display: grid;
+  gap: 10px;
+}
+
+.bearing-assembly-stage-row {
+  display: grid;
+  gap: 6px;
+}
+
+.bearing-assembly-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.bearing-assembly-stage-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bearing-assembly-stage-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.78), rgba(250, 204, 21, 0.88));
+}
+
+.bearing-assembly-overflow-note {
+  margin-top: 10px;
+  padding: 9px 10px;
+  border: 1px solid rgba(251, 191, 36, 0.18);
+  border-radius: 10px;
+  background: rgba(120, 53, 15, 0.16);
+  color: rgba(252, 211, 77, 0.9);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.bearing-assembly-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bearing-assembly-data-item {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bearing-assembly-data-item span {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.bearing-assembly-data-item strong {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bearing-assembly-legend {
+  display: grid;
+  gap: 8px;
+}
+
+.bearing-assembly-legend-item {
+  display: grid;
+  grid-template-columns: 22px 10px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.bearing-assembly-legend-item:hover,
+.bearing-assembly-legend-item[data-active='true'] {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bearing-assembly-legend-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bearing-assembly-legend-swatch {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.bearing-assembly-legend-copy {
+  display: grid;
+  gap: 3px;
   min-width: 0;
 }
 
-.bearing-assembly-count {
-  margin-left: 4px;
-  color: rgba(255, 255, 255, 0.30);
-  font-variant-numeric: tabular-nums;
+.bearing-assembly-legend-copy strong {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-.bearing-assembly-sep {
-  width: 1px;
-  height: 12px;
-  margin: 0 2px;
-  background: rgba(255, 255, 255, 0.08);
+.bearing-assembly-legend-copy span {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .bearing-assembly-panel {
+    left: 8px;
+    right: 8px;
+    width: auto !important;
+    max-width: calc(100vw - 16px);
+  }
+
+  .bearing-assembly-data-grid,
+  .bearing-assembly-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bearing-assembly-callout-label {
+    max-width: 92px;
+  }
 }

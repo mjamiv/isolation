@@ -1,57 +1,69 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react';
-import { useModelStore } from '@/stores/modelStore';
-import { useDisplayStore } from '@/stores/displayStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useComparisonStore } from '@/stores/comparisonStore';
+import { useDisplayStore } from '@/stores/displayStore';
+import { useModelStore } from '@/stores/modelStore';
 import type { TimeHistoryResults } from '@/types/analysis';
-import { computeTfpStageOffsets } from './tfpKinematics';
+import type { BearingAssemblyPiece, BearingAssemblyPieceId } from './bearingAssemblyUi';
+import {
+  ASSEMBLY_LABEL_OFFSETS,
+  buildBearingAssemblyPieces,
+  clampPercent,
+  createBearingAssemblyProjector,
+  formatSignedValue,
+  summarizeBearingAssembly,
+} from './bearingAssemblyUi';
 import { extractOrbitPoints } from './tfpKinematics';
 import { toViewerTranslation, useActiveDisplacements } from './useActiveDisplacements';
 
-// ---------------------------------------------------------------------------
-// Drawing
-// ---------------------------------------------------------------------------
-
 interface AssemblyDrawParams {
   relDx: number;
-  relDy: number;
   relDz: number;
-  stageCapacities: [number, number, number];
+  pieces: BearingAssemblyPiece[];
   fullOrbitPoints: [number, number, number][];
   orbitPoints: [number, number, number][];
   radius: number;
-  gap: number;
-  plateThickness: number;
   viewZoom: number;
   viewPanX: number;
   viewPanY: number;
   viewYaw: number;
   viewPitch: number;
   showOrbit: boolean;
+  highlightPieceId: BearingAssemblyPieceId | null;
 }
+
+type PanelSize = 'compact' | 'detail' | 'expanded';
+type ViewPreset = 'iso' | 'front' | 'plan';
+
+const PANEL_LAYOUTS: Record<PanelSize, { panelWidth: number; canvasHeight: number }> = {
+  compact: { panelWidth: 300, canvasHeight: 200 },
+  detail: { panelWidth: 388, canvasHeight: 252 },
+  expanded: { panelWidth: 540, canvasHeight: 332 },
+};
+
+const VIEW_PRESETS: Record<ViewPreset, { label: string; yaw: number; pitch: number }> = {
+  iso: { label: 'Iso', yaw: -Math.PI / 4, pitch: 0.62 },
+  front: { label: 'Front', yaw: 0, pitch: 0.3 },
+  plan: { label: 'Plan', yaw: -Math.PI / 4, pitch: 1.24 },
+};
 
 function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
   const {
     relDx,
-    relDy,
     relDz,
-    stageCapacities,
+    pieces,
     fullOrbitPoints,
     orbitPoints,
     radius,
-    gap,
-    plateThickness,
     viewZoom,
     viewPanX,
     viewPanY,
     viewYaw,
     viewPitch,
     showOrbit,
+    highlightPieceId,
   } = params;
-  const offsets = computeTfpStageOffsets(relDx, relDz, stageCapacities);
-  const [s1x, s1z] = offsets.slider1;
-  const [s2x, s2z] = offsets.slider2;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -63,31 +75,19 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
 
-  const cosY = Math.cos(viewYaw);
-  const sinY = Math.sin(viewYaw);
-  const cosP = Math.cos(viewPitch);
-  const sinP = Math.sin(viewPitch);
-  let orbitExtent = 0;
-  for (const p of fullOrbitPoints) {
-    orbitExtent = Math.max(orbitExtent, Math.abs(p[0]), Math.abs(p[2]));
-  }
-  const viewExtent = Math.max(
-    radius * 4,
-    Math.abs(relDx) + Math.abs(relDz) + radius * 2.5,
-    orbitExtent + radius * 1.2,
-    32,
-  );
-  const scale = (Math.min(cssW, cssH) / (viewExtent * 1.15)) * viewZoom;
-  const cx = cssW * 0.5 + viewPanX;
-  const cy = cssH * 0.58 + viewPanY;
-
-  const project = (x: number, y: number, z: number) => {
-    const xr = x * cosY - z * sinY;
-    const zr = x * sinY + z * cosY;
-    const yr = y * cosP - zr * sinP;
-    const depth = y * sinP + zr * cosP;
-    return { x: cx + xr * scale, y: cy - yr * scale, depth };
-  };
+  const project = createBearingAssemblyProjector({
+    cssW,
+    cssH,
+    relDx,
+    relDz,
+    radius,
+    fullOrbitPoints,
+    viewZoom,
+    viewPanX,
+    viewPanY,
+    viewYaw,
+    viewPitch,
+  });
 
   const SEGS = 28;
   const lightDir = { x: 0.35, y: 0.65, z: -0.67 };
@@ -95,6 +95,8 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
   lightDir.x /= lightLen;
   lightDir.y /= lightLen;
   lightDir.z /= lightLen;
+
+  const hasFocusedPiece = highlightPieceId != null;
 
   const shade = (base: string, nDotL: number): string => {
     const m = base.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
@@ -106,8 +108,12 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     return `rgb(${rc},${gc},${bc})`;
   };
 
-  const drawPlate = (x: number, y: number, z: number, r: number, h: number, fill: string) => {
-    ctx.globalAlpha = 0.92;
+  const drawPlate = (piece: BearingAssemblyPiece) => {
+    const { x, y, z, r, h, fill, id } = piece;
+    const isFocused = highlightPieceId === id;
+    const alpha = hasFocusedPiece ? (isFocused ? 0.98 : 0.28) : 0.94;
+    ctx.globalAlpha = alpha;
+
     const topY = y + h * 0.5;
     const botY = y - h * 0.5;
     const topPts: { x: number; y: number; depth: number }[] = [];
@@ -162,13 +168,34 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     ctx.closePath();
     ctx.fillStyle = shade(fill, frontNdotL);
     ctx.fill();
+
+    if (isFocused) {
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
   };
 
-  // Background
-  ctx.fillStyle = 'rgba(8,12,20,0.92)';
+  const bgGradient = ctx.createLinearGradient(0, 0, cssW, cssH);
+  bgGradient.addColorStop(0, '#09111f');
+  bgGradient.addColorStop(1, '#020617');
+  ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, cssW, cssH);
 
-  // Subtle grid
+  const glow = ctx.createRadialGradient(
+    cssW * 0.34,
+    cssH * 0.24,
+    0,
+    cssW * 0.34,
+    cssH * 0.24,
+    cssW,
+  );
+  glow.addColorStop(0, 'rgba(34,211,238,0.08)');
+  glow.addColorStop(1, 'rgba(34,211,238,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, cssW, cssH);
+
   const gridY = -radius * 1.5;
   ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 0.5;
@@ -189,9 +216,8 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     ctx.stroke();
   }
 
-  // Orbit trace
   if (showOrbit && fullOrbitPoints.length > 1) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.strokeStyle = hasFocusedPiece ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
     fullOrbitPoints.forEach((p, i) => {
@@ -201,9 +227,11 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
     });
     ctx.stroke();
   }
+
   if (showOrbit && orbitPoints.length > 1) {
-    ctx.strokeStyle = 'rgba(34,211,238,0.80)';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = 'rgba(34,211,238,0.88)';
+    ctx.lineWidth =
+      highlightPieceId === 'stage1Slider' || highlightPieceId === 'stage2Slider' ? 2.2 : 1.4;
     ctx.beginPath();
     orbitPoints.forEach((p, i) => {
       const q = project(p[0], p[1], p[2]);
@@ -211,59 +239,28 @@ function drawAssembly(canvas: HTMLCanvasElement, params: AssemblyDrawParams) {
       else ctx.lineTo(q.x, q.y);
     });
     ctx.stroke();
+
     const last = orbitPoints[orbitPoints.length - 1]!;
     const cur = project(last[0], last[1], last[2]);
     ctx.beginPath();
-    ctx.arc(cur.x, cur.y, 2.5, 0, Math.PI * 2);
+    ctx.arc(cur.x, cur.y, 3, 0, Math.PI * 2);
     ctx.fillStyle = '#22d3ee';
     ctx.fill();
   }
 
-  // Assembly plates — depth-sorted
-  const pieces: { x: number; y: number; z: number; r: number; h: number; fill: string }[] = [
-    {
-      x: 0,
-      y: -plateThickness * 1.8,
-      z: 0,
-      r: radius * 0.96,
-      h: plateThickness * 2.2,
-      fill: '#6b7280',
-    },
-    { x: 0, y: 0, z: 0, r: radius, h: plateThickness, fill: '#c8d0dc' },
-    {
-      x: 0,
-      y: plateThickness * 0.85,
-      z: 0,
-      r: radius * 0.55,
-      h: plateThickness * 0.9,
-      fill: '#9ca3af',
-    },
-    { x: s1x, y: gap * 0.35, z: s1z, r: radius * 0.22, h: plateThickness * 1.1, fill: '#d1d5db' },
-    { x: s2x, y: gap * 0.56, z: s2z, r: radius * 0.32, h: plateThickness * 1.05, fill: '#e5e7eb' },
-    { x: relDx, y: gap + relDy, z: relDz, r: radius, h: plateThickness, fill: '#c8d0dc' },
-    {
-      x: relDx,
-      y: gap + relDy - plateThickness * 0.85,
-      z: relDz,
-      r: radius * 0.55,
-      h: plateThickness * 0.9,
-      fill: '#9ca3af',
-    },
-  ];
-  pieces.sort((a, b) => project(a.x, a.y, a.z).depth - project(b.x, b.y, b.z).depth);
-  for (const p of pieces) drawPlate(p.x, p.y, p.z, p.r, p.h, p.fill);
+  const sortedPieces = [...pieces].sort(
+    (a, b) => project(a.x, a.y, a.z).depth - project(b.x, b.y, b.z).depth,
+  );
+  for (const piece of sortedPieces) drawPlate(piece);
 
   ctx.globalAlpha = 1;
-
-  // Displacement readout — bottom-left of canvas
   ctx.font = '10px ui-monospace, monospace';
-  ctx.fillStyle = 'rgba(255,255,255,0.40)';
-  ctx.fillText(`dX ${relDx.toFixed(2)}  dZ ${relDz.toFixed(2)}`, 6, cssH - 6);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillText(`dX ${relDx.toFixed(2)} in`, 10, cssH - 10);
+  ctx.textAlign = 'right';
+  ctx.fillText(`dZ ${relDz.toFixed(2)} in`, cssW - 10, cssH - 10);
+  ctx.textAlign = 'left';
 }
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
 
 function useActiveTimeHistory(): TimeHistoryResults | null {
   const results = useAnalysisStore((s) => s.results);
@@ -278,10 +275,6 @@ function useActiveTimeHistory(): TimeHistoryResults | null {
   }
   return null;
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export function BearingAssemblyWindow() {
   const bearings = useModelStore((s) => s.bearings);
@@ -300,12 +293,20 @@ export function BearingAssemblyWindow() {
   );
 
   const [showOrbit, setShowOrbit] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
+  const [showLabels, setShowLabels] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
+  const [panelSize, setPanelSize] = useState<PanelSize>('detail');
   const [viewZoom, setViewZoom] = useState(1);
   const [viewPan, setViewPan] = useState({ x: 0, y: 0 });
-  const [viewYaw, setViewYaw] = useState(-Math.PI / 4);
-  const [viewPitch, setViewPitch] = useState(0.62);
+  const [viewYaw, setViewYaw] = useState(VIEW_PRESETS.iso.yaw);
+  const [viewPitch, setViewPitch] = useState(VIEW_PRESETS.iso.pitch);
+  const [focusedPieceId, setFocusedPieceId] = useState<BearingAssemblyPieceId | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragRef = useRef<{ active: boolean; x: number; y: number }>({ active: false, x: 0, y: 0 });
+
+  const layout = PANEL_LAYOUTS[panelSize];
+  const canvasWidth = layout.panelWidth - 28;
 
   const selectedIdx = useMemo(() => {
     if (bearingList.length === 0) return 0;
@@ -372,37 +373,103 @@ export function BearingAssemblyWindow() {
   const relDy = dispJ[1] - dispI[1];
   const relDz = dispJ[2] - dispI[2];
 
+  const pieces = useMemo(
+    () =>
+      buildBearingAssemblyPieces({
+        relDx,
+        relDy,
+        relDz,
+        stageCapacities,
+        radius,
+        gap,
+        plateThickness,
+      }),
+    [relDx, relDy, relDz, stageCapacities, radius, gap, plateThickness],
+  );
+
+  const summary = useMemo(
+    () => summarizeBearingAssembly(bearing, relDx, relDy, relDz, stageCapacities),
+    [bearing, relDx, relDy, relDz, stageCapacities],
+  );
+  const stageRows = useMemo(
+    () =>
+      summary.stageTravel.map((travel, index) => ({
+        index,
+        travel,
+        capacity: stageCapacities[index] ?? 0,
+        utilization: summary.stageUtilization[index] ?? 0,
+      })),
+    [summary.stageTravel, summary.stageUtilization, stageCapacities],
+  );
+
+  const labelAnchors = useMemo(() => {
+    if (!showLabels || panelSize === 'compact') return [];
+    const project = createBearingAssemblyProjector({
+      cssW: canvasWidth,
+      cssH: layout.canvasHeight,
+      relDx,
+      relDz,
+      radius,
+      fullOrbitPoints,
+      viewZoom,
+      viewPanX: viewPan.x,
+      viewPanY: viewPan.y,
+      viewYaw,
+      viewPitch,
+    });
+
+    return pieces.map((piece) => {
+      const anchor = project(piece.x, piece.y + piece.h * 0.45, piece.z);
+      const offset = ASSEMBLY_LABEL_OFFSETS[piece.id];
+      return {
+        ...piece,
+        left: anchor.x + offset.x,
+        top: anchor.y + offset.y,
+      };
+    });
+  }, [
+    showLabels,
+    panelSize,
+    canvasWidth,
+    layout.canvasHeight,
+    relDx,
+    relDz,
+    radius,
+    fullOrbitPoints,
+    viewZoom,
+    viewPan.x,
+    viewPan.y,
+    viewYaw,
+    viewPitch,
+    pieces,
+  ]);
+
   useEffect(() => {
     if (!showBearingDisplacement || !bearing || !nodeI || !nodeJ) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     drawAssembly(canvas, {
       relDx,
-      relDy,
       relDz,
-      stageCapacities,
+      pieces,
       fullOrbitPoints,
       orbitPoints,
       radius,
-      gap,
-      plateThickness,
       viewZoom,
       viewPanX: viewPan.x,
       viewPanY: viewPan.y,
       viewYaw,
       viewPitch,
       showOrbit,
+      highlightPieceId: focusedPieceId,
     });
   }, [
     relDx,
-    relDy,
     relDz,
-    stageCapacities,
+    pieces,
     fullOrbitPoints,
     orbitPoints,
     radius,
-    gap,
-    plateThickness,
     viewZoom,
     viewPan.x,
     viewPan.y,
@@ -413,9 +480,16 @@ export function BearingAssemblyWindow() {
     bearing,
     nodeI,
     nodeJ,
+    focusedPieceId,
+    panelSize,
   ]);
 
   if (!showBearingDisplacement || !bearing || !nodeI || !nodeJ) return null;
+
+  const applyViewPreset = (preset: ViewPreset) => {
+    setViewYaw(VIEW_PRESETS[preset].yaw);
+    setViewPitch(VIEW_PRESETS[preset].pitch);
+  };
 
   const handleWheel = (e: ReactWheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
@@ -456,66 +530,319 @@ export function BearingAssemblyWindow() {
     const nextIdx = (selectedIdx - 1 + bearingList.length) % bearingList.length;
     setActiveBearing(bearingList[nextIdx]?.id ?? null);
   };
+
   const nextBearing = () => {
     const nextIdx = (selectedIdx + 1) % bearingList.length;
     setActiveBearing(bearingList[nextIdx]?.id ?? null);
   };
+
   const resetView = () => {
     setViewZoom(1);
     setViewPan({ x: 0, y: 0 });
-    setViewYaw(-Math.PI / 4);
-    setViewPitch(0.62);
+    setViewYaw(VIEW_PRESETS.iso.yaw);
+    setViewPitch(VIEW_PRESETS.iso.pitch);
+    setFocusedPieceId(null);
   };
 
   return (
     <div
-      className="bearing-assembly-panel"
+      className="bearing-assembly-panel viewer-overlay-card"
+      data-size={panelSize}
+      style={{ width: layout.panelWidth }}
       onPointerDown={(e) => e.stopPropagation()}
       onPointerMove={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >
-      {/* Canvas — the main content */}
-      <canvas
-        ref={canvasRef}
-        className="bearing-assembly-canvas"
-        style={{ touchAction: 'none' }}
-        onWheel={handleWheel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-      />
-
-      {/* Compact bottom bar */}
-      <div className="bearing-assembly-bar">
-        {bearingList.length > 1 && (
-          <>
-            <button className="bearing-assembly-btn" onClick={prevBearing}>
-              ‹
-            </button>
-            <span className="bearing-assembly-label">
-              {bearing.label ?? `Brg ${bearing.id}`}
-              <span className="bearing-assembly-count">
-                {selectedIdx + 1}/{bearingList.length}
-              </span>
+      <div className="viewer-overlay-header bearing-assembly-header">
+        <div>
+          <div className="viewer-overlay-kicker">Isolation Mechanism</div>
+          <div className="viewer-overlay-title">Bearing Assembly</div>
+          <div className="bearing-assembly-subtitle">
+            <span>{bearing.label ?? `Brg ${bearing.id}`}</span>
+            <span className="bearing-assembly-subtitle-dot" />
+            <span>
+              {selectedIdx + 1}/{bearingList.length}
             </span>
-            <button className="bearing-assembly-btn" onClick={nextBearing}>
-              ›
-            </button>
-            <span className="bearing-assembly-sep" />
-          </>
-        )}
-        <button
-          className="bearing-assembly-btn"
-          data-active={showOrbit}
-          onClick={() => setShowOrbit((v) => !v)}
-        >
-          Orbit
-        </button>
-        <button className="bearing-assembly-btn" onClick={resetView}>
-          Reset
-        </button>
+            <span className="bearing-assembly-subtitle-dot" />
+            <span>{summary.engagedStage === 0 ? 'Centered' : `Stage ${summary.engagedStage}`}</span>
+          </div>
+        </div>
+        <div className="viewer-overlay-stack">
+          <div className="viewer-chip viewer-chip--muted">
+            util {clampPercent(summary.totalUtilization)}
+          </div>
+          <button
+            type="button"
+            className="viewer-tool-button"
+            onClick={() => setCollapsed((v) => !v)}
+          >
+            {collapsed ? 'Open' : 'Hide'}
+          </button>
+        </div>
       </div>
+
+      {!collapsed && (
+        <div className="viewer-overlay-body">
+          <div className="viewer-overlay-toolbar bearing-assembly-toolbar">
+            <div className="viewer-overlay-stack">
+              {bearingList.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="viewer-tool-button"
+                    aria-label="Previous bearing"
+                    onClick={prevBearing}
+                  >
+                    Prev
+                  </button>
+                  <button
+                    type="button"
+                    className="viewer-tool-button"
+                    aria-label="Next bearing"
+                    onClick={nextBearing}
+                  >
+                    Next
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="viewer-overlay-stack">
+              {(['compact', 'detail', 'expanded'] as const).map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  className="viewer-tool-button"
+                  data-active={panelSize === size}
+                  aria-label={`Set ${size} panel size`}
+                  onClick={() => setPanelSize(size)}
+                >
+                  {size === 'compact' ? 'S' : size === 'detail' ? 'M' : 'L'}
+                </button>
+              ))}
+              <button type="button" className="viewer-tool-button" onClick={resetView}>
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div className="bearing-assembly-control-row">
+            <div className="viewer-overlay-stack">
+              {(
+                Object.entries(VIEW_PRESETS) as [
+                  ViewPreset,
+                  { label: string; yaw: number; pitch: number },
+                ][]
+              ).map(([preset, config]) => (
+                <button
+                  key={preset}
+                  type="button"
+                  className="viewer-tool-button"
+                  data-active={
+                    Math.abs(viewYaw - config.yaw) < 0.08 &&
+                    Math.abs(viewPitch - config.pitch) < 0.08
+                  }
+                  onClick={() => applyViewPreset(preset)}
+                >
+                  {config.label}
+                </button>
+              ))}
+            </div>
+            <div className="viewer-overlay-stack">
+              <button
+                type="button"
+                className="viewer-tool-button"
+                data-active={showOrbit}
+                onClick={() => setShowOrbit((v) => !v)}
+              >
+                Orbit
+              </button>
+              <button
+                type="button"
+                className="viewer-tool-button"
+                data-active={showLabels}
+                onClick={() => setShowLabels((v) => !v)}
+              >
+                Labels
+              </button>
+              {panelSize !== 'compact' && (
+                <button
+                  type="button"
+                  className="viewer-tool-button"
+                  data-active={showLegend}
+                  onClick={() => setShowLegend((v) => !v)}
+                >
+                  Legend
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="bearing-assembly-canvas-shell">
+            <div className="bearing-assembly-canvas-frame" style={{ height: layout.canvasHeight }}>
+              <canvas
+                ref={canvasRef}
+                className="bearing-assembly-canvas"
+                style={{ touchAction: 'none' }}
+                onWheel={handleWheel}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+              />
+
+              {showLabels && panelSize !== 'compact' && (
+                <div className="bearing-assembly-label-layer">
+                  {labelAnchors.map((piece) => (
+                    <button
+                      key={piece.id}
+                      type="button"
+                      className="bearing-assembly-callout"
+                      data-active={focusedPieceId === piece.id}
+                      style={{ left: piece.left, top: piece.top }}
+                      onMouseEnter={() => setFocusedPieceId(piece.id)}
+                      onMouseLeave={() => setFocusedPieceId(null)}
+                    >
+                      <span
+                        className="bearing-assembly-callout-badge"
+                        style={{ backgroundColor: piece.fill }}
+                      >
+                        {piece.badge}
+                      </span>
+                      <span className="bearing-assembly-callout-label">{piece.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="bearing-assembly-canvas-hint">
+                Drag rotate. Hold Shift to pan. Scroll to zoom.
+              </div>
+            </div>
+          </div>
+
+          <div className="bearing-assembly-stat-grid">
+            <div className="bearing-assembly-stat-card">
+              <span className="bearing-assembly-stat-label">Plan travel</span>
+              <strong>{summary.totalPlanDisp.toFixed(2)} in</strong>
+            </div>
+            <div className="bearing-assembly-stat-card">
+              <span className="bearing-assembly-stat-label">Vertical offset</span>
+              <strong>{formatSignedValue(summary.totalVerticalDisp)} in</strong>
+            </div>
+            <div className="bearing-assembly-stat-card">
+              <span className="bearing-assembly-stat-label">Tracked capacity</span>
+              <strong>{summary.totalCapacity.toFixed(2)} in</strong>
+            </div>
+            <div className="bearing-assembly-stat-card">
+              <span className="bearing-assembly-stat-label">Current state</span>
+              <strong>
+                {summary.engagedStage === 0 ? 'Centered' : `Stage ${summary.engagedStage}`}
+              </strong>
+            </div>
+          </div>
+
+          {panelSize !== 'compact' && (
+            <>
+              <div className="viewer-overlay-section">
+                <div className="bearing-assembly-section-title">Stage Travel</div>
+                <div className="bearing-assembly-stage-list">
+                  {stageRows.map((row) => (
+                    <div key={row.index} className="bearing-assembly-stage-row">
+                      <div className="bearing-assembly-stage-head">
+                        <span>Stage {row.index + 1}</span>
+                        <span>
+                          {row.travel.toFixed(2)} / {row.capacity.toFixed(2)} in
+                        </span>
+                      </div>
+                      <div className="bearing-assembly-stage-track">
+                        <div
+                          className="bearing-assembly-stage-fill"
+                          style={{ width: clampPercent(row.utilization) }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {summary.overflow > 0 && (
+                  <div className="bearing-assembly-overflow-note">
+                    Rendered travel exceeds tracked capacity by {summary.overflow.toFixed(2)} in.
+                  </div>
+                )}
+              </div>
+
+              <div className="viewer-overlay-section">
+                <div className="bearing-assembly-section-title">Bearing Data</div>
+                <div className="bearing-assembly-data-grid">
+                  <div className="bearing-assembly-data-item">
+                    <span>Nodes</span>
+                    <strong>
+                      {bearing.nodeI} → {bearing.nodeJ}
+                    </strong>
+                  </div>
+                  <div className="bearing-assembly-data-item">
+                    <span>Radii</span>
+                    <strong>{bearing.radii.map((value) => value.toFixed(1)).join(' / ')}</strong>
+                  </div>
+                  <div className="bearing-assembly-data-item">
+                    <span>Capacities</span>
+                    <strong>
+                      {bearing.dispCapacities.map((value) => value.toFixed(1)).join(' / ')}
+                    </strong>
+                  </div>
+                  <div className="bearing-assembly-data-item">
+                    <span>Weight</span>
+                    <strong>{bearing.weight.toFixed(1)}</strong>
+                  </div>
+                  <div className="bearing-assembly-data-item">
+                    <span>Yield disp</span>
+                    <strong>{bearing.yieldDisp.toFixed(3)}</strong>
+                  </div>
+                  <div className="bearing-assembly-data-item">
+                    <span>Vertical scale</span>
+                    <strong>{bearingVerticalScale.toFixed(2)}x</strong>
+                  </div>
+                </div>
+              </div>
+
+              {showLegend && (
+                <div className="viewer-overlay-section">
+                  <div className="bearing-assembly-section-title">Legend</div>
+                  <div className="bearing-assembly-legend">
+                    {pieces.map((piece) => (
+                      <button
+                        key={piece.id}
+                        type="button"
+                        className="bearing-assembly-legend-item"
+                        data-active={focusedPieceId === piece.id}
+                        onMouseEnter={() => setFocusedPieceId(piece.id)}
+                        onMouseLeave={() => setFocusedPieceId(null)}
+                      >
+                        <span className="bearing-assembly-legend-index">{piece.badge}</span>
+                        <span
+                          className="bearing-assembly-legend-swatch"
+                          style={{ backgroundColor: piece.fill }}
+                        />
+                        <span className="bearing-assembly-legend-copy">
+                          <strong>{piece.label}</strong>
+                          <span>{piece.description}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="viewer-overlay-footer">
+            <span>{summary.engagedStageLabel}</span>
+            <span className="viewer-overlay-metric">
+              dX {formatSignedValue(relDx)} | dY {formatSignedValue(relDy)} | dZ{' '}
+              {formatSignedValue(relDz)}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

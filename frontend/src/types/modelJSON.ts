@@ -69,4 +69,14 @@ export const PRESET_MODELS: PresetModel[] = [
     kind: 'url',
     url: '/models/three-span-bridge-isolated.json',
   },
+  {
+    label: 'Apple Park (Isolated)',
+    kind: 'url',
+    url: '/models/apple-park-isolated.json',
+  },
+  {
+    label: 'LA City Hall (Isolated)',
+    kind: 'url',
+    url: '/models/la-city-hall-isolated.json',
+  },
 ];
