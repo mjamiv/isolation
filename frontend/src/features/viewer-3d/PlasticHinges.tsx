@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import * as THREE from 'three';
 import { useModelStore } from '@/stores/modelStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
@@ -6,6 +6,13 @@ import type { PerformanceLevel } from '@/types/analysis';
 
 const HINGE_RADIUS = 4; // model units (inches)
 const HINGE_SEGMENTS = 12;
+
+// Shared geometry for all hinge spheres
+const SHARED_HINGE_GEOMETRY = new THREE.SphereGeometry(
+  HINGE_RADIUS,
+  HINGE_SEGMENTS,
+  HINGE_SEGMENTS,
+);
 
 const HINGE_COLORS: Record<PerformanceLevel, string> = {
   elastic: '#9ca3af',
@@ -21,9 +28,21 @@ interface HingeData {
   id: string;
   position: THREE.Vector3;
   color: string;
+  performanceLevel: PerformanceLevel;
 }
 
-export function PlasticHinges() {
+const HINGE_MATERIALS = Object.fromEntries(
+  (Object.entries(HINGE_COLORS) as [PerformanceLevel, string][]).map(([level, color]) => [
+    level,
+    new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 0.4,
+    }),
+  ]),
+) as Record<PerformanceLevel, THREE.MeshStandardMaterial>;
+
+export const PlasticHinges = memo(function PlasticHinges() {
   const nodes = useModelStore((s) => s.nodes);
   const elements = useModelStore((s) => s.elements);
   const results = useAnalysisStore((s) => s.results);
@@ -45,6 +64,7 @@ export function PlasticHinges() {
         id: `${hinge.elementId}-${hinge.end}`,
         position: new THREE.Vector3(node.x, node.y, node.z),
         color: HINGE_COLORS[hinge.performanceLevel],
+        performanceLevel: hinge.performanceLevel,
       });
     }
 
@@ -56,15 +76,13 @@ export function PlasticHinges() {
   return (
     <group>
       {hinges.map((hinge) => (
-        <mesh key={hinge.id} position={hinge.position}>
-          <sphereGeometry args={[HINGE_RADIUS, HINGE_SEGMENTS, HINGE_SEGMENTS]} />
-          <meshStandardMaterial
-            color={hinge.color}
-            emissive={hinge.color}
-            emissiveIntensity={0.4}
-          />
-        </mesh>
+        <mesh
+          key={hinge.id}
+          position={hinge.position}
+          geometry={SHARED_HINGE_GEOMETRY}
+          material={HINGE_MATERIALS[hinge.performanceLevel] ?? HINGE_MATERIALS.elastic}
+        />
       ))}
     </group>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useModelStore } from '@/stores/modelStore';
@@ -10,6 +10,13 @@ const MODE_COLOR = '#8b5cf6';
 const MODE_OPACITY = 0.7;
 const NODE_RADIUS = 2;
 const NODE_SEGMENTS = 8;
+
+const SHARED_NODE_GEOMETRY = new THREE.SphereGeometry(NODE_RADIUS, NODE_SEGMENTS, NODE_SEGMENTS);
+const SHARED_NODE_MATERIAL = new THREE.MeshStandardMaterial({
+  color: MODE_COLOR,
+  transparent: true,
+  opacity: MODE_OPACITY,
+});
 
 interface AnimatedState {
   positions: Map<number, THREE.Vector3>;
@@ -140,7 +147,7 @@ interface AnimatedNodeProps {
   stateRef: React.RefObject<AnimatedState>;
 }
 
-function AnimatedNode({ nodeId, stateRef }: AnimatedNodeProps) {
+const AnimatedNode = memo(function AnimatedNode({ nodeId, stateRef }: AnimatedNodeProps) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame(() => {
@@ -149,10 +156,5 @@ function AnimatedNode({ nodeId, stateRef }: AnimatedNodeProps) {
     meshRef.current.position.copy(pos);
   });
 
-  return (
-    <mesh ref={meshRef}>
-      <sphereGeometry args={[NODE_RADIUS, NODE_SEGMENTS, NODE_SEGMENTS]} />
-      <meshStandardMaterial color={MODE_COLOR} transparent opacity={MODE_OPACITY} />
-    </mesh>
-  );
-}
+  return <mesh ref={meshRef} geometry={SHARED_NODE_GEOMETRY} material={SHARED_NODE_MATERIAL} />;
+});

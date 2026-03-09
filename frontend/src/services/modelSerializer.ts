@@ -123,13 +123,9 @@ function serializeDiaphragm(
 ): { master_node_id: number; constrained_node_ids: number[]; perp_direction: number } {
   // In Y-up frontend, perpDirection=2 means Y-perp (horizontal diaphragm).
   // In Z-up backend, that becomes perpDirection=3. Swap 2↔3 when zUp.
-  const perpDirection = zUp
-    ? d.perpDirection === 2
-      ? 3
-      : d.perpDirection === 3
-        ? 2
-        : d.perpDirection
-    : d.perpDirection;
+  let perpDirection = d.perpDirection;
+  if (zUp && d.perpDirection === 2) perpDirection = 3;
+  else if (zUp && d.perpDirection === 3) perpDirection = 2;
   return {
     master_node_id: d.masterNodeId,
     constrained_node_ids: [...d.constrainedNodeIds],
@@ -142,7 +138,13 @@ function serializeEqualDofConstraint(
   zUp: boolean,
 ): { retained_node_id: number; constrained_node_id: number; dofs: number[] } {
   // DOF swap: frontend Y-up DOF 2 (Y) <-> backend Z-up DOF 3 (Z)
-  const dofs = zUp ? c.dofs.map((d) => (d === 2 ? 3 : d === 3 ? 2 : d)) : [...c.dofs];
+  const dofs = zUp
+    ? c.dofs.map((d) => {
+        if (d === 2) return 3;
+        if (d === 3) return 2;
+        return d;
+      })
+    : [...c.dofs];
   return {
     retained_node_id: c.retainedNodeId,
     constrained_node_id: c.constrainedNodeId,

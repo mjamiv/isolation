@@ -19,30 +19,36 @@ export interface Element {
   label?: string;
 }
 
+/** Section properties. Lengths in inches (d, bf, tw, tf); area in², I in⁴, Zx in³. */
 export interface Section {
   id: number;
   name: string;
-  area: number; // in^2
-  Ix: number; // in^4 — strong axis
-  Iy: number; // in^4 — weak axis
-  Zx: number; // in^3 — plastic modulus
-  d: number; // depth in inches
-  bf: number; // flange width in inches
-  tw: number; // web thickness in inches
-  tf: number; // flange thickness in inches
+  area: number;
+  Ix: number;
+  Iy: number;
+  Zx: number;
+  d: number;
+  bf: number;
+  tw: number;
+  tf: number;
 }
 
+/** Material. E and Fy in ksi, density in pcf. */
 export interface Material {
   id: number;
   name: string;
-  E: number; // ksi
-  Fy: number; // ksi
-  density: number; // pcf
-  nu: number; // Poisson ratio
+  E: number;
+  Fy: number;
+  density: number;
+  nu: number;
 }
 
 export type FrictionModelType = 'Coulomb' | 'VelDependent' | 'VelPressureDep';
 
+/**
+ * Friction surface for TFP bearing. Surfaces 1-2 (inner pair) and 3-4 (outer pair) share values.
+ * muSlow/muFast: friction coefficients (typically 0.02–0.15); transRate: velocity transition (in/s).
+ */
 export interface FrictionSurface {
   type: FrictionModelType;
   muSlow: number;
@@ -50,13 +56,18 @@ export interface FrictionSurface {
   transRate: number;
 }
 
+/**
+ * Triple Friction Pendulum bearing. OpenSeesPy TripleFrictionPendulum requires Z-up (DOF 3 = compression).
+ * radii: [L1, L2, L3] effective pendulum radii (length units, e.g. in). dispCapacities: [d1, d2, d3] (length).
+ * vertStiffness: elastic spring (can be large); kvt (tension) is separate and must stay low (~1.0) for convergence.
+ */
 export interface TFPBearing {
   id: number;
   nodeI: number;
   nodeJ: number;
   surfaces: [FrictionSurface, FrictionSurface, FrictionSurface, FrictionSurface];
-  radii: [number, number, number]; // [L1, L2, L3] effective pendulum radii
-  dispCapacities: [number, number, number]; // [d1, d2, d3] displacement capacities
+  radii: [number, number, number]; // [L1, L2, L3] effective pendulum radii (length units)
+  dispCapacities: [number, number, number]; // [d1, d2, d3] displacement capacities (length units)
   weight: number; // vertical load on bearing (force units)
   yieldDisp: number; // yield displacement for initial stiffness
   vertStiffness: number; // vertical stiffness factor
@@ -76,6 +87,9 @@ export interface PointLoad {
   mz: number;
 }
 
+/**
+ * Ground motion record. direction: 1=X, 2=Y, 3=Z. scaleFactor: g→accel units (e.g. 386.4 for in/s²).
+ */
 export interface GroundMotionRecord {
   id: number;
   name: string;
@@ -85,6 +99,10 @@ export interface GroundMotionRecord {
   scaleFactor: number;
 }
 
+/**
+ * Rigid diaphragm constraint. All constrained nodes move together in-plane; perpDirection (2=Y, 3=Z)
+ * is the out-of-plane axis. Serialized with Y/Z swap for backend Z-up convention.
+ */
 export interface RigidDiaphragm {
   id: number;
   masterNodeId: number;
@@ -93,11 +111,15 @@ export interface RigidDiaphragm {
   label?: string;
 }
 
+/**
+ * EqualDOF constraint (e.g. bridge deck-to-cap link). retainedNodeId: master; constrainedNodeId: slave.
+ * dofs: DOF indices (e.g. [2] vertical, [2,3] vertical+transverse).
+ */
 export interface EqualDOFConstraint {
   id: number;
-  retainedNodeId: number; // pier cap node
-  constrainedNodeId: number; // deck girder node
-  dofs: number[]; // e.g. [2] vertical, [2,3] vertical+transverse
+  retainedNodeId: number;
+  constrainedNodeId: number;
+  dofs: number[];
   label?: string;
 }
 

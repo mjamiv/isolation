@@ -17,6 +17,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.config import settings
 from app.core.security import require_api_key
 from app.schemas.model import StructuralModelSchema
 
@@ -27,7 +28,17 @@ router = APIRouter(
 )
 
 # In-memory model store  --  model_id (str) -> model dict
+# Uses insertion order (Python 3.7+) for FIFO eviction
 _model_store: dict[str, dict[str, Any]] = {}
+_model_order: list[str] = []
+
+
+def _evict_oldest_models_if_needed() -> None:
+    """Evict oldest models when store exceeds MAX_MODELS."""
+    while len(_model_store) >= settings.MAX_MODELS and _model_order:
+        oldest = _model_order.pop(0)
+        if oldest in _model_store:
+            del _model_store[oldest]
 
 
 def get_model_store() -> dict[str, dict[str, Any]]:
@@ -61,10 +72,20 @@ async def create_model(model: StructuralModelSchema) -> dict[str, Any]:
 
     Returns:
         A dict with ``model_id`` and the stored ``model`` data.
+
+    Raises:
+        HTTPException 429: If the model store is full (after eviction attempt).
     """
+    _evict_oldest_models_if_needed()
+    if len(_model_store) >= settings.MAX_MODELS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Model store full (max {settings.MAX_MODELS}). Delete models to create new ones.",
+        )
     model_id = str(uuid.uuid4())
     model_dict = model.model_dump()
     _model_store[model_id] = model_dict
+    _model_order.append(model_id)
     return {"model_id": model_id, "model": model_dict}
 
 
@@ -127,4 +148,6 @@ async def delete_model(model_id: str) -> dict[str, str]:
             detail=f"Model '{model_id}' not found",
         )
     del _model_store[model_id]
+    if model_id in _model_order:
+        _model_order.remove(model_id)
     return {"detail": f"Model '{model_id}' deleted"}

@@ -22,7 +22,7 @@ export function FormField({
   const id = useId();
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <label htmlFor={id} className="shrink-0 text-[11px] text-white/35 w-12">
+      <label htmlFor={id} className="shrink-0 text-[11px] text-white/50 w-12">
         {label}
       </label>
       <input

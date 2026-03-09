@@ -2,15 +2,30 @@ import { create } from 'zustand';
 
 // ── Inline types ──────────────────────────────────────────────────────
 
+/** Member geometry rendering: wireframe (lines), extruded (box cross-sections), or solid (lit meshes). */
 export type DisplayMode = 'wireframe' | 'extruded' | 'solid';
+
+/** Force diagram overlay type. When 'none', showForces is effectively off. */
 export type ForceType = 'moment' | 'shear' | 'axial' | 'none';
+
+/** Color mapping overlay for element visualization (demand/capacity, displacement, stress). */
 export type ColorMapType = 'none' | 'demandCapacity' | 'displacement' | 'stress';
-export type EnvironmentPreset = 'studio' | 'outdoor' | 'dark' | 'blueprint' | 'lab';
+
+/** Scene environment preset. Only one WebGL context is allowed (main 3D viewer); overlays use 2D canvas. */
+export type EnvironmentPreset = 'blueprint';
+
+/** Camera view preset for animated transitions. */
 export type CameraViewPreset = 'iso' | 'plan' | 'front' | 'side';
 
 const MIN_BEARING_VERTICAL_SCALE = 0.5;
 const MAX_BEARING_VERTICAL_SCALE = 3;
 
+/**
+ * Display state for the 3D viewer. Groups: rendering (displayMode, deformed, scale, labels),
+ * overlays (force diagrams, color map, bearing displacement, comparison), camera (view preset,
+ * command version for animation triggers), and selection (nodes, elements, bearings, hover).
+ * activeBearingId drives both the Bearing Assembly and Bearing Orbit panels.
+ */
 interface DisplayState {
   // Scene environment
   environment: EnvironmentPreset;
@@ -97,7 +112,7 @@ interface DisplayState {
 
 export const useDisplayStore = create<DisplayState>((set) => ({
   // Default scene state
-  environment: 'lab',
+  environment: 'blueprint',
 
   // Default display state
   displayMode: 'wireframe',
@@ -105,7 +120,7 @@ export const useDisplayStore = create<DisplayState>((set) => ({
   hideUndeformed: false,
   scaleFactor: 100,
   showLabels: false,
-  showGrid: false,
+  showGrid: true,
   showAxes: false,
   showMassLabels: false,
   showStiffnessLabels: false,

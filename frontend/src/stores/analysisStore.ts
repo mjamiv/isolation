@@ -15,6 +15,12 @@ interface CachedAnalysis {
 
 // ── Store interface ───────────────────────────────────────────────────
 
+/**
+ * Analysis store state. Playback (currentTimeStep, isPlaying, playbackSpeed, loopPlayback) drives
+ * time-history and mode-shape animation; setResults resets currentTimeStep to 0 and stops playback
+ * to avoid out-of-range reads. resultCache preserves results per model name when switching presets
+ * within a session; restoreFromCache restores without re-running.
+ */
 interface AnalysisState {
   status: AnalysisStatus;
   progress: number; // 0 - 100
@@ -23,13 +29,15 @@ interface AnalysisState {
   analysisId: string | null;
   analysisType: AnalysisType | null;
   results: AnalysisResults | null;
+  /** Index into time-history steps; clamped by PlaybackDriver when results change. */
   currentTimeStep: number;
   isPlaying: boolean;
-  playbackSpeed: number; // multiplier: 0.25, 0.5, 1, 2, 4
+  /** Playback speed multiplier (0.25, 0.5, 1, 2, 4). */
+  playbackSpeed: number;
   loopPlayback: boolean;
   selectedModeNumber: number | null;
   error: string | null;
-  /** Per-model result cache keyed by model name. */
+  /** Per-model result cache keyed by model name. Session-scoped; switching presets preserves cached results. */
   resultCache: Map<string, CachedAnalysis>;
 
   // Actions
@@ -37,12 +45,13 @@ interface AnalysisState {
   setAnalysisId: (id: string) => void;
   setAnalysisType: (type: AnalysisType) => void;
   setProgress: (progress: number, currentStep: number, totalSteps: number) => void;
+  /** Sets results, status=complete, progress=100, currentTimeStep=0, isPlaying=false. */
   setResults: (results: AnalysisResults) => void;
   setError: (error: string) => void;
   resetAnalysis: () => void;
-  /** Save current results to cache under the given model name. */
+  /** Save current results to cache under model name. No-op if results or analysisType is null. */
   saveToCache: (modelName: string) => void;
-  /** Restore cached results for the given model name. Returns true if found. */
+  /** Restore cached results for model name; resets playback state. Returns true if cache hit. */
   restoreFromCache: (modelName: string) => boolean;
   setTimeStep: (step: number) => void;
   togglePlayback: () => void;

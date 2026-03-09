@@ -32,8 +32,8 @@ export function ResultsPanel() {
             />
           </svg>
         </div>
-        <p className="text-[11px] font-medium text-white/40">No analysis results</p>
-        <p className="mt-1 text-[10px] text-white/20">
+        <p className="text-[11px] font-medium text-white/50">No analysis results</p>
+        <p className="mt-1 text-[10px] text-white/35">
           Use the toolbar Run Analysis action to run an analysis.
         </p>
       </div>

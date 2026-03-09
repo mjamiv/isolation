@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
+import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import * as THREE from 'three';
 import { useDisplayStore } from '../../stores/displayStore';
 import { StructuralModel3D } from './StructuralModel3D';
@@ -11,13 +11,11 @@ import { SceneEnvironment } from './SceneEnvironment';
 import { useModelBounds } from './useModelBounds';
 import { ViewerHud } from './ViewerHud';
 import type { CameraViewPreset } from '../../stores/displayStore';
+import type { ModelBounds } from './useModelBounds';
 
 type CameraControls = { target: THREE.Vector3; update: () => void };
 
-function getCameraPresetPosition(
-  view: CameraViewPreset,
-  bounds: ReturnType<typeof useModelBounds>,
-) {
+function getCameraPresetPosition(view: CameraViewPreset, bounds: ModelBounds) {
   const [cx, cy, cz] = bounds.center;
   const dist = Math.max(bounds.maxDimension * 1.6, 180);
 
@@ -103,28 +101,19 @@ function CameraRig() {
 // ── Scene content ───────────────────────────────────────────────────────
 
 function SceneContent() {
-  const showGrid = useDisplayStore((state) => state.showGrid);
   const showAxes = useDisplayStore((state) => state.showAxes);
-  const environment = useDisplayStore((state) => state.environment);
   const bounds = useModelBounds();
-
-  const [cx, , cz] = bounds.center;
-  const floorY = bounds.min[1] - 2;
-
-  const gridPosition = useMemo(
-    (): [number, number, number] => [cx, floorY + 0.12, cz],
-    [cx, floorY, cz],
+  const orbitTarget = useMemo(
+    () => new THREE.Vector3(...bounds.center),
+    [bounds.center[0], bounds.center[1], bounds.center[2]],
   );
 
   return (
     <>
-      {/* Environment preset — provides background, lighting, ground treatment */}
-      <SceneEnvironment environment={environment} bounds={bounds} />
+      <SceneEnvironment bounds={bounds} />
 
-      {/* Auto-frame camera to model extents on load */}
       <CameraRig />
 
-      {/* Camera controls — dynamic limits based on model size */}
       <OrbitControls
         makeDefault
         enableDamping
@@ -132,36 +121,15 @@ function SceneContent() {
         minDistance={Math.max(bounds.maxDimension * 0.1, 20)}
         maxDistance={bounds.orbitMaxDistance}
         screenSpacePanning
-        target={new THREE.Vector3(...bounds.center)}
+        target={orbitTarget}
       />
 
-      {/* Orientation gizmo */}
       <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
         <GizmoViewport axisColors={['#ef4444', '#22c55e', '#3b82f6']} labelColor="white" />
       </GizmoHelper>
 
-      {/* User-toggled grid overlay (supplements environment ground treatment) */}
-      {/* Blueprint environment provides its own grid, so skip this one there */}
-      {showGrid && environment !== 'blueprint' && (
-        <Grid
-          args={[bounds.gridSize, bounds.gridSize]}
-          cellSize={bounds.cellSize}
-          cellThickness={0.5}
-          cellColor="#374151"
-          sectionSize={bounds.sectionSize}
-          sectionThickness={1}
-          sectionColor="#4b5563"
-          fadeDistance={bounds.gridSize * 1.5}
-          fadeStrength={1}
-          followCamera={false}
-          position={gridPosition}
-        />
-      )}
-
-      {/* Axes helper — scales with model */}
       {showAxes && <axesHelper args={[Math.max(bounds.maxDimension * 0.15, 100)]} />}
 
-      {/* Structural model */}
       <StructuralModel3D />
     </>
   );
@@ -187,9 +155,7 @@ export function Viewer3D() {
           far: 20000,
           up: [0, 1, 0],
         }}
-        onPointerMissed={() => {
-          useDisplayStore.getState().clearSelection();
-        }}
+        onPointerMissed={() => useDisplayStore.getState().clearSelection()}
       >
         <Suspense fallback={null}>
           <SceneContent />

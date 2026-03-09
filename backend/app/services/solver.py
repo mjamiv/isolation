@@ -884,7 +884,6 @@ def run_time_history(
                 ehist = element_force_history[ekey]
                 try:
                     force_vals = _to_float_list(ops.eleResponse(elem["id"], "localForce"))
-                    pass
                 except Exception:
                     force_vals = []
 

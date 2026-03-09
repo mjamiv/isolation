@@ -222,6 +222,20 @@ body {
   transform: translateX(2px);
 }
 
+.toggle-track:focus-visible {
+  outline: 2px solid var(--gold-400);
+  outline-offset: 2px;
+  border-radius: 9px;
+}
+
+.toggle-track:hover[aria-checked='false'] {
+  background: var(--surface-3);
+}
+
+.toggle-track:hover[aria-checked='true'] {
+  box-shadow: 0 0 12px -2px var(--glow-gold-strong);
+}
+
 /* ─── Range Slider ─── */
 input[type='range'] {
   -webkit-appearance: none;

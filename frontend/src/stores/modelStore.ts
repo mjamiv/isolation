@@ -291,6 +291,12 @@ function generateLongDurationSubduction(): GroundMotionRecord {
 
 // ── Store interface ───────────────────────────────────────────────────
 
+/**
+ * Model store state. All entity collections (nodes, elements, sections, etc.) are Maps keyed by id.
+ * loadModelFromJSON and loadGeneratedPresetModel replace the entire store; clearModel resets to empty.
+ * Models without ground motions in JSON get 5 synthetic records (Serviceability, Subduction, Harmonic,
+ * El Centro, Near-Fault) auto-injected for immediate time-history analysis.
+ */
 interface ModelState {
   model: StructuralModel | null;
   nodes: Map<number, Node>;
@@ -352,9 +358,13 @@ interface ModelState {
   removeGroundMotion: (id: number) => void;
 
   // Model loaders
+  /** Load the canonical 1x1x1 steel bay startup model (fixed base, 50% LL). */
   loadSampleModel: () => void;
+  /** Replace store with a generated bay-build preset (The Frame or Long-Span Pavilion, fixed/isolated). */
   loadGeneratedPresetModel: (presetId: GeneratedPresetId) => void;
+  /** Replace store from JSON; injects default ground motions if json.groundMotions is empty. */
   loadModelFromJSON: (json: ModelJSON) => void;
+  /** Clear all model data; sets model to null and empties all Maps. */
   clearModel: () => void;
 }
 

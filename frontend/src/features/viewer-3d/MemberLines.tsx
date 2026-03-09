@@ -1,7 +1,8 @@
-import { useMemo, useCallback, useRef } from 'react';
+import { memo, useMemo, useCallback, useRef } from 'react';
 import { Line, Edges } from '@react-three/drei';
 import * as THREE from 'three';
 import { ThreeEvent } from '@react-three/fiber';
+import { useShallow } from 'zustand/react/shallow';
 import { useModelStore, type Element, type Node, type Section } from '../../stores/modelStore';
 import { useDisplayStore, type DisplayMode } from '../../stores/displayStore';
 
@@ -115,7 +116,7 @@ interface MemberLineProps {
   onHover: (id: number | null) => void;
 }
 
-function MemberLine({
+const MemberLine = memo(function MemberLine({
   element,
   nodeI,
   nodeJ,
@@ -173,7 +174,7 @@ function MemberLine({
       onPointerOut={handlePointerOut}
     />
   );
-}
+});
 
 // ── Helper: compute member geometry transform ───────────────────────
 
@@ -225,7 +226,7 @@ interface MemberExtrudedProps {
   onHover: (id: number | null) => void;
 }
 
-function MemberExtruded({
+const MemberExtruded = memo(function MemberExtruded({
   element,
   nodeI,
   nodeJ,
@@ -302,7 +303,7 @@ function MemberExtruded({
       <Edges color={color} threshold={15} />
     </mesh>
   );
-}
+});
 
 // ── Solid member (opaque box with standard material) ────────────────
 
@@ -317,7 +318,7 @@ interface MemberSolidProps {
   onHover: (id: number | null) => void;
 }
 
-function MemberSolid({
+const MemberSolid = memo(function MemberSolid({
   element,
   nodeI,
   nodeJ,
@@ -387,7 +388,7 @@ function MemberSolid({
       <meshStandardMaterial color={color} roughness={0.6} metalness={0.2} />
     </mesh>
   );
-}
+});
 
 // ── Container component ─────────────────────────────────────────────
 
@@ -395,11 +396,16 @@ export function MemberLines() {
   const nodes = useModelStore((state) => state.nodes);
   const elements = useModelStore((state) => state.elements);
   const sections = useModelStore((state) => state.sections);
-  const displayMode: DisplayMode = useDisplayStore((state) => state.displayMode);
-  const selectedElementIds = useDisplayStore((state) => state.selectedElementIds);
-  const hoveredElementId = useDisplayStore((state) => state.hoveredElementId);
-  const selectElement = useDisplayStore((state) => state.selectElement);
-  const setHoveredElement = useDisplayStore((state) => state.setHoveredElement);
+  const { displayMode, selectedElementIds, hoveredElementId, selectElement, setHoveredElement } =
+    useDisplayStore(
+      useShallow((s) => ({
+        displayMode: s.displayMode as DisplayMode,
+        selectedElementIds: s.selectedElementIds,
+        hoveredElementId: s.hoveredElementId,
+        selectElement: s.selectElement,
+        setHoveredElement: s.setHoveredElement,
+      })),
+    );
 
   const elementArray = useMemo(() => Array.from(elements.values()), [elements]);
 

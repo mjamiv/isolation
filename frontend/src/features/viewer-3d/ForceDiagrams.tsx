@@ -9,6 +9,9 @@ import type { StaticResults, TimeHistoryResults, PushoverResults } from '@/types
 
 const LARGE_MODEL_FORCE_DIAGRAM_THRESHOLD = 120;
 
+// Shared index buffer for quad faces (avoids per-segment allocation)
+const QUAD_INDEX = new Uint16Array([0, 1, 2, 0, 2, 3]);
+
 interface DiagramItem {
   elementId: number;
   base: THREE.Vector3[];
@@ -672,10 +675,7 @@ export function ForceDiagrams() {
                   <mesh key={`force-face-${item.elementId}-${segIdx}`} renderOrder={2}>
                     <bufferGeometry>
                       <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-                      <bufferAttribute
-                        attach="index"
-                        args={[new Uint16Array([0, 1, 2, 0, 2, 3]), 1]}
-                      />
+                      <bufferAttribute attach="index" args={[QUAD_INDEX, 1]} />
                     </bufferGeometry>
                     <meshBasicMaterial
                       color={item.color}

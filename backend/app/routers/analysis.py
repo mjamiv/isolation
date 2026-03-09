@@ -37,7 +37,9 @@ router = APIRouter(
 )
 
 # In-memory analysis results store  --  analysis_id -> result dict
+# Uses insertion order for FIFO eviction when store is full
 _analysis_store: dict[str, dict[str, Any]] = {}
+_analysis_order: list[str] = []
 
 PUBLIC_ANALYSIS_ERROR = "Analysis failed due to an internal error"
 PUBLIC_ANALYSIS_ERROR_CODE = "ANALYSIS_INTERNAL_ERROR"
@@ -49,6 +51,31 @@ def get_analysis_store() -> dict[str, dict[str, Any]]:
     Used by the results router to look up completed analyses.
     """
     return _analysis_store
+
+
+def _evict_oldest_analyses_if_needed() -> None:
+    """Evict oldest analyses when store exceeds MAX_ANALYSES."""
+    while len(_analysis_store) >= settings.MAX_ANALYSES and _analysis_order:
+        oldest = _analysis_order.pop(0)
+        if oldest in _analysis_store:
+            del _analysis_store[oldest]
+
+
+def _get_websocket_origin(websocket: WebSocket) -> str | None:
+    """Extract Origin header from WebSocket handshake."""
+    headers = dict(
+        (k.decode("latin-1").lower(), v.decode("latin-1"))
+        for k, v in websocket.scope.get("headers", [])
+    )
+    return headers.get("origin")
+
+
+def _validate_websocket_origin(websocket: WebSocket) -> bool:
+    """Return True if Origin is allowed (in CORS_ORIGINS or missing for same-origin)."""
+    origin = _get_websocket_origin(websocket)
+    if origin is None:
+        return True  # Same-origin or no Origin (e.g. non-browser client)
+    return origin in settings.CORS_ORIGINS
 
 
 # --------------------------------------------------------------------------
@@ -115,6 +142,13 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
     analysis_id = str(uuid.uuid4())
     analysis_type = params.type
 
+    _evict_oldest_analyses_if_needed()
+    if len(_analysis_store) >= settings.MAX_ANALYSES:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Analysis store full (max {settings.MAX_ANALYSES}). Wait for cleanup or retry later.",
+        )
+
     # Mark as running
     _analysis_store[analysis_id] = {
         "analysis_id": analysis_id,
@@ -125,6 +159,7 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
         "results": None,
         "error": None,
     }
+    _analysis_order.append(analysis_id)
 
     try:
         # Lazy import to avoid loading openseespy at module import time
@@ -278,6 +313,8 @@ async def get_analysis_status(analysis_id: str) -> dict[str, Any]:
 async def ws_analysis_stream(websocket: WebSocket, analysis_id: str) -> None:
     """WebSocket endpoint for streaming analysis results step-by-step.
 
+    Validates Origin header against CORS_ORIGINS before accepting the connection.
+
     This is a skeleton implementation that demonstrates the protocol.
     In a production system, the solver would push intermediate results
     through this channel during a long-running time-history analysis.
@@ -295,6 +332,9 @@ async def ws_analysis_stream(websocket: WebSocket, analysis_id: str) -> None:
         websocket: The WebSocket connection.
         analysis_id: UUID of the analysis to stream.
     """
+    if not _validate_websocket_origin(websocket):
+        await websocket.close(code=1008)  # Policy Violation - origin not allowed
+        return
     await websocket.accept()
     logger.info("WebSocket connected for analysis %s", analysis_id)
 

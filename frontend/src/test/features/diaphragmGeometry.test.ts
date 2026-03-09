@@ -15,8 +15,9 @@ describe('diaphragmGeometry', () => {
     ]);
 
     expect(mesh).not.toBeNull();
-    expect(mesh!.outline.map((point) => point.y)).toEqual([180, 192, 204, 198]);
-    expect(mesh!.vertices[0]!.y).toBeCloseTo(193.5, 6);
+    expect(mesh!.outline.map((point) => point.y)).toEqual([180, 198, 204, 192]);
+    // Centroid is appended as the last vertex by the Delaunay fan triangulation
+    expect(mesh!.vertices[mesh!.vertices.length - 1]!.y).toBeCloseTo(193.5, 6);
   });
 
   it('builds a deformed ribbon strip that follows local node elevations', () => {

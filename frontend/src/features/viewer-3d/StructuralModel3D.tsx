@@ -1,3 +1,5 @@
+import { memo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useModelStore } from '../../stores/modelStore';
 import { useDisplayStore } from '../../stores/displayStore';
 import { useAnalysisStore } from '../../stores/analysisStore';
@@ -16,12 +18,16 @@ import { PlasticHinges } from './PlasticHinges';
 import { PlaybackDriver } from './PlaybackDriver';
 import { ForceDiagrams } from './ForceDiagrams';
 
-export function StructuralModel3D() {
+export const StructuralModel3D = memo(function StructuralModel3D() {
   const model = useModelStore((state) => state.model);
-  const showDeformed = useDisplayStore((state) => state.showDeformed);
-  const hideUndeformed = useDisplayStore((state) => state.hideUndeformed);
-  const showForces = useDisplayStore((state) => state.showForces);
-  const forceType = useDisplayStore((state) => state.forceType);
+  const { showDeformed, hideUndeformed, showForces, forceType } = useDisplayStore(
+    useShallow((s) => ({
+      showDeformed: s.showDeformed,
+      hideUndeformed: s.hideUndeformed,
+      showForces: s.showForces,
+      forceType: s.forceType,
+    })),
+  );
   const results = useAnalysisStore((state) => state.results);
   const selectedModeNumber = useAnalysisStore((state) => state.selectedModeNumber);
   const comparisonType = useComparisonStore((state) => state.comparisonType);
@@ -58,4 +64,4 @@ export function StructuralModel3D() {
       {(hasTimeHistory || hasComparisonTimeHistory) && <PlaybackDriver />}
     </group>
   );
-}
+});

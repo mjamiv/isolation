@@ -1,30 +1,39 @@
 # MEMORY
 
-## Session Update (2026-03-07 — Viewer Cleanup, Landmark Model Presets, Diaphragm Fix)
-- Cleaned up 3D viewer base layers: removed the gold-accented environment grid from Test Lab, tightened ContactShadows (opacity 0.45->0.35, blur 2.6->1.8), and aligned the user-toggled grid to the floor plane (`bounds.min[1] - 2 + 0.12`) instead of floating at Y=0
-- Built **Apple Park Ring Segment (TFP Isolated)** preset — a 40-degree wedge of the iconic ring building with 162 nodes, 276 elements, 27 EPS TFP bearings (52" displacement capacity), based on real specs (1,532 ft outer diameter, 180 ft ring width, 692 isolators total)
-- Built **LA City Hall (Base Isolated)** preset — the 32-story, 460 ft tall steel frame with three setback segments (podium/midrise/tower), 291 nodes, 513 elements, 27 HDR-equivalent bearings (21" displacement capacity), based on the Nabih Youssef et al. 2000 paper
-- Fixed structural continuity in LA City Hall: tower columns extend through midrise and podium to the base; midrise columns extend through podium to the base; verified with successful time-history analysis (peak base shear 0.21 kips, max displacement 10.4 in for synthetic pulse)
-- Fixed diaphragm rendering for concave geometries: replaced convex hull (which drew a straight chord across arc segments) with Delaunay triangulation (Bowyer-Watson) so diaphragm surfaces follow the actual node perimeter — fixes Apple Park's curved floor slabs
+## Session Update (2026-03-09 — YOLO-MOAS Full Repo Upgrade)
+- Ran Y.O.L.O-M.O.A.S: 5 agent leads × 2 sub-agents = 15 total agents swept the codebase
+- **Frontend Design**: 19 changes — mobile tab layout, WCAG accessibility (aria-labels, focus rings, keyboard nav, skip link, semantic landmarks, toast aria-live), systematic contrast bumps across all panels
+- **Code Simplifier**: 7 changes — 4 nested ternaries → if/else, dead code removal (redundant `pass`, identity prop), named `ModelBounds` type
+- **Security**: 7 changes — security headers middleware (CSP, X-Frame-Options, etc.), Docker Compose hardening (Redis localhost-only, read-only FS, no-new-privileges, memory limits), WebSocket origin validation, in-memory store limits (100 models/500 analyses with FIFO eviction), Pydantic schema validation on model metadata
+- **Performance**: 12 changes — React.memo on 8 Three.js components, useShallow selectors (ViewerControls 30+ → 2), shared module-scope geometries/materials, lazy-loaded 4 heavy panels (ComparisonPanel, AnalysisDialog, BayBuildDialog, BentBuildDialog)
+- **Documentation**: README restructured (390 → 155 lines), JSDoc on 5 frontend files (stores, types)
+- Fixed pre-existing diaphragmGeometry test (outline ordering + centroid vertex index after Delaunay change)
+- All 51 changes passed independent checker review with 0 reverts
 
 ## Key Files Updated This Session
-- `frontend/src/features/viewer-3d/SceneEnvironment.tsx` — removed Test Lab environment grid, tightened contact shadows
-- `frontend/src/features/viewer-3d/Viewer3D.tsx` — aligned user grid to floor elevation
-- `frontend/src/features/viewer-3d/diaphragmGeometry.ts` — replaced convex hull surface with Delaunay triangulation + concave boundary for proper arc/ring diaphragm rendering
-- `frontend/src/types/modelJSON.ts` — added Apple Park and LA City Hall to PRESET_MODELS
-- `frontend/public/models/apple-park-isolated.json` — new preset (ring segment)
-- `frontend/public/models/la-city-hall-isolated.json` — new preset (tall building)
+- 36 files modified across frontend and backend (see git diff --stat)
+- `backend/app/main.py` — security headers middleware, CORS hardening
+- `backend/app/core/config.py` — MAX_MODELS, MAX_ANALYSES limits
+- `backend/app/routers/analysis.py` — WebSocket origin validation, store limits
+- `backend/app/routers/models.py` — model store limits with FIFO eviction
+- `backend/app/schemas/model.py` — typed ModelInfoSchema with validation
+- `docker-compose.yml` — Redis localhost-only, read-only FS, memory limits
+- `frontend/src/features/layout/AppLayout.tsx` — mobile tabs, semantic HTML, lazy ComparisonPanel
+- `frontend/src/features/controls/ViewerControls.tsx` — useShallow selectors, accessibility
+- `frontend/src/features/viewer-3d/*.tsx` — React.memo, shared geometries/materials
+- `frontend/src/stores/*.ts`, `frontend/src/types/storeModel.ts` — JSDoc documentation
 
 ## Decisions and Rationale
-- Used a single 40-degree wedge for Apple Park rather than the full ring because modeling 692 bearings on a full circle would be too dense for the viewer and analysis; one of nine independent wedge segments is structurally representative
-- Modeled LA City Hall bearings as TFP (the IsoVis element type) with friction properties approximating the real HDR bearing hysteretic damping (~5-8% equivalent), since IsoVis doesn't have a native HDR bearing element
-- The diaphragm Delaunay fix is backward-compatible: for convex/rectangular layouts the triangulation produces the same visual as the old convex hull fan
+- CSP uses `unsafe-inline`/`unsafe-eval` because Plotly.js and Tailwind require them
+- Shared module-scope Three.js objects persist for app lifetime (intentional — tiny memory)
+- Mobile layout uses tab-based navigation instead of cramped 3-panel split
+- In-memory store limits use FIFO eviction (oldest first) to prevent DoS
 
 ## Current State
 - Branch: `main` (tracking `origin/main`)
-- 12 model presets in Load Model dropdown (including Apple Park and LA City Hall)
-- LA City Hall time-history analysis verified via API with successful completion
-- Diaphragm rendering works for both convex grids and concave arc segments
+- All tests pass: 511 frontend (Vitest), 128 backend (pytest)
+- TypeScript type-check clean
+- 12 model presets available
 
 ## ⚠ Backend Launch (CRITICAL — read every session)
 The backend **must** be started with the `isovis-x86` conda environment — NOT the local `.venv`.
@@ -45,14 +54,15 @@ Do NOT use `source .venv/bin/activate` or plain `conda activate isovis-x86` (the
 ## Accumulated Context from Prior Sessions
 - Phases 1-5 complete (model editor, analysis runner, TFP bearings, pushover, time-history comparison)
 - Generated presets: The Frame (Fixed/Isolated), Long-Span Pavilion (Fixed/Isolated), plus static JSON presets
-- Diaphragm geometry uses hull surfaces (non-collinear) and ribbon strips (collinear/bridge)
+- Diaphragm geometry uses Delaunay triangulation (Bowyer-Watson) for concave/arc segments, ribbon strips for collinear/bridge
 - All Plotly charts use SVG `scatter` (not `scattergl`) to avoid WebGL context exhaustion
 - Only the main 3D viewer holds a WebGL context
 - Frontend: Vite + React + Zustand + R3F + Radix UI + Plotly
 - Backend: FastAPI + OpenSeesPy (x86_64 Rosetta on Apple Silicon)
 
 ## Next Steps
-- Debug why `/api/results/<analysisId>` is returning null/empty isolated time-history payloads (`dt`, `totalTime`, `peakValues`) for the live smoke-tested run
-- Re-run the live bearing smoke test after the backend fix and verify nonzero orbit/stage travel in the upgraded panel
-- Turn the browser smoke test into a checked-in Playwright spec once the backend payload issue is fixed
-- Investigate the frontend Vitest `--localstorage-file` warning
+- Debug why `/api/results/<analysisId>` is returning null/empty isolated time-history payloads
+- Re-run the live bearing smoke test after the backend fix
+- Turn the browser smoke test into a checked-in Playwright spec
+- Manual QA of the new mobile tab layout
+- Enable `AUTH_REQUIRED` for production deployment

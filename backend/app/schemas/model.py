@@ -12,6 +12,54 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.core.config import settings
 
+
+class ModelInfoSchema(BaseModel):
+    """Validated model metadata.
+
+    Attributes:
+        name: Human-readable model name.
+        units: Unit system (kN-m, N-m, kip-in, etc.).
+        ndm: Number of dimensions (2 or 3).
+        ndf: Number of DOFs per node (3 or 6).
+        z_up: If True, vertical axis is Z (for 3D TFP models).
+    """
+
+    model_config = ConfigDict(strict=False)
+
+    name: str = Field(default="Untitled", description="Model name")
+    units: str = Field(
+        default="kN-m",
+        description="Unit system",
+    )
+    ndm: int = Field(default=2, ge=2, le=3, description="Number of dimensions (2 or 3)")
+    ndf: int = Field(default=3, ge=3, le=6, description="Number of DOFs per node (3 or 6)")
+    z_up: bool = Field(default=False, description="Vertical axis is Z (3D TFP convention)")
+
+    @field_validator("units", mode="before")
+    @classmethod
+    def units_normalize_and_validate(cls, v: str | dict) -> str:
+        """Accept string or legacy {force, length, time} dict; normalize to string."""
+        if isinstance(v, dict):
+            force = v.get("force", "kN")
+            length = v.get("length", "m")
+            # Map common combinations to solver-supported strings
+            mapping = {
+                ("kip", "in"): "kip-in",
+                ("kip", "ft"): "kip-ft",
+                ("lb", "in"): "lb-in",
+                ("lb", "ft"): "lb-ft",
+                ("kN", "m"): "kN-m",
+                ("kN", "mm"): "kN-mm",
+                ("N", "m"): "N-m",
+                ("N", "mm"): "N-mm",
+            }
+            v = mapping.get((force, length), "kN-m")
+        allowed = {"kN-m", "N-m", "kip-in", "lb-in", "kN-mm", "N-mm", "kip-ft", "lb-ft"}
+        if v not in allowed:
+            raise ValueError(f"units must be one of {allowed}")
+        return v
+
+
 class NodeSchema(BaseModel):
     """A structural node with coordinates and boundary conditions.
 
@@ -351,8 +399,8 @@ class StructuralModelSchema(BaseModel):
 
     model_config = ConfigDict(strict=False)
 
-    model_info: dict = Field(
-        default_factory=lambda: {"name": "Untitled", "units": "kN-m", "ndm": 2, "ndf": 3},
+    model_info: ModelInfoSchema = Field(
+        default_factory=ModelInfoSchema,
         description="Model metadata: name, units, ndm, ndf",
     )
     nodes: list[NodeSchema] = Field(default_factory=list, max_length=10000, description="Structural nodes")
@@ -417,12 +465,5 @@ class StructuralModelSchema(BaseModel):
                 raise ValueError(
                     f"Section {sec.id} references non-existent material {sec.material_id}"
                 )
-
-        # Validate model_info
-        info = self.model_info
-        if "ndm" not in info:
-            self.model_info["ndm"] = 2
-        if "ndf" not in info:
-            self.model_info["ndf"] = 3
 
         return self

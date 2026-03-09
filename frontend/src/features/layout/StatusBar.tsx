@@ -96,11 +96,11 @@ export function StatusBar() {
       )}
 
       {/* Right: Model info */}
-      <div className="flex items-center gap-3 text-white/45">
-        {model && <span className="font-medium text-white/60">{model.name}</span>}
+      <div className="flex items-center gap-3 text-white/50">
+        {model && <span className="font-medium text-white/70">{model.name}</span>}
         <span className="font-mono">{nodeCount}N</span>
         <span className="font-mono">{elementCount}E</span>
-        <span className="rounded border border-white/[0.06] px-1.5 py-0.5 font-mono text-ui-xs text-white/55">
+        <span className="rounded border border-white/[0.06] px-1.5 py-0.5 font-mono text-ui-xs text-white/60">
           Units: kip-in
         </span>
       </div>

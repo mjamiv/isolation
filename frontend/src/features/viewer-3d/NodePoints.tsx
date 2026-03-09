@@ -1,5 +1,6 @@
-import { useRef, useMemo, useEffect } from 'react';
+import { memo, useRef, useMemo, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
+import { ThreeEvent } from '@react-three/fiber';
 import { useModelStore } from '../../stores/modelStore';
 import { useDisplayStore } from '../../stores/displayStore';
 
@@ -32,7 +33,7 @@ const _tempColor = new THREE.Color();
  * and apply it additively in a custom onBeforeCompile patch.
  */
 
-export function NodePoints() {
+export const NodePoints = memo(function NodePoints() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const emissiveAttrRef = useRef<THREE.InstancedBufferAttribute | null>(null);
 
@@ -124,35 +125,43 @@ export function NodePoints() {
     }
   }, [nodeArray, nodeCount, selectedNodeIds, hoveredNodeId]);
 
+  const handleClick = useCallback(
+    (e: ThreeEvent<MouseEvent>) => {
+      e.stopPropagation();
+      const instanceId = e.instanceId;
+      if (instanceId !== undefined && instanceId < indexToNodeId.length) {
+        const nodeId = indexToNodeId[instanceId];
+        if (nodeId !== undefined) {
+          selectNode(nodeId, e.nativeEvent.shiftKey);
+        }
+      }
+    },
+    [indexToNodeId, selectNode],
+  );
+  const handlePointerOver = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation();
+      const instanceId = e.instanceId;
+      if (instanceId !== undefined && instanceId < indexToNodeId.length) {
+        const nodeId = indexToNodeId[instanceId];
+        if (nodeId !== undefined) {
+          setHoveredNode(nodeId);
+        }
+      }
+    },
+    [indexToNodeId, setHoveredNode],
+  );
+  const handlePointerOut = useCallback(() => setHoveredNode(null), [setHoveredNode]);
+
   if (nodeCount === 0) return null;
 
   return (
     <instancedMesh
       ref={meshRef}
       args={[geometry, undefined, nodeCount]}
-      onClick={(e) => {
-        e.stopPropagation();
-        const instanceId = e.instanceId;
-        if (instanceId !== undefined && instanceId < indexToNodeId.length) {
-          const nodeId = indexToNodeId[instanceId];
-          if (nodeId !== undefined) {
-            selectNode(nodeId, e.nativeEvent.shiftKey);
-          }
-        }
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        const instanceId = e.instanceId;
-        if (instanceId !== undefined && instanceId < indexToNodeId.length) {
-          const nodeId = indexToNodeId[instanceId];
-          if (nodeId !== undefined) {
-            setHoveredNode(nodeId);
-          }
-        }
-      }}
-      onPointerOut={() => {
-        setHoveredNode(null);
-      }}
+      onClick={handleClick}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
     >
       <meshStandardMaterial
         vertexColors
@@ -164,4 +173,4 @@ export function NodePoints() {
       />
     </instancedMesh>
   );
-}
+});

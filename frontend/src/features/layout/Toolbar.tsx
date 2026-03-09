@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { useModelStore } from '../../stores/modelStore';
 import { useDisplayStore, type DisplayMode } from '../../stores/displayStore';
 import { useAnalysisStore } from '../../stores/analysisStore';
@@ -6,10 +6,17 @@ import { useComparisonStore } from '../../stores/comparisonStore';
 import { useToastStore } from '../../stores/toastStore';
 import { PRESET_MODELS } from '../../types/modelJSON';
 import type { ModelJSON } from '../../types/modelJSON';
-import { AnalysisDialog } from '../analysis/AnalysisDialog';
-import { BayBuildDialog } from '../bay-build/BayBuildDialog';
-import { BentBuildDialog } from '../bent-build/BentBuildDialog';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+
+const AnalysisDialog = lazy(() =>
+  import('../analysis/AnalysisDialog').then((m) => ({ default: m.AnalysisDialog })),
+);
+const BayBuildDialog = lazy(() =>
+  import('../bay-build/BayBuildDialog').then((m) => ({ default: m.BayBuildDialog })),
+);
+const BentBuildDialog = lazy(() =>
+  import('../bent-build/BentBuildDialog').then((m) => ({ default: m.BentBuildDialog })),
+);
 
 const DISPLAY_MODES: { value: DisplayMode; label: string }[] = [
   { value: 'wireframe', label: 'Wireframe' },
@@ -254,9 +261,11 @@ export function Toolbar() {
         ))}
       </div>
 
-      <AnalysisDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-      <BayBuildDialog open={bayBuildOpen} onOpenChange={setBayBuildOpen} />
-      <BentBuildDialog open={bentBuildOpen} onOpenChange={setBentBuildOpen} />
+      <Suspense fallback={null}>
+        <AnalysisDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+        <BayBuildDialog open={bayBuildOpen} onOpenChange={setBayBuildOpen} />
+        <BentBuildDialog open={bentBuildOpen} onOpenChange={setBentBuildOpen} />
+      </Suspense>
       <ConfirmDialog
         open={resetConfirmOpen}
         onOpenChange={setResetConfirmOpen}

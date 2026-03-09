@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { useModelStore } from '@/stores/modelStore';
@@ -12,6 +12,19 @@ const OVERLAY_COLOR = '#f97316'; // orange-500
 const DEFORMED_OPACITY = 0.7;
 const NODE_RADIUS = 2;
 const NODE_SEGMENTS = 8;
+
+// Shared geometry and materials for deformed node spheres (avoids per-node allocation)
+const SHARED_NODE_GEOMETRY = new THREE.SphereGeometry(NODE_RADIUS, NODE_SEGMENTS, NODE_SEGMENTS);
+const SHARED_DEFORMED_MATERIAL = new THREE.MeshStandardMaterial({
+  color: DEFORMED_COLOR,
+  transparent: true,
+  opacity: DEFORMED_OPACITY,
+});
+const SHARED_OVERLAY_MATERIAL = new THREE.MeshStandardMaterial({
+  color: OVERLAY_COLOR,
+  transparent: true,
+  opacity: DEFORMED_OPACITY,
+});
 
 /** Number of interpolation segments per member for smooth curves. */
 const CURVE_SEGMENTS = 12;
@@ -171,7 +184,7 @@ function buildDisplacedNodeMap(
 // DeformedShape component
 // ---------------------------------------------------------------------------
 
-export function DeformedShape() {
+export const DeformedShape = memo(function DeformedShape() {
   const nodes = useModelStore((s) => s.nodes);
   const elements = useModelStore((s) => s.elements);
   const showDeformed = useDisplayStore((s) => s.showDeformed);
@@ -446,10 +459,12 @@ export function DeformedShape() {
 
       {/* Primary deformed node points */}
       {nodePositions.map((pos, i) => (
-        <mesh key={i} position={pos}>
-          <sphereGeometry args={[NODE_RADIUS, NODE_SEGMENTS, NODE_SEGMENTS]} />
-          <meshStandardMaterial color={DEFORMED_COLOR} transparent opacity={DEFORMED_OPACITY} />
-        </mesh>
+        <mesh
+          key={i}
+          position={pos}
+          geometry={SHARED_NODE_GEOMETRY}
+          material={SHARED_DEFORMED_MATERIAL}
+        />
       ))}
 
       {/* Overlay deformed members — smooth cubic Hermite curves (yellow) */}
@@ -493,11 +508,13 @@ export function DeformedShape() {
 
       {/* Overlay deformed node points */}
       {overlayNodePositions.map((pos, i) => (
-        <mesh key={`overlay-node-${i}`} position={pos}>
-          <sphereGeometry args={[NODE_RADIUS, NODE_SEGMENTS, NODE_SEGMENTS]} />
-          <meshStandardMaterial color={OVERLAY_COLOR} transparent opacity={DEFORMED_OPACITY} />
-        </mesh>
+        <mesh
+          key={`overlay-node-${i}`}
+          position={pos}
+          geometry={SHARED_NODE_GEOMETRY}
+          material={SHARED_OVERLAY_MATERIAL}
+        />
       ))}
     </group>
   );
-}
+});

@@ -37,6 +37,18 @@ const DIRECTION_PRESETS: DirectionPreset[] = [
   { label: 'X+Y+Z (30/30/100)', scales: { 1: 30, 2: 30, 3: 100 } },
 ];
 
+function getRunButtonLabel(
+  submitting: boolean,
+  runComparisonMode: boolean,
+  analysisType: AnalysisType,
+): string {
+  if (submitting) return 'Submitting...';
+  if (runComparisonMode && (analysisType === 'pushover' || analysisType === 'time_history')) {
+    return 'Run Comparison';
+  }
+  return 'Run';
+}
+
 export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
   const [analysisType, setAnalysisType] = useState<AnalysisType>('static');
   const [numModes, setNumModes] = useState('3');
@@ -142,7 +154,12 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
         // backend DOF 2 = frontend Z (lateral) and DOF 3 = frontend Y (vertical).
         // Map the user's frontend direction to the backend DOF accordingly.
         const zUp = bearings.size > 0;
-        const mapDir = (d: 1 | 2 | 3): 1 | 2 | 3 => (zUp ? (d === 2 ? 3 : d === 3 ? 2 : d) : d);
+        const mapDir = (d: 1 | 2 | 3): 1 | 2 | 3 => {
+          if (!zUp) return d;
+          if (d === 2) return 3;
+          if (d === 3) return 2;
+          return d;
+        };
 
         params.groundMotions = ([1, 2, 3] as const)
           .filter((dir) => directionScales[dir] > 0)
@@ -209,14 +226,14 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             </Dialog.Close>
           </div>
 
-          <Dialog.Description className="mt-1 text-[11px] text-white/30">
+          <Dialog.Description className="mt-1 text-[11px] text-white/45">
             Configure and run a structural analysis.
           </Dialog.Description>
 
           {/* Analysis type selector */}
           <div className="mt-4 space-y-3">
             <div>
-              <label className="text-[11px] font-medium text-white/40">Analysis Type</label>
+              <label className="text-[11px] font-medium text-white/50">Analysis Type</label>
               <div className={toggleGroupClass}>
                 {ANALYSIS_TYPES.map((t) => (
                   <button
@@ -238,7 +255,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             {/* Modal params */}
             {analysisType === 'modal' && (
               <div>
-                <label className="text-[11px] font-medium text-white/40">Number of Modes</label>
+                <label className="text-[11px] font-medium text-white/50">Number of Modes</label>
                 <input
                   type="number"
                   value={numModes}
@@ -256,7 +273,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                 <div>
                   <label
                     htmlFor="analysis-ground-motion"
-                    className="text-[11px] font-medium text-white/40"
+                    className="text-[11px] font-medium text-white/50"
                   >
                     Ground Motion
                   </label>
@@ -276,7 +293,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-white/40">
+                  <label className="text-[11px] font-medium text-white/50">
                     Excitation Directions
                   </label>
                   <div className="mt-1 mb-2">
@@ -337,7 +354,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[11px] font-medium text-white/40">Time Step (s)</label>
+                    <label className="text-[11px] font-medium text-white/50">Time Step (s)</label>
                     <input
                       type="number"
                       value={dt}
@@ -347,7 +364,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-medium text-white/40">Num Steps</label>
+                    <label className="text-[11px] font-medium text-white/50">Num Steps</label>
                     <input
                       type="number"
                       value={numSteps}
@@ -365,7 +382,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
               <>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[11px] font-medium text-white/40">
+                    <label className="text-[11px] font-medium text-white/50">
                       Target Disp (in)
                     </label>
                     <input
@@ -378,7 +395,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-medium text-white/40">
+                    <label className="text-[11px] font-medium text-white/50">
                       Disp Increment (in)
                     </label>
                     <input
@@ -392,7 +409,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-white/40">Push Direction</label>
+                  <label className="text-[11px] font-medium text-white/50">Push Direction</label>
                   <div className={toggleGroupClass}>
                     {(['X', 'Y'] as const).map((dir) => (
                       <button
@@ -407,7 +424,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-white/40">Load Pattern</label>
+                  <label className="text-[11px] font-medium text-white/50">Load Pattern</label>
                   <div className={toggleGroupClass}>
                     {[
                       { value: 'linear' as const, label: 'Linear' },
@@ -444,7 +461,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
 
                 {runComparisonMode && (
                   <>
-                    <p className="text-[10px] text-white/25">
+                    <p className="text-[10px] text-white/40">
                       {analysisType === 'time_history'
                         ? 'Runs time-history on both the isolated model and an auto-generated fixed-base variant with animated overlay.'
                         : 'Runs pushover on both the isolated model and an auto-generated fixed-base variant.'}
@@ -459,7 +476,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                             onChange={(e) => setEnableLambda(e.target.checked)}
                             className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
                           />
-                          <span className="text-[11px] text-white/40">
+                          <span className="text-[11px] text-white/50">
                             Lambda Factors (ASCE 7-22 Ch. 17)
                           </span>
                         </label>
@@ -522,7 +539,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] text-white/50 transition-colors hover:bg-surface-4 hover:text-white/70"
+                className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] text-white/60 transition-colors hover:bg-surface-4 hover:text-white/80 focus-visible:outline-2 focus-visible:outline-yellow-400 focus-visible:outline-offset-1"
               >
                 Cancel
               </button>
@@ -532,14 +549,9 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
               onClick={handleRun}
               disabled={!!validationError || submitting}
               aria-describedby={validationError ? 'analysis-validation-error' : undefined}
-              className="rounded-md bg-gradient-to-r from-yellow-600 to-yellow-500 px-4 py-1.5 text-[11px] font-semibold text-white shadow-glow-gold transition-all hover:from-yellow-500 hover:to-yellow-400 hover:shadow-glow-gold-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+              className="rounded-md bg-gradient-to-r from-yellow-600 to-yellow-500 px-4 py-1.5 text-[11px] font-semibold text-white shadow-glow-gold transition-all hover:from-yellow-500 hover:to-yellow-400 hover:shadow-glow-gold-lg disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none focus-visible:outline-2 focus-visible:outline-yellow-400 focus-visible:outline-offset-1"
             >
-              {submitting
-                ? 'Submitting...'
-                : runComparisonMode &&
-                    (analysisType === 'pushover' || analysisType === 'time_history')
-                  ? 'Run Comparison'
-                  : 'Run'}
+              {getRunButtonLabel(submitting, runComparisonMode, analysisType)}
             </button>
           </div>
         </Dialog.Content>

@@ -1,3 +1,6 @@
+from starlette.requests import Request
+from starlette.responses import Response
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,13 +13,44 @@ app = FastAPI(
     description="IsoVis - Triple Friction Pendulum bearing simulation API",
 )
 
+# Security headers middleware
+# NOTE: Request body size is implicitly limited by Pydantic validation
+# (e.g. MAX_GROUND_MOTION_POINTS=500_000). No middleware-level limit added.
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "0",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "font-src 'self' data:; "
+        "connect-src 'self' ws: wss:; "
+        "worker-src 'self' blob:; "
+        "frame-ancestors 'none'"
+    ),
+}
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next: object) -> Response:
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers[name] = value
+    return response
+
+
 # CORS middleware
+# X-Api-Key included for when AUTH_REQUIRED is enabled
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Api-Key"],
 )
 
 

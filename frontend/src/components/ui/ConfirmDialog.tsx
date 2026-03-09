@@ -30,7 +30,7 @@ export function ConfirmDialog({
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] text-white/50 transition-colors hover:bg-surface-4 hover:text-white/70"
+                className="rounded-md border border-white/[0.06] bg-surface-3 px-3 py-1.5 text-[11px] text-white/60 transition-colors hover:bg-surface-4 hover:text-white/80 focus-visible:outline-2 focus-visible:outline-yellow-400 focus-visible:outline-offset-1"
               >
                 Cancel
               </button>
@@ -41,7 +41,7 @@ export function ConfirmDialog({
                 onConfirm();
                 onOpenChange(false);
               }}
-              className="rounded-md bg-red-600 px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-red-500"
+              className="rounded-md bg-red-600 px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-red-400 focus-visible:outline-offset-1"
             >
               {confirmLabel}
             </button>

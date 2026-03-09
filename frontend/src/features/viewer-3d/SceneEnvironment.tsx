@@ -1,93 +1,29 @@
 /**
  * SceneEnvironment.tsx
  *
- * Provides 6 selectable environment presets for the 3D structural viewer.
- * Each preset defines background, lighting, ground treatment, and atmosphere
- * to present the gold/yellow structural model at industry-standard visual quality.
+ * Blueprint environment for the 3D structural viewer.
+ * Navy-blue background, even technical lighting, fine engineering grid,
+ * and subtle axis lines — clean, minimal, and purpose-built for
+ * structural analysis visualization.
  *
- * All sizing (ground planes, grids, shadows, fog, lights) adapts dynamically
- * to the loaded model's bounding box via the `bounds` prop from useModelBounds.
+ * All sizing (grid, lights) adapts dynamically to the loaded model's
+ * bounding box via the `bounds` prop from useModelBounds.
  *
- * Presets:
- *   - Test Lab:      Overhead fixtures, concrete floor, subtle grid
- *   - Studio:        Clean product-photography lighting, gradient backdrop, reflective floor
- *   - Outdoor:       Natural sky, soft shadows, sunlit ground plane
- *   - Dark:          Dramatic rim lighting, near-black backdrop, floating model
- *   - Blueprint:     Navy-blue technical grid, even lighting, engineering aesthetic
- *
- * All environments are procedural — no external HDR files are loaded.
+ * Procedural — no external HDR files are loaded.
  * Compatible with frameloop="demand" via useThree().invalidate().
  */
 
 import { useEffect, useRef, useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Environment, Lightformer, ContactShadows, Grid, Sky, Stars } from '@react-three/drei';
+import { Environment, Lightformer, Grid } from '@react-three/drei';
 import * as THREE from 'three';
-import type { EnvironmentPreset } from '../../stores/displayStore';
+import { useDisplayStore } from '../../stores/displayStore';
 import type { ModelBounds } from './useModelBounds';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface SceneEnvironmentProps {
-  environment: EnvironmentPreset;
   bounds: ModelBounds;
-}
-
-interface EnvironmentSubProps {
-  bounds: ModelBounds;
-}
-
-// ── Invalidation hook ────────────────────────────────────────────────────────
-// Forces a re-render whenever the environment preset changes, since the Canvas
-// uses frameloop="demand" and won't re-draw automatically.
-
-function useInvalidateOnChange(dep: unknown) {
-  const invalidate = useThree((state) => state.invalidate);
-  const isFirstRender = useRef(true);
-
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    // Small delay to let new elements mount before invalidating
-    const id = requestAnimationFrame(() => invalidate());
-    return () => cancelAnimationFrame(id);
-  }, [dep, invalidate]);
-}
-
-// ── Background setter ────────────────────────────────────────────────────────
-// Directly sets scene.background to a gradient texture so we avoid relying on
-// CSS or Canvas alpha for the backdrop. Uses a vertical 2-stop gradient.
-
-function SceneBackground({ topColor, bottomColor }: { topColor: string; bottomColor: string }) {
-  const scene = useThree((state) => state.scene);
-  const invalidate = useThree((state) => state.invalidate);
-
-  const texture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 2;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d')!;
-    const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-    gradient.addColorStop(0, topColor);
-    gradient.addColorStop(1, bottomColor);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 2, 512);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.mapping = THREE.EquirectangularReflectionMapping;
-    return tex;
-  }, [topColor, bottomColor]);
-
-  useEffect(() => {
-    scene.background = texture;
-    invalidate();
-    return () => {
-      scene.background = null;
-    };
-  }, [scene, texture, invalidate]);
-
-  return null;
 }
 
 // ── Solid background setter ──────────────────────────────────────────────────
@@ -107,488 +43,9 @@ function SolidBackground({ color }: { color: string }) {
   return null;
 }
 
-// ── Fog setter ───────────────────────────────────────────────────────────────
-
-function SceneFog({ color, near, far }: { color: string; near: number; far: number }) {
-  const scene = useThree((state) => state.scene);
-  const invalidate = useThree((state) => state.invalidate);
-
-  useEffect(() => {
-    scene.fog = new THREE.Fog(color, near, far);
-    invalidate();
-    return () => {
-      scene.fog = null;
-    };
-  }, [scene, color, near, far, invalidate]);
-
-  return null;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TEST LAB ENVIRONMENT
-// ═══════════════════════════════════════════════════════════════════════════════
-// Clean industrial lab: overhead fixtures, concrete-tone floor, subtle grid.
-// No enclosure geometry — keeps focus on the structural model.
-
-function TestLabEnvironment({ bounds }: EnvironmentSubProps) {
-  const [cx, , cz] = bounds.center;
-  const s = bounds.shadowExtent;
-  const gs = bounds.gridSize;
-  const floorY = bounds.min[1] - 2;
-  const ceilingY = Math.max(bounds.max[1] + bounds.maxDimension * 0.35, floorY + 220);
-  const planeSize = gs * 1.3;
-
-  return (
-    <>
-      <SceneBackground topColor="#dce3e8" bottomColor="#7f8a93" />
-      <SceneFog color="#aeb8bf" near={bounds.fogFar * 0.3} far={bounds.fogFar * 1.1} />
-
-      <hemisphereLight args={['#f5f8fb', '#616d75', 0.55]} />
-      <ambientLight intensity={0.4} color="#f3f4f6" />
-
-      <directionalLight
-        position={[cx + s * 0.12, ceilingY, cz + s * 0.08]}
-        intensity={2.15}
-        color="#fffef7"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-far={s * 3}
-        shadow-camera-near={10}
-        shadow-camera-left={-s}
-        shadow-camera-right={s}
-        shadow-camera-top={s}
-        shadow-camera-bottom={-s}
-        shadow-bias={-0.001}
-      />
-      <directionalLight
-        position={[cx - s * 0.22, ceilingY * 0.72, cz - s * 0.16]}
-        intensity={0.75}
-        color="#d7eefc"
-      />
-
-      <Environment resolution={64} frames={1}>
-        {[-0.42, -0.14, 0.14, 0.42].map((offset) => (
-          <Lightformer
-            key={offset}
-            form="rect"
-            intensity={3}
-            position={[cx + gs * offset, ceilingY - 16, cz - gs * 0.1]}
-            rotation-x={Math.PI / 2}
-            scale={[gs * 0.22, 10, 1]}
-            color="#fffdf5"
-          />
-        ))}
-        <Lightformer
-          form="rect"
-          intensity={1.1}
-          position={[cx - gs * 0.42, ceilingY * 0.72, cz + gs * 0.22]}
-          rotation-y={Math.PI / 2}
-          scale={[gs * 0.28, ceilingY * 0.18, 1]}
-          color="#d8ecff"
-        />
-        <Lightformer
-          form="rect"
-          intensity={1.2}
-          position={[cx + gs * 0.42, ceilingY * 0.72, cz + gs * 0.18]}
-          rotation-y={-Math.PI / 2}
-          scale={[gs * 0.28, ceilingY * 0.18, 1]}
-          color="#ffe3a3"
-        />
-      </Environment>
-
-      <ContactShadows
-        position={[cx, floorY + 0.5, cz]}
-        opacity={0.35}
-        scale={gs * 1.4}
-        blur={1.8}
-        far={s * 1.5}
-        resolution={512}
-        color="#262b31"
-        frames={1}
-      />
-
-      <mesh rotation-x={-Math.PI / 2} position={[cx, floorY, cz]} receiveShadow>
-        <planeGeometry args={[planeSize, planeSize]} />
-        <meshStandardMaterial color="#6f7a83" roughness={0.76} metalness={0.12} />
-      </mesh>
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STUDIO ENVIRONMENT
-// ═══════════════════════════════════════════════════════════════════════════════
-// Clean, well-lit studio with soft directional lights. Neutral gradient from
-// mid-gray at the top to charcoal at the bottom. ContactShadows provide a
-// grounding plane. Environment with inline Lightformers gives soft reflections
-// on the structural members without loading an external HDR.
-
-function StudioEnvironment({ bounds }: EnvironmentSubProps) {
-  const [cx, , cz] = bounds.center;
-  const s = bounds.shadowExtent;
-  const gs = bounds.gridSize;
-  const planeSize = gs * 2;
-  const fogNear = bounds.fogFar * 0.4;
-
-  return (
-    <>
-      <SceneBackground topColor="#2d2d30" bottomColor="#18181b" />
-      <SceneFog color="#18181b" near={fogNear} far={bounds.fogFar} />
-
-      {/* Primary key light — warm, upper-right */}
-      <directionalLight
-        position={[cx + s * 0.4, s * 0.6, cz + s * 0.3]}
-        intensity={1.8}
-        color="#fff5e6"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-far={s * 3}
-        shadow-camera-near={10}
-        shadow-camera-left={-s}
-        shadow-camera-right={s}
-        shadow-camera-top={s}
-        shadow-camera-bottom={-s}
-        shadow-bias={-0.001}
-      />
-
-      {/* Fill light — cooler, left side */}
-      <directionalLight
-        position={[cx - s * 0.35, s * 0.35, cz - s * 0.15]}
-        intensity={0.5}
-        color="#e0e8f0"
-      />
-
-      {/* Rim / back light — pushes edge highlights */}
-      <directionalLight
-        position={[cx - s * 0.15, s * 0.2, cz - s * 0.4]}
-        intensity={0.6}
-        color="#d4d4d8"
-      />
-
-      {/* Ambient base — low to preserve directionality */}
-      <ambientLight intensity={0.35} color="#e8e8e8" />
-
-      {/* Environment map from inline Lightformers for subtle reflections */}
-      <Environment resolution={64} frames={1}>
-        <Lightformer
-          form="rect"
-          intensity={2}
-          position={[0, 5, -5]}
-          scale={[10, 5, 1]}
-          color="#f5f5f5"
-        />
-        <Lightformer
-          form="rect"
-          intensity={0.8}
-          position={[-5, 3, 0]}
-          rotation-y={Math.PI / 2}
-          scale={[10, 5, 1]}
-          color="#e8e0d0"
-        />
-        <Lightformer
-          form="circle"
-          intensity={1.2}
-          position={[5, 5, 2]}
-          scale={[3, 3, 1]}
-          color="#fff8ee"
-        />
-      </Environment>
-
-      {/* Ground plane — soft shadow catcher */}
-      <ContactShadows
-        position={[cx, -1, cz]}
-        opacity={0.4}
-        scale={gs * 1.5}
-        blur={2.5}
-        far={s * 1.5}
-        resolution={512}
-        color="#000000"
-        frames={1}
-      />
-
-      {/* Reflective ground plane */}
-      <mesh rotation-x={-Math.PI / 2} position={[cx, -2, cz]} receiveShadow>
-        <planeGeometry args={[planeSize, planeSize]} />
-        <meshStandardMaterial
-          color="#1a1a1e"
-          roughness={0.85}
-          metalness={0.15}
-          transparent
-          opacity={0.6}
-        />
-      </mesh>
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// OUTDOOR ENVIRONMENT
-// ═══════════════════════════════════════════════════════════════════════════════
-// Natural daylight with a stylized Sky dome. Sunlight comes from a specific
-// direction. Ground plane catches soft shadows. The overall feel is "structure
-// sitting outdoors for context" — clean and readable, not photorealistic.
-
-function OutdoorEnvironment({ bounds }: EnvironmentSubProps) {
-  const [cx, , cz] = bounds.center;
-  const s = bounds.shadowExtent;
-  const gs = bounds.gridSize;
-  const planeSize = gs * 3;
-  const fogNear = bounds.fogFar * 0.5;
-
-  return (
-    <>
-      {/* Sky dome — low turbidity for clean, stylized look */}
-      <Sky
-        distance={450000}
-        sunPosition={[cx + s * 0.3, s * 0.4, cz + s * 0.15]}
-        inclination={0.52}
-        azimuth={0.25}
-        mieCoefficient={0.005}
-        mieDirectionalG={0.8}
-        rayleigh={0.5}
-        turbidity={2}
-      />
-
-      <SceneFog color="#87a4c4" near={fogNear} far={bounds.fogFar * 1.25} />
-
-      {/* Sun — warm directional */}
-      <directionalLight
-        position={[cx + s * 0.3, s * 0.4, cz + s * 0.15]}
-        intensity={2.0}
-        color="#fff0d4"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-far={s * 3}
-        shadow-camera-near={10}
-        shadow-camera-left={-s}
-        shadow-camera-right={s}
-        shadow-camera-top={s}
-        shadow-camera-bottom={-s}
-        shadow-bias={-0.001}
-      />
-
-      {/* Sky fill — cool blue bounce light */}
-      <directionalLight
-        position={[cx - s * 0.2, s * 0.3, cz - s * 0.3]}
-        intensity={0.4}
-        color="#a0c4e8"
-      />
-
-      {/* Hemisphere light for sky/ground ambient */}
-      <hemisphereLight args={['#87ceeb', '#4a6741', 0.4]} />
-
-      {/* Ambient base */}
-      <ambientLight intensity={0.25} />
-
-      {/* Environment for reflections */}
-      <Environment resolution={64} frames={1}>
-        <Lightformer
-          form="rect"
-          intensity={1.5}
-          position={[0, 8, -3]}
-          scale={[15, 8, 1]}
-          color="#e8f0ff"
-        />
-        <Lightformer
-          form="circle"
-          intensity={2}
-          position={[4, 6, 2]}
-          scale={[4, 4, 1]}
-          color="#fff5dd"
-        />
-      </Environment>
-
-      {/* Ground shadow plane */}
-      <ContactShadows
-        position={[cx, -1, cz]}
-        opacity={0.5}
-        scale={gs * 1.5}
-        blur={2}
-        far={s * 1.5}
-        resolution={512}
-        color="#2a3a24"
-        frames={1}
-      />
-
-      {/* Ground surface — subtle green-gray */}
-      <mesh rotation-x={-Math.PI / 2} position={[cx, -3, cz]} receiveShadow>
-        <planeGeometry args={[planeSize, planeSize]} />
-        <meshStandardMaterial color="#5a6b52" roughness={0.95} metalness={0} />
-      </mesh>
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DARK ENVIRONMENT
-// ═══════════════════════════════════════════════════════════════════════════════
-// Deep, near-black backdrop with dramatic rim lighting. Minimal ambient keeps
-// the model feeling like it's floating in a void. Gold/yellow members pop hard
-// against the darkness. Ideal for presentations and hero screenshots.
-
-function DarkEnvironment({ bounds }: EnvironmentSubProps) {
-  const [cx, , cz] = bounds.center;
-  const s = bounds.shadowExtent;
-  const gs = bounds.gridSize;
-  const fogNear = bounds.fogFar * 0.3;
-
-  return (
-    <>
-      <SolidBackground color="#0a0a0a" />
-      <SceneFog color="#0a0a0a" near={fogNear} far={bounds.fogFar * 0.75} />
-
-      {/* Subtle star field — adds depth without distraction */}
-      <Stars radius={gs * 1.5} depth={200} count={800} factor={6} saturation={0} fade speed={0} />
-
-      {/* Strong rim light — upper back, creates edge highlights on gold members */}
-      <directionalLight
-        position={[cx - s * 0.3, s * 0.35, cz - s * 0.35]}
-        intensity={1.2}
-        color="#e0e0ff"
-      />
-
-      {/* Counter rim — opposite side, slightly warmer */}
-      <directionalLight
-        position={[cx + s * 0.35, s * 0.2, cz - s * 0.3]}
-        intensity={0.8}
-        color="#fff0dd"
-      />
-
-      {/* Subtle front fill — very low to keep drama */}
-      <directionalLight
-        position={[cx + s * 0.15, s * 0.4, cz + s * 0.3]}
-        intensity={0.5}
-        color="#ffffff"
-      />
-
-      {/* Minimal ambient — just enough to read geometry */}
-      <ambientLight intensity={0.12} color="#c0c0d0" />
-
-      {/* Environment — dark with bright accent formers for specular highlights */}
-      <Environment resolution={64} frames={1}>
-        {/* Thin bright strip for sharp specular on members */}
-        <Lightformer
-          form="rect"
-          intensity={3}
-          position={[0, 4, -6]}
-          scale={[12, 0.5, 1]}
-          color="#ffffff"
-        />
-        <Lightformer
-          form="rect"
-          intensity={1.5}
-          position={[-6, 3, 0]}
-          rotation-y={Math.PI / 2}
-          scale={[8, 0.3, 1]}
-          color="#d0d8ff"
-        />
-        {/* Warm accent */}
-        <Lightformer
-          form="circle"
-          intensity={0.8}
-          position={[4, 2, 3]}
-          scale={[2, 2, 1]}
-          color="#ffd080"
-        />
-      </Environment>
-
-      {/* No ground plane — model floats. Only a very faint shadow hint */}
-      <ContactShadows
-        position={[cx, -1, cz]}
-        opacity={0.15}
-        scale={gs}
-        blur={3}
-        far={s}
-        resolution={256}
-        color="#000000"
-        frames={1}
-      />
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// BLUEPRINT ENVIRONMENT
-// ═══════════════════════════════════════════════════════════════════════════════
-// Engineering blueprint aesthetic: dark navy background, visible grid lines,
-// even flat lighting that minimizes shadows. Clean and technical — feels like
-// a CAD viewport or technical drawing come to life.
-
-function BlueprintEnvironment({ bounds }: EnvironmentSubProps) {
-  const [cx, , cz] = bounds.center;
-  const s = bounds.shadowExtent;
-  const gs = bounds.gridSize;
-
-  return (
-    <>
-      <SolidBackground color="#0c1525" />
-
-      {/* Even, shadowless lighting — no strong directionality */}
-      <ambientLight intensity={0.6} color="#c8d8f0" />
-
-      {/* Soft directional — provides just enough shape definition */}
-      <directionalLight
-        position={[cx + s * 0.3, s * 0.5, cz + s * 0.3]}
-        intensity={0.6}
-        color="#dce8ff"
-      />
-      <directionalLight
-        position={[cx - s * 0.2, s * 0.35, cz - s * 0.2]}
-        intensity={0.4}
-        color="#c0d0e8"
-      />
-
-      {/* Front fill to reduce shadow contrast */}
-      <directionalLight position={[cx, s * 0.15, cz + s * 0.4]} intensity={0.3} color="#d0d8e8" />
-
-      {/* Environment — cold blue tones for technical feel */}
-      <Environment resolution={64} frames={1}>
-        <Lightformer
-          form="rect"
-          intensity={1}
-          position={[0, 5, -4]}
-          scale={[15, 8, 1]}
-          color="#c8d8f0"
-        />
-        <Lightformer
-          form="rect"
-          intensity={0.6}
-          position={[5, 3, 2]}
-          scale={[6, 4, 1]}
-          color="#b0c0d8"
-        />
-      </Environment>
-
-      {/* Blueprint grid — fine engineering grid with labeled-feel spacing */}
-      <Grid
-        args={[gs * 1.5, gs * 1.5]}
-        cellSize={bounds.cellSize / 2}
-        cellThickness={0.3}
-        cellColor="#1a2a42"
-        sectionSize={bounds.sectionSize}
-        sectionThickness={0.8}
-        sectionColor="#243858"
-        fadeDistance={gs * 1.5}
-        fadeStrength={1.5}
-        followCamera={false}
-        position={[cx, -1, cz]}
-        side={THREE.DoubleSide}
-      />
-
-      {/* Axis lines rendered as thin colored lines at the origin */}
-      <BlueprintAxes bounds={bounds} />
-    </>
-  );
-}
-
 // ── Blueprint axis lines ─────────────────────────────────────────────────────
-// Draws X (red) and Z (blue) axis lines on the ground plane to reinforce
-// the engineering coordinate system — subtle but visible.
 
-function BlueprintAxes({ bounds }: EnvironmentSubProps) {
+function BlueprintAxes({ bounds }: { bounds: ModelBounds }) {
   const axisLen = bounds.gridSize * 0.6;
   const axisNeg = bounds.gridSize * 0.15;
   const yLen = bounds.maxDimension * 0.5;
@@ -606,39 +63,38 @@ function BlueprintAxes({ bounds }: EnvironmentSubProps) {
     [yLen],
   );
 
+  const xPositions = useMemo(
+    () => new Float32Array(xPoints.flatMap((p) => [p.x, p.y, p.z])),
+    [xPoints],
+  );
+  const zPositions = useMemo(
+    () => new Float32Array(zPoints.flatMap((p) => [p.x, p.y, p.z])),
+    [zPoints],
+  );
+  const yPositions = useMemo(
+    () => new Float32Array(yPoints.flatMap((p) => [p.x, p.y, p.z])),
+    [yPoints],
+  );
+
   return (
     <group>
-      {/* X axis — red, faint */}
       <line>
         <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            args={[new Float32Array(xPoints.flatMap((p) => [p.x, p.y, p.z])), 3]}
-          />
+          <bufferAttribute attach="attributes-position" args={[xPositions, 3]} />
         </bufferGeometry>
-        <lineBasicMaterial color="#3b1520" linewidth={1} transparent opacity={0.6} />
+        <lineBasicMaterial color="#4a1a28" linewidth={1} transparent opacity={0.5} />
       </line>
-
-      {/* Z axis — blue, faint */}
       <line>
         <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            args={[new Float32Array(zPoints.flatMap((p) => [p.x, p.y, p.z])), 3]}
-          />
+          <bufferAttribute attach="attributes-position" args={[zPositions, 3]} />
         </bufferGeometry>
-        <lineBasicMaterial color="#152040" linewidth={1} transparent opacity={0.6} />
+        <lineBasicMaterial color="#1a2850" linewidth={1} transparent opacity={0.5} />
       </line>
-
-      {/* Y axis — green, faint */}
       <line>
         <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            args={[new Float32Array(yPoints.flatMap((p) => [p.x, p.y, p.z])), 3]}
-          />
+          <bufferAttribute attach="attributes-position" args={[yPositions, 3]} />
         </bufferGeometry>
-        <lineBasicMaterial color="#153020" linewidth={1} transparent opacity={0.6} />
+        <lineBasicMaterial color="#1a3828" linewidth={1} transparent opacity={0.5} />
       </line>
     </group>
   );
@@ -648,21 +104,85 @@ function BlueprintAxes({ bounds }: EnvironmentSubProps) {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function SceneEnvironment({ environment, bounds }: SceneEnvironmentProps) {
-  useInvalidateOnChange(environment);
+export function SceneEnvironment({ bounds }: SceneEnvironmentProps) {
+  const showGrid = useDisplayStore((state) => state.showGrid);
+  const invalidate = useThree((state) => state.invalidate);
+  const isFirstRender = useRef(true);
 
-  switch (environment) {
-    case 'lab':
-      return <TestLabEnvironment bounds={bounds} />;
-    case 'studio':
-      return <StudioEnvironment bounds={bounds} />;
-    case 'outdoor':
-      return <OutdoorEnvironment bounds={bounds} />;
-    case 'dark':
-      return <DarkEnvironment bounds={bounds} />;
-    case 'blueprint':
-      return <BlueprintEnvironment bounds={bounds} />;
-    default:
-      return <StudioEnvironment bounds={bounds} />;
-  }
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const id = requestAnimationFrame(() => invalidate());
+    return () => cancelAnimationFrame(id);
+  }, [showGrid, invalidate]);
+
+  const [cx, , cz] = bounds.center;
+  const s = bounds.shadowExtent;
+  const gs = bounds.gridSize;
+
+  return (
+    <>
+      <SolidBackground color="#0b1220" />
+
+      {/* Cool ambient wash */}
+      <ambientLight intensity={0.55} color="#b8c8e0" />
+
+      {/* Primary key — slight warm offset for material definition */}
+      <directionalLight
+        position={[cx + s * 0.3, s * 0.5, cz + s * 0.3]}
+        intensity={0.7}
+        color="#d8e4f8"
+      />
+
+      {/* Cool fill — opposite side */}
+      <directionalLight
+        position={[cx - s * 0.2, s * 0.35, cz - s * 0.2]}
+        intensity={0.35}
+        color="#a0b8d8"
+      />
+
+      {/* Front fill — subtle, reduces harsh shadows */}
+      <directionalLight position={[cx, s * 0.15, cz + s * 0.4]} intensity={0.25} color="#c0d0e0" />
+
+      {/* Environment map for subtle specular on structural members */}
+      <Environment resolution={64} frames={1}>
+        <Lightformer
+          form="rect"
+          intensity={0.9}
+          position={[0, 6, -5]}
+          scale={[18, 10, 1]}
+          color="#b8c8e0"
+        />
+        <Lightformer
+          form="rect"
+          intensity={0.5}
+          position={[6, 3, 3]}
+          scale={[8, 5, 1]}
+          color="#a0b0c8"
+        />
+      </Environment>
+
+      {showGrid && (
+        <>
+          <Grid
+            args={[gs * 1.8, gs * 1.8]}
+            cellSize={bounds.cellSize / 2}
+            cellThickness={0.25}
+            cellColor="#142238"
+            sectionSize={bounds.sectionSize}
+            sectionThickness={0.6}
+            sectionColor="#1e3450"
+            fadeDistance={gs * 1.6}
+            fadeStrength={1.8}
+            followCamera={false}
+            position={[cx, -1, cz]}
+            side={THREE.DoubleSide}
+          />
+          <BlueprintAxes bounds={bounds} />
+        </>
+      )}
+    </>
+  );
 }

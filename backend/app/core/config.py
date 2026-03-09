@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     RATE_LIMIT_DEFAULT_MAX: int = 120
     RATE_LIMIT_HEAVY_MAX: int = 10
 
+    # In-memory store limits (evict oldest when exceeded)
+    MAX_MODELS: int = 100
+    MAX_ANALYSES: int = 500
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

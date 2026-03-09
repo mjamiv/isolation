@@ -41,7 +41,7 @@ class TestStructuralModelSchema:
         model = StructuralModelSchema()
         assert model.nodes == []
         assert model.elements == []
-        assert model.model_info["ndm"] is not None
+        assert model.model_info.ndm is not None
 
     def test_rejects_invalid_element_node_reference(self):
         """An element referencing a non-existent node fails validation."""
