@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import type { TimeHistoryResults as THResultsType } from '@/types/analysis';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useDisplayStore } from '@/stores/displayStore';
+import { ChartPlotSkeleton } from '@/components/ui/Skeleton';
 import { TimeHistoryPlaybackControls } from './TimeHistoryPlaybackControls';
 
 const Plot = lazy(() => import('react-plotly.js'));
@@ -264,13 +265,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
           </select>
         </div>
         <div className="h-56 rounded bg-gray-800/50">
-          <Suspense
-            fallback={
-              <div className="flex h-full items-center justify-center text-xs text-gray-500">
-                Loading chart...
-              </div>
-            }
-          >
+          <Suspense fallback={<ChartPlotSkeleton className="h-56" />}>
             <Plot
               data={[
                 {
@@ -342,13 +337,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
               </select>
             </div>
             <div className="h-52 rounded bg-gray-800/50">
-              <Suspense
-                fallback={
-                  <div className="flex h-full items-center justify-center text-xs text-gray-500">
-                    Loading chart...
-                  </div>
-                }
-              >
+              <Suspense fallback={<ChartPlotSkeleton className="h-full min-h-[13rem]" />}>
                 <Plot
                   data={[
                     {
@@ -402,13 +391,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
           <div>
             <h3 className="mb-1 text-xs font-semibold text-gray-300">Bearing Hysteresis Loop</h3>
             <div className="h-52 rounded bg-gray-800/50">
-              <Suspense
-                fallback={
-                  <div className="flex h-full items-center justify-center text-xs text-gray-500">
-                    Loading chart...
-                  </div>
-                }
-              >
+              <Suspense fallback={<ChartPlotSkeleton className="h-full min-h-[13rem]" />}>
                 <Plot
                   data={[
                     {
@@ -477,13 +460,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
             <div>
               <h4 className="mb-1 text-[10px] font-semibold text-gray-400">Shear</h4>
               <div className="h-44 rounded bg-gray-800/50">
-                <Suspense
-                  fallback={
-                    <div className="flex h-full items-center justify-center text-xs text-gray-500">
-                      Loading chart...
-                    </div>
-                  }
-                >
+                <Suspense fallback={<ChartPlotSkeleton className="h-full min-h-[11rem]" />}>
                   <Plot
                     data={[
                       {
@@ -527,13 +504,7 @@ export function TimeHistoryResults({ data }: TimeHistoryResultsProps) {
             <div>
               <h4 className="mb-1 text-[10px] font-semibold text-gray-400">Moment</h4>
               <div className="h-44 rounded bg-gray-800/50">
-                <Suspense
-                  fallback={
-                    <div className="flex h-full items-center justify-center text-xs text-gray-500">
-                      Loading chart...
-                    </div>
-                  }
-                >
+                <Suspense fallback={<ChartPlotSkeleton className="h-full min-h-[11rem]" />}>
                   <Plot
                     data={[
                       {

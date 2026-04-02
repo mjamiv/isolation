@@ -74,7 +74,16 @@ export function useRunAnalysis() {
         useAnalysisStore.getState().setSelectedModeNumber(1);
       }
 
-      useToastStore.getState().addToast('success', 'Analysis completed successfully.');
+      if (result.payloadEmptyReason) {
+        useToastStore
+          .getState()
+          .addToast(
+            'warning',
+            `Analysis finished but results are incomplete: ${result.payloadEmptyReason}`,
+          );
+      } else {
+        useToastStore.getState().addToast('success', 'Analysis completed successfully.');
+      }
     },
     onError: (message: string) => {
       setError(message);

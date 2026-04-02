@@ -10,6 +10,7 @@ import { DriftProfileChart } from './DriftProfileChart';
 import { BaseShearComparison } from './BaseShearComparison';
 import { BearingDemandCapacity } from './BearingDemandCapacity';
 import { HingeDistribution } from './HingeDistribution';
+import { ChartPlotSkeleton } from '@/components/ui/Skeleton';
 
 const Plot = lazy(() => import('react-plotly.js'));
 
@@ -319,13 +320,7 @@ export function ComparisonPanel() {
       <Accordion.Root type="multiple" defaultValue={['capacity', 'drift', 'shear']}>
         <AccordionItem value="capacity" title="Capacity Curve">
           <div className="metric-card h-48 rounded-lg">
-            <Suspense
-              fallback={
-                <div className="flex h-full items-center justify-center text-ui-sm text-gray-500">
-                  Loading chart...
-                </div>
-              }
-            >
+            <Suspense fallback={<ChartPlotSkeleton className="h-full min-h-[12rem]" />}>
               <Plot
                 data={capacityTraces}
                 layout={{

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { Viewer3D } from '../viewer-3d/Viewer3D';
@@ -8,6 +8,8 @@ import { PropertyInspector } from '../property-inspector/PropertyInspector';
 import { ResultsPanel } from '../results/ResultsPanel';
 import { Toolbar } from './Toolbar';
 import { StatusBar } from './StatusBar';
+import { ComparisonPanelSkeleton } from '@/components/ui/Skeleton';
+import { useToastStore } from '@/stores/toastStore';
 
 const ComparisonPanel = lazy(() =>
   import('../comparison/ComparisonPanel').then((m) => ({ default: m.ComparisonPanel })),
@@ -132,13 +134,7 @@ function RightPanel() {
           hidden={activeTab !== 'comparison'}
         >
           {activeTab === 'comparison' && (
-            <Suspense
-              fallback={
-                <div className="flex h-32 items-center justify-center text-ui-sm text-white/40">
-                  Loading...
-                </div>
-              }
-            >
+            <Suspense fallback={<ComparisonPanelSkeleton />}>
               <ComparisonPanel />
             </Suspense>
           )}
@@ -158,11 +154,22 @@ const MOBILE_TABS: { value: MobileTab; label: string }[] = [
 
 function MobileLayout() {
   const [mobileTab, setMobileTab] = useState<MobileTab>('viewer');
+  const [inspectUnread, setInspectUnread] = useState(false);
   const analysisStatus = useAnalysisStore((s) => s.status);
+  const prevStatusRef = useRef(analysisStatus);
+  const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => {
-    if (analysisStatus === 'complete') setMobileTab('inspect');
-  }, [analysisStatus]);
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = analysisStatus;
+    if (analysisStatus === 'running') {
+      setInspectUnread(false);
+    }
+    if (prev === 'running' && analysisStatus === 'complete') {
+      setInspectUnread(true);
+      addToast('info', 'Analysis complete — open Inspect to view results.');
+    }
+  }, [analysisStatus, addToast]);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden md:hidden">
@@ -178,12 +185,23 @@ function MobileLayout() {
             role="tab"
             aria-selected={mobileTab === tab.value}
             aria-controls={`mobile-panel-${tab.value}`}
-            onClick={() => setMobileTab(tab.value)}
+            onClick={() => {
+              setMobileTab(tab.value);
+              if (tab.value === 'inspect') setInspectUnread(false);
+            }}
             className={`relative flex-1 px-3 py-2 text-[11px] font-semibold transition-colors duration-150 ${
               mobileTab === tab.value ? 'text-yellow-400' : 'text-white/30 hover:text-white/50'
             }`}
           >
-            {tab.label}
+            <span className="inline-flex items-center justify-center gap-1">
+              {tab.label}
+              {tab.value === 'inspect' && inspectUnread && mobileTab !== 'inspect' && (
+                <span
+                  className="h-1.5 w-1.5 rounded-full bg-yellow-400 shadow-glow-gold"
+                  aria-label="New results"
+                />
+              )}
+            </span>
             {mobileTab === tab.value && (
               <span className="absolute inset-x-3 -bottom-px h-[2px] rounded-full bg-gradient-to-r from-yellow-500 to-yellow-400" />
             )}

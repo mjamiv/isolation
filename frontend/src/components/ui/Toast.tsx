@@ -4,12 +4,14 @@ const TYPE_STYLES: Record<ToastType, string> = {
   success: 'border-yellow-500/30 bg-yellow-900/40 text-yellow-200',
   error: 'border-red-500/30 bg-red-900/40 text-red-200',
   info: 'border-yellow-400/20 bg-surface-3 text-yellow-100',
+  warning: 'border-amber-500/35 bg-amber-950/50 text-amber-100',
 };
 
 const TYPE_ICONS: Record<ToastType, string> = {
   success: '\u2713',
   error: '\u2717',
   info: '\u2139',
+  warning: '!',
 };
 
 export function ToastContainer() {

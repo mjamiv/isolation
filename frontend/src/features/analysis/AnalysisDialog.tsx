@@ -267,7 +267,7 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
               </div>
             )}
 
-            {/* Time-history params */}
+            {/* Time-history params — core path: record + step count; excitation/comparison in Advanced */}
             {analysisType === 'time_history' && (
               <>
                 <div>
@@ -292,66 +292,6 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="text-[11px] font-medium text-white/50">
-                    Excitation Directions
-                  </label>
-                  <div className="mt-1 mb-2">
-                    <select
-                      id="analysis-load-case-preset"
-                      aria-label="Load Case Presets"
-                      value=""
-                      onChange={(e) => {
-                        const preset = DIRECTION_PRESETS[Number(e.target.value)];
-                        if (preset) setDirectionScales({ ...preset.scales });
-                      }}
-                      className={inputClass}
-                    >
-                      <option value="" disabled>
-                        Load case presets...
-                      </option>
-                      {DIRECTION_PRESETS.map((p, i) => (
-                        <option key={i} value={i}>
-                          {p.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mt-1 flex gap-3">
-                    {([1, 2, 3] as const).map((dir) => {
-                      const label = dir === 1 ? 'X' : dir === 2 ? 'Y' : 'Z';
-                      const enabled = directionScales[dir] > 0;
-                      return (
-                        <label key={dir} className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={enabled}
-                            onChange={(e) => {
-                              setDirectionScales((prev) => ({
-                                ...prev,
-                                [dir]: e.target.checked ? 100 : 0,
-                              }));
-                            }}
-                            className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
-                          />
-                          <span className="text-[11px] text-white/60">{label}</span>
-                          <input
-                            type="number"
-                            value={directionScales[dir]}
-                            onChange={(e) => {
-                              const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
-                              setDirectionScales((prev) => ({ ...prev, [dir]: val }));
-                            }}
-                            min={0}
-                            max={100}
-                            className="w-12 rounded-md border border-white/[0.06] bg-surface-3 px-1.5 py-0.5 text-center text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
-                          />
-                          <span className="text-[10px] text-white/25">%</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-[11px] font-medium text-white/50">Time Step (s)</label>
@@ -374,6 +314,100 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                     />
                   </div>
                 </div>
+                <details className="group rounded-lg border border-white/[0.06] bg-surface-0 open:bg-surface-2/50">
+                  <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-medium text-white/55 [&::-webkit-details-marker]:hidden">
+                    Advanced — excitation, comparison, λ factors
+                  </summary>
+                  <div className="space-y-3 border-t border-white/[0.06] px-3 pb-3 pt-2">
+                    <div>
+                      <label className="text-[11px] font-medium text-white/50">
+                        Excitation Directions
+                      </label>
+                      <p className="mb-1 mt-0.5 text-[10px] text-white/35">
+                        Defaults use 100% X if you do not change these.
+                      </p>
+                      <div className="mt-1 mb-2">
+                        <select
+                          id="analysis-load-case-preset"
+                          aria-label="Load Case Presets"
+                          value=""
+                          onChange={(e) => {
+                            const preset = DIRECTION_PRESETS[Number(e.target.value)];
+                            if (preset) setDirectionScales({ ...preset.scales });
+                          }}
+                          className={inputClass}
+                        >
+                          <option value="" disabled>
+                            Load case presets...
+                          </option>
+                          {DIRECTION_PRESETS.map((p, i) => (
+                            <option key={i} value={i}>
+                              {p.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-3">
+                        {([1, 2, 3] as const).map((dir) => {
+                          const label = dir === 1 ? 'X' : dir === 2 ? 'Y' : 'Z';
+                          const enabled = directionScales[dir] > 0;
+                          return (
+                            <label key={dir} className="flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={enabled}
+                                onChange={(e) => {
+                                  setDirectionScales((prev) => ({
+                                    ...prev,
+                                    [dir]: e.target.checked ? 100 : 0,
+                                  }));
+                                }}
+                                className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
+                              />
+                              <span className="text-[11px] text-white/60">{label}</span>
+                              <input
+                                type="number"
+                                value={directionScales[dir]}
+                                onChange={(e) => {
+                                  const val = Math.max(
+                                    0,
+                                    Math.min(100, Number(e.target.value) || 0),
+                                  );
+                                  setDirectionScales((prev) => ({ ...prev, [dir]: val }));
+                                }}
+                                min={0}
+                                max={100}
+                                className="w-12 rounded-md border border-white/[0.06] bg-surface-3 px-1.5 py-0.5 text-center text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
+                              />
+                              <span className="text-[10px] text-white/25">%</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    {hasBearings && (
+                      <div className="rounded-lg border border-white/[0.04] bg-surface-2/80 p-3 space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={runComparisonMode}
+                            onChange={(e) => setRunComparisonMode(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
+                          />
+                          <span className="text-[11px] font-medium text-white/60">
+                            Run Comparison (Isolated vs Fixed-Base)
+                          </span>
+                        </label>
+                        {runComparisonMode && (
+                          <p className="text-[10px] text-white/40">
+                            Runs time-history on both the isolated model and an auto-generated
+                            fixed-base variant with animated overlay.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </details>
               </>
             )}
 
@@ -441,83 +475,82 @@ export function AnalysisDialog({ open, onOpenChange }: AnalysisDialogProps) {
                     ))}
                   </div>
                 </div>
-              </>
-            )}
-
-            {/* Comparison toggle — available for pushover and time-history */}
-            {(analysisType === 'pushover' || analysisType === 'time_history') && hasBearings && (
-              <div className="rounded-lg border border-white/[0.04] bg-surface-2 p-3 space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={runComparisonMode}
-                    onChange={(e) => setRunComparisonMode(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
-                  />
-                  <span className="text-[11px] font-medium text-white/60">
-                    Run Comparison (Isolated vs Fixed-Base)
-                  </span>
-                </label>
-
-                {runComparisonMode && (
-                  <>
-                    <p className="text-[10px] text-white/40">
-                      {analysisType === 'time_history'
-                        ? 'Runs time-history on both the isolated model and an auto-generated fixed-base variant with animated overlay.'
-                        : 'Runs pushover on both the isolated model and an auto-generated fixed-base variant.'}
-                    </p>
-
-                    {analysisType === 'pushover' && (
-                      <>
+                {hasBearings && (
+                  <details className="group rounded-lg border border-white/[0.06] bg-surface-0 open:bg-surface-2/50">
+                    <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-medium text-white/55 [&::-webkit-details-marker]:hidden">
+                      Advanced — comparison, ASCE λ factors
+                    </summary>
+                    <div className="space-y-3 border-t border-white/[0.06] px-3 pb-3 pt-2">
+                      <div className="rounded-lg border border-white/[0.04] bg-surface-2/80 p-3 space-y-2">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={enableLambda}
-                            onChange={(e) => setEnableLambda(e.target.checked)}
+                            checked={runComparisonMode}
+                            onChange={(e) => setRunComparisonMode(e.target.checked)}
                             className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
                           />
-                          <span className="text-[11px] text-white/50">
-                            Lambda Factors (ASCE 7-22 Ch. 17)
+                          <span className="text-[11px] font-medium text-white/60">
+                            Run Comparison (Isolated vs Fixed-Base)
                           </span>
                         </label>
-
-                        {enableLambda && (
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="text-[10px] font-medium text-white/35">
-                                Lambda Min
-                              </label>
-                              <input
-                                type="number"
-                                value={lambdaMin}
-                                onChange={(e) => setLambdaMin(e.target.value)}
-                                min={0.1}
-                                max={1}
-                                step={0.05}
-                                className="mt-0.5 w-full rounded-md border border-white/[0.06] bg-surface-3 px-2 py-1 text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-medium text-white/35">
-                                Lambda Max
-                              </label>
-                              <input
-                                type="number"
-                                value={lambdaMax}
-                                onChange={(e) => setLambdaMax(e.target.value)}
-                                min={1}
-                                max={3}
-                                step={0.1}
-                                className="mt-0.5 w-full rounded-md border border-white/[0.06] bg-surface-3 px-2 py-1 text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
-                              />
-                            </div>
-                          </div>
+                        {runComparisonMode && (
+                          <p className="text-[10px] text-white/40">
+                            Runs pushover on both the isolated model and an auto-generated
+                            fixed-base variant.
+                          </p>
                         )}
-                      </>
-                    )}
-                  </>
+                        {runComparisonMode && (
+                          <>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={enableLambda}
+                                onChange={(e) => setEnableLambda(e.target.checked)}
+                                className="h-3.5 w-3.5 rounded border-white/10 bg-surface-3 text-yellow-500 focus:ring-yellow-500"
+                              />
+                              <span className="text-[11px] text-white/50">
+                                Lambda Factors (ASCE 7-22 Ch. 17)
+                              </span>
+                            </label>
+                            {enableLambda && (
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="text-[10px] font-medium text-white/35">
+                                    Lambda Min
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={lambdaMin}
+                                    onChange={(e) => setLambdaMin(e.target.value)}
+                                    min={0.1}
+                                    max={1}
+                                    step={0.05}
+                                    className="mt-0.5 w-full rounded-md border border-white/[0.06] bg-surface-3 px-2 py-1 text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-medium text-white/35">
+                                    Lambda Max
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={lambdaMax}
+                                    onChange={(e) => setLambdaMax(e.target.value)}
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    className="mt-0.5 w-full rounded-md border border-white/[0.06] bg-surface-3 px-2 py-1 text-[11px] text-white/80 outline-none focus:border-yellow-500/50"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </details>
                 )}
-              </div>
+              </>
             )}
 
             {/* Validation error */}

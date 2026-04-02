@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import * as THREE from 'three';
@@ -54,6 +55,7 @@ function CameraRig() {
   const targetUpRef = useRef(new THREE.Vector3(0, 1, 0));
   const targetLookAtRef = useRef(new THREE.Vector3(...bounds.center));
   const animatingRef = useRef(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     const target = new THREE.Vector3(...bounds.center);
@@ -72,9 +74,13 @@ function CameraRig() {
     const controls = controlsRef;
     if (!controls || !animatingRef.current) return;
 
-    camera.position.lerp(targetPositionRef.current, 0.16);
-    camera.up.lerp(targetUpRef.current, 0.2).normalize();
-    controls.target.lerp(targetLookAtRef.current, 0.18);
+    const posT = reducedMotion ? 1 : 0.16;
+    const upT = reducedMotion ? 1 : 0.2;
+    const tgtT = reducedMotion ? 1 : 0.18;
+
+    camera.position.lerp(targetPositionRef.current, posT);
+    camera.up.lerp(targetUpRef.current, upT).normalize();
+    controls.target.lerp(targetLookAtRef.current, tgtT);
     camera.lookAt(controls.target);
     controls.update();
 

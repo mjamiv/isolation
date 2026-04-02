@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { ChartPlotSkeleton } from '@/components/ui/Skeleton';
 import type {
   PushoverResults as PushoverResultsType,
   HingeState,
@@ -50,13 +51,7 @@ export function PushoverResults({ data, hingeStates }: PushoverResultsProps) {
       <div>
         <h3 className="mb-1 text-xs font-semibold text-gray-300">Capacity Curve</h3>
         <div className="h-48 rounded bg-gray-800/50">
-          <Suspense
-            fallback={
-              <div className="flex h-full items-center justify-center text-xs text-gray-500">
-                Loading chart...
-              </div>
-            }
-          >
+          <Suspense fallback={<ChartPlotSkeleton className="h-full min-h-[12rem]" />}>
             <Plot
               data={[
                 {

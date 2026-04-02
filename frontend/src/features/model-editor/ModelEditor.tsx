@@ -14,7 +14,7 @@ interface ModelEditorProps {
 
 export function ModelEditor({ defaultOpenSections = [] }: ModelEditorProps) {
   return (
-    <Accordion.Root type="multiple" defaultValue={defaultOpenSections} className="text-gray-300">
+    <Accordion.Root type="multiple" defaultValue={defaultOpenSections} className="text-white/80">
       <NodeList />
       <ElementList />
       <SectionList />

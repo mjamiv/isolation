@@ -28,14 +28,29 @@ export function ViewerHud() {
     <div className="viewer-hud-bar">
       {/* Camera presets */}
       <div className="viewer-hud-group">
-        <button className="viewer-hud-btn" onClick={frameCamera}>
+        <button
+          type="button"
+          className="viewer-hud-btn"
+          title="Frame entire model in view"
+          onClick={frameCamera}
+        >
           Fit
         </button>
         <span className="viewer-hud-sep" />
         {VIEWS.map((v) => (
           <button
             key={v.value}
+            type="button"
             className="viewer-hud-btn"
+            title={
+              v.value === 'iso'
+                ? 'Isometric camera'
+                : v.value === 'plan'
+                  ? 'Plan (top) view'
+                  : v.value === 'front'
+                    ? 'Front elevation'
+                    : 'Side elevation'
+            }
             data-active={cameraView === v.value}
             onClick={() => setCameraView(v.value)}
           >
@@ -49,7 +64,15 @@ export function ViewerHud() {
         {MODES.map((m) => (
           <button
             key={m.value}
+            type="button"
             className="viewer-hud-btn"
+            title={
+              m.value === 'wireframe'
+                ? 'Wireframe members'
+                : m.value === 'solid'
+                  ? 'Solid shaded members'
+                  : 'Extruded cross-sections'
+            }
             data-active={displayMode === m.value}
             onClick={() => setDisplayMode(m.value)}
           >
@@ -61,14 +84,18 @@ export function ViewerHud() {
       {/* Layer toggles */}
       <div className="viewer-hud-group">
         <button
+          type="button"
           className="viewer-hud-btn"
+          title="Toggle ground grid"
           data-active={showGrid}
           onClick={() => setShowGrid(!showGrid)}
         >
           Grid
         </button>
         <button
+          type="button"
           className="viewer-hud-btn"
+          title="Toggle node and member labels"
           data-active={showLabels}
           onClick={() => setShowLabels(!showLabels)}
         >

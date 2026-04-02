@@ -202,6 +202,12 @@ async def run_analysis(request: RunAnalysisRequest) -> dict[str, Any]:
                 dt=dt_value,
                 num_steps=num_steps_value,
             )
+            time_series = results.get("time") or []
+            if len(time_series) == 0:
+                raise ValueError(
+                    "Time-history produced no integration steps. The solver may have failed "
+                    "immediately—check ground motion scaling, dt, num_steps, and model stability."
+                )
 
         elif analysis_type == "pushover":
             if params.target_displacement is None:

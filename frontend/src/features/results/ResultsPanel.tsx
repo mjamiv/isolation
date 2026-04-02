@@ -43,8 +43,8 @@ export function ResultsPanel() {
   return (
     <div className="space-y-3 p-3">
       {/* Keep summary visible while scrolling result sections */}
-      <div className="sticky top-0 z-10 -mx-3 border-b border-white/[0.06] bg-surface-1/98 px-3 pb-2 backdrop-blur-sm">
-        <div className="metric-card rounded-lg p-2.5">
+      <div className="results-chart-frame sticky top-0 z-10 -mx-3 border-b border-white/[0.06] bg-surface-1/98 px-3 pb-2 backdrop-blur-sm">
+        <div className="metric-card rounded-lg border border-white/[0.06] p-2.5 shadow-inner-dark">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-white/70">
               {analysisType === 'static' && 'Static Analysis'}
@@ -61,6 +61,18 @@ export function ResultsPanel() {
           </div>
         </div>
       </div>
+
+      {results.payloadEmptyReason && (
+        <div
+          role="alert"
+          className="rounded-lg border border-amber-500/35 bg-amber-950/40 px-3 py-2.5 text-left"
+        >
+          <p className="text-[11px] font-semibold text-amber-200/95">Incomplete result payload</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-amber-100/80">
+            {results.payloadEmptyReason}
+          </p>
+        </div>
+      )}
 
       {/* Type-specific results */}
       {results.results && results.type === 'static' && (

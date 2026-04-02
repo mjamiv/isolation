@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface Toast {
   id: string;
@@ -25,11 +25,14 @@ export const useToastStore = create<ToastState>((set) => ({
     }));
     // Error toasts persist until manually dismissed; others auto-dismiss
     if (type !== 'error') {
-      setTimeout(() => {
-        set((state) => ({
-          toasts: state.toasts.filter((t) => t.id !== id),
-        }));
-      }, 5000);
+      setTimeout(
+        () => {
+          set((state) => ({
+            toasts: state.toasts.filter((t) => t.id !== id),
+          }));
+        },
+        type === 'warning' ? 8000 : 5000,
+      );
     }
   },
   removeToast: (id) =>

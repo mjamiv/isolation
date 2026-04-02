@@ -512,6 +512,10 @@ function normalizeAnalysisResults(raw: RawMap): AnalysisResults {
 
   const results = asRecord(raw.results);
   if (Object.keys(results).length === 0) {
+    if (normalizedType === 'time_history') {
+      out.payloadEmptyReason =
+        'Time-history results are empty (no series returned). Check ground motion, dt, and num_steps.';
+    }
     return out;
   }
 
@@ -521,6 +525,12 @@ function normalizeAnalysisResults(raw: RawMap): AnalysisResults {
     out.results = normalizeModalResults(results);
   } else if (normalizedType === 'time_history') {
     out.results = normalizeTimeHistoryResults(results);
+    const th = out.results;
+    if (th && th.timeSteps.length === 0) {
+      out.results = null;
+      out.payloadEmptyReason =
+        'Time-history returned no data (empty time series). The solver may have failed at step 0—check ground motion, dt, and model stability.';
+    }
   } else if (normalizedType === 'pushover') {
     out.results = normalizePushoverResults(results);
     if (

@@ -395,8 +395,20 @@ select {
 }
 
 .viewer-hud-btn[data-active='true'] {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: linear-gradient(180deg, rgba(234, 179, 8, 0.22) 0%, rgba(202, 138, 4, 0.14) 100%);
+  color: #fde047;
+  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.25);
+}
+
+.viewer-hud-btn:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-accordion-down,
+  .animate-accordion-up {
+    animation: none !important;
+  }
 }
 
 /* ─── Viewer Overlay System ─── */

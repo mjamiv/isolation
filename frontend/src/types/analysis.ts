@@ -196,6 +196,8 @@ export interface AnalysisResults {
   hingeStates?: HingeState[];
   /** Error description if status === 'error'. */
   error?: string;
+  /** When the run completed but the payload has no usable series (e.g. empty time-history). */
+  payloadEmptyReason?: string;
   /** Wall-clock time of the analysis in seconds. */
   wallTime?: number;
 }

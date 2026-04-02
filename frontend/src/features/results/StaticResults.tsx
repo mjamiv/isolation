@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { ChartPlotSkeleton } from '@/components/ui/Skeleton';
 import type { StaticResults as StaticResultsType } from '@/types/analysis';
 import { useDisplayStore } from '@/stores/displayStore';
 
@@ -157,13 +158,7 @@ export function StaticResults({ data }: StaticResultsProps) {
             </select>
           </div>
           <div className="h-44 rounded bg-gray-800/50">
-            <Suspense
-              fallback={
-                <div className="flex h-full items-center justify-center text-ui-sm text-gray-500">
-                  Loading chart...
-                </div>
-              }
-            >
+            <Suspense fallback={<ChartPlotSkeleton className="h-full min-h-[11rem]" />}>
               <Plot
                 data={[
                   {
